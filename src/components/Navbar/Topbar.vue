@@ -160,7 +160,6 @@
       </ul>
       <div class="d-block d-lg-none">
         <img src="/dist/images/logos/dark-logo.svg" class="dark-logo" width="180" alt="" />
-        <img src="/dist/images/logos/light-logo.svg" class="light-logo"  width="180" alt="" />
       </div>
       <button class="navbar-toggler p-0 border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="p-2">

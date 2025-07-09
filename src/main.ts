@@ -1,36 +1,39 @@
-import { createApp } from 'vue'
-import App from './App.vue'
-import { createRouter, createWebHistory } from 'vue-router'
-import Register from './views/auth/Register.vue'
-import Login from './views/auth/Login.vue'
-import Dashboard from './views/dashboard/Dashboard.vue'
-import DataHero from './views/data-hero/DataHero.vue'
+import { createApp } from "vue";
+import App from "./App.vue";
+import { DefaultApolloClient } from "@vue/apollo-composable";
+import apolloClient from "./plugins/apollo";
+import { createRouter, createWebHistory } from "vue-router";
+import Register from "./views/auth/Register.vue";
+import Login from "./views/auth/Login.vue";
+import Dashboard from "./views/dashboard/Dashboard.vue";
+import DataHero from "./views/data-hero/DataHero.vue";
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
-      path: '/login',
-      component: Login
+      path: "/login",
+      component: Login,
     },
     {
-      path: '/register',
-      component: Register
+      path: "/register",
+      component: Register,
     },
     {
-      path: '/dashboard',
-      component: Dashboard
+      path: "/dashboard",
+      component: Dashboard,
     },
     {
-      path: '/data-hero',
-      component: DataHero
+      path: "/data-hero",
+      component: DataHero,
     },
-    // {
-    //   path: '/data-persiapan/data-emblem',
-    //   name: 'DataPersiapanEmblem',
-    // }
+  ],
+});
 
-  ]
-})
+const app = createApp(App)
 
-createApp(App).use(router).mount('#app')
+app.provide(DefaultApolloClient, apolloClient)
+
+app.use(router)
+
+app.mount('#app')
