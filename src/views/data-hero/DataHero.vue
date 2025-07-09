@@ -16,7 +16,12 @@ const query = `
       type
       short_description
       avatar
+      image
       release_date
+      durability
+      offense
+      control_effect
+      difficulty
     }
   }
 `;
@@ -31,7 +36,12 @@ const createHeroMutation = `
       type
       short_description
       avatar
+      image
       release_date
+      durability
+      offense
+      control_effect
+      difficulty
     }
   }
 `;
@@ -70,9 +80,49 @@ const heroForm = ref({
   type: '',
   short_description: '',
   avatar: '',
-  release_date: ''
+  image: '',
+  release_date: '',
+  durability: '',
+  offense: '',
+  control_effect: '',
+  difficulty: ''
 });
 const isSubmitting = ref(false);
+
+const typeOptions = [
+  'Tank', 'Assassin', 'Fighter', 'Marksman', 'Mage', 'Support'
+];
+const roleOptions = [
+  'Roam', 'Jungle', 'Midlane', 'Explane', 'Goldlane'
+];
+const editType = ref<string[]>([]);
+const editRole = ref<string[]>([]);
+
+function handleTypeChange(e: Event) {
+  const value = (e.target as HTMLInputElement).value;
+  if ((e.target as HTMLInputElement).checked) {
+    if (editType.value.length < 2) {
+      editType.value.push(value);
+    } else {
+      (e.target as HTMLInputElement).checked = false;
+    }
+  } else {
+    editType.value = editType.value.filter(t => t !== value);
+  }
+}
+
+function handleRoleChange(e: Event) {
+  const value = (e.target as HTMLInputElement).value;
+  if ((e.target as HTMLInputElement).checked) {
+    if (editRole.value.length < 2) {
+      editRole.value.push(value);
+    } else {
+      (e.target as HTMLInputElement).checked = false;
+    }
+  } else {
+    editRole.value = editRole.value.filter(r => r !== value);
+  }
+}
 
 const resetForm = () => {
   heroForm.value = {
@@ -82,18 +132,23 @@ const resetForm = () => {
     type: '',
     short_description: '',
     avatar: '',
-    release_date: ''
+    image: '',
+    release_date: '',
+    durability: '',
+    offense: '',
+    control_effect: '',
+    difficulty: ''
   };
 };
 
 const handleAddHero = async () => {
   isSubmitting.value = true;
   try {
-    // Proses role dan type menjadi array jika perlu
+    // Ambil role dan type dari checkbox (editRole, editType)
     const input = {
       ...heroForm.value,
-      role: heroForm.value.role.split(',').map((r: string) => r.trim()).filter(Boolean),
-      type: heroForm.value.type.split(',').map((t: string) => t.trim()).filter(Boolean)
+      role: [...editRole.value],
+      type: [...editType.value]
     };
     const newHero = await createHero(input);
     if (newHero) {
@@ -106,13 +161,31 @@ const handleAddHero = async () => {
       const result = await response.json();
       heroes.value = result.data?.heroes || [];
       // Tutup modal
-      (window as any).bootstrap?.Modal?.getOrCreateInstance(document.getElementById('add-contact'))?.hide();
+      (window as any).bootstrap?.Modal?.getOrCreateInstance(document.getElementById('add-hero'))?.hide();
       resetForm();
+      editRole.value = [];
+      editType.value = [];
     }
   } finally {
     isSubmitting.value = false;
   }
 };
+
+const editHero = ref<any>({});
+const editRoleEdit = ref<string[]>([]);
+const editTypeEdit = ref<string[]>([]);
+
+function openEditModal(hero: any) {
+  // Format release_date to 'YYYY-MM-DD' for input type="date"
+  let formattedReleaseDate = hero.release_date;
+  if (formattedReleaseDate && typeof formattedReleaseDate === 'string') {
+    formattedReleaseDate = formattedReleaseDate.slice(0, 10);
+  }
+  editHero.value = { ...hero, release_date: formattedReleaseDate };
+  // Pastikan role/type selalu array
+  editRoleEdit.value = Array.isArray(hero.role) ? [...hero.role] : hero.role ? [hero.role] : [];
+  editTypeEdit.value = Array.isArray(hero.type) ? [...hero.type] : hero.type ? [hero.type] : [];
+}
 </script>
 
 <template>
@@ -149,93 +222,173 @@ const handleAddHero = async () => {
                 type="button"
                 class="btn btn-info btn-rounded m-t-10 mb-2"
                 data-bs-toggle="modal"
-                data-bs-target="#add-contact"
+                data-bs-target="#add-hero"
               >
-                Add New Contact
+                Tambah Data Hero
               </button>
             </div>
             <!-- Add Contact Popup Model -->
             <div
-              id="add-contact"
-              class="modal fade in"
+              id="add-hero"
+              class="modal fade"
               tabindex="-1"
               role="dialog"
-              aria-labelledby="myModalLabel"
+              aria-labelledby="myLargeModalLabel"
               aria-hidden="true"
             >
-              <div class="modal-dialog modal-dialog-scrollable modal-lg">
+              <div class="modal-dialog modal-dialog-scrollable modal-xl">
                 <div class="modal-content">
                   <div class="modal-header d-flex align-items-center">
                     <h4 class="modal-title" id="myModalLabel">
-                      Add New Contact
+                      Tambah Data Hero
                     </h4>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                   </div>
                   <div class="modal-body">
                     <form class="form-horizontal form-material" @submit.prevent="handleAddHero">
                       <div class="form-group">
-                        <div class="col-md-12 mb-3">
-                          <input
-                            type="text"
-                            class="form-control"
-                            placeholder="name"
-                            v-model="heroForm.name"
-                            required
-                          />
+                        <div class="row pt-3">
+                          <div class="col-md-6 col-lg-4">
+                            <div class="mb-3">
+                              <label class="control-label">Nama</label>
+                              <input
+                                type="text"
+                                class="form-control"
+                                placeholder="name"
+                                v-model="heroForm.name"
+                                required
+                              />
+                            </div>
+                          </div>
+                          <div class="col-md-6 col-lg-4">
+                            <div class="mb-3">
+                              <label class="control-label">Alias</label>
+                              <input
+                                type="text"
+                                class="form-control"
+                                placeholder="Alias"
+                                v-model="heroForm.alias"
+                                required
+                              />
+                            </div>
+                          </div>
+                          <div class="col-md-6 col-lg-4">
+                            <div class="mb-3">
+                              <label class="control-label">Tanggal Rilis</label>
+                              <input type="date" class="form-control" v-model="heroForm.release_date"/>
+                            </div>
+                          </div>
                         </div>
-                        <div class="col-md-12 mb-3">
-                          <input
-                            type="text"
-                            class="form-control"
-                            placeholder="Alias"
-                            v-model="heroForm.alias"
-                            required
-                          />
+                        <div class="row">
+                          <div class="col-md-6 col-lg-4">
+                            <div class="mb-3">
+                              <label class="control-label">Role</label>
+                              <div class="row">
+                                <template v-for="option in roleOptions" :key="option">
+                                  <div class="col-md-6 py-2">
+                                    <div class="form-check form-check-inline">
+                                      <input class="form-check-input primary" type="checkbox" id="primary-check" 
+                                      :value="option"
+                                      :checked="editRole.includes(option)"
+                                      @change="handleRoleChange">
+                                      <label class="form-check-label" for="primary-check">{{option}}</label>
+                                    </div>
+                                  </div>
+                                </template>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-md-6 col-lg-4">
+                            <div class="mb-3">
+                              <label class="control-label">Tipe</label>
+                              <div class="row">
+                                  <template v-for="option in typeOptions" :key="option">
+                                  <div class="col-md-6 py-2">
+                                    <div class="form-check form-check-inline">
+                                      <input class="form-check-input primary" type="checkbox" id="primary-check" 
+                                      :value="option"
+                                      :checked="editType.includes(option)"
+                                      @change="handleTypeChange">
+                                      <label class="form-check-label" for="primary-check">{{option}}</label>
+                                    </div>
+                                  </div>
+                                </template>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-md-6 col-lg-4">
+                            <div class="mb-3">
+                              <label class="control-label">Deskripsi Singkat</label>
+                              <textarea
+                                id="short_description"
+                                class="form-control"
+                                rows="5"
+                                placeholder="Deskripsi Singkat Hero"
+                                v-model="heroForm.short_description"
+                                required
+                              ></textarea>
+                            </div>
+                          </div>
                         </div>
-                        <div class="col-md-12 mb-3">
-                          <input
-                            type="text"
-                            class="form-control"
-                            placeholder="Role (pisahkan dengan koma jika lebih dari satu)"
-                            v-model="heroForm.role"
-                            required
-                          />
+                        <div class="row">
+                          <div class="col-md-6">
+                            <div class="mb-3">
+                              <label class="control-label">Gambar</label>
+                              <input
+                                type="text"
+                                class="form-control"
+                                placeholder="Avatar URL"
+                                v-model="heroForm.image"
+                                required
+                              />
+                            </div>
+                          </div>
+                          <div class="col-md-6">
+                            <div class="mb-3">
+                              <label class="control-label">Avatar</label>
+                              <input
+                                type="text"
+                                class="form-control"
+                                placeholder="Avatar URL"
+                                v-model="heroForm.avatar"
+                                required
+                              />
+                            </div>
+                          </div>
                         </div>
-                        <div class="col-md-12 mb-3">
-                          <input
-                            type="text"
-                            class="form-control"
-                            placeholder="Type (pisahkan dengan koma jika lebih dari satu)"
-                            v-model="heroForm.type"
-                            required
-                          />
-                        </div>
-                        <div class="col-md-12 mb-3">
-                          <input
-                            type="text"
-                            class="form-control"
-                            placeholder="Deskripsi Singkat"
-                            v-model="heroForm.short_description"
-                            required
-                          />
-                        </div>
-                        <div class="col-md-12 mb-3">
-                          <input
-                            type="text"
-                            class="form-control"
-                            placeholder="Avatar URL"
-                            v-model="heroForm.avatar"
-                            required
-                          />
-                        </div>
-                        <div class="col-md-12 mb-3">
-                          <input
-                            type="date"
-                            class="form-control"
-                            placeholder="Tanggal Rilis"
-                            v-model="heroForm.release_date"
-                            required
-                          />
+                        <div class="row">
+                          <div class="col-sm-6 col-md-4 col-lg-3">
+                            <div class="mb-3">
+                              <label class="control-label">Durability</label>
+                              <div class="form-group">
+                                <input type="number" class="form-control" min="1" max="10" placeholder="Range 1 - 10" v-model="heroForm.durability"/>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-sm-6 col-md-4 col-lg-3">
+                            <div class="mb-3">
+                              <label class="control-label">Offense</label>
+                              <div class="form-group">
+                                <input type="number" class="form-control" min="1" max="10" placeholder="Range 1 - 10" v-model="heroForm.offense"/>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-sm-6 col-md-4 col-lg-3">
+                            <div class="mb-3">
+                              <label class="control-label">Control Effect</label>
+                              <div class="form-group">
+                                <input type="number" class="form-control" min="1" max="10" placeholder="Range 1 - 10" v-model="heroForm.control_effect"/>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-sm-6 col-md-4 col-lg-3">
+                            <div class="mb-3">
+                              <label class="control-label">Difficulty</label>
+                              <div class="form-group">
+                                <input type="number" class="form-control" min="1" max="10" placeholder="Range 1 - 10" v-model="heroForm.difficulty"/>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
                       <div class="modal-footer">
@@ -269,7 +422,7 @@ const handleAddHero = async () => {
                   table table-bordered
                   m-t-30
                   table-hover
-                  contact-list
+                  hero-list
                 "
                 data-paging="true"
                 data-paging-size="7"
@@ -317,7 +470,238 @@ const handleAddHero = async () => {
                       </span></td>
                     <td>{{ hero.short_description }}</td>
                     <td>{{ new Date(hero.release_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) }}</td>
-                    <td></td>
+                    <td>
+                      <div>
+                        <button
+                          class="btn me-1 mb-1 btn-light-warning text-warning btn-lg px-3 fs-3 font-medium"
+                          data-bs-toggle="modal"
+                          data-bs-target="#edit-hero"
+                          @click="openEditModal(hero)"
+                        >
+                          Edit
+                        </button>
+                        <!-- sample modal content -->
+                        <div
+                          class="modal fade"
+                          id="edit-hero"
+                          tabindex="-1"
+                          aria-labelledby="bs-example-modal-lg"
+                          aria-hidden="true"
+                        >
+                          <div class="modal-dialog modal-xl">
+                            <div class="modal-content">
+                              <div
+                                class="modal-header d-flex"
+                              >
+                                <h4 class="modal-title" id="myLargeModalLabel1">
+                                  Edit Data Hero
+                                </h4>
+                                <button
+                                  type="button"
+                                  class="btn-close"
+                                  data-bs-dismiss="modal"
+                                  aria-label="Close"
+                                ></button>
+                              </div>
+                              <div class="modal-body text-start">
+                                <form action="#">
+                                  <div>
+                                    <div class="card-body">
+                                      <h5>Data Hero</h5>
+                                      <div class="row pt-3">
+                                        <div class="col-md-6 col-lg-4">
+                                          <div class="mb-3">
+                                            <label class="control-label">Nama</label>
+                                            <input
+                                              type="text"
+                                              id="name"
+                                              class="form-control"
+                                              placeholder="Nama hero"
+                                              v-model="editHero.name"
+                                            />
+                                          </div>
+                                        </div>
+                                        <div class="col-md-6 col-lg-4">
+                                          <div class="mb-3">
+                                            <label class="control-label">Alias</label>
+                                            <input
+                                              type="text"
+                                              id="alias"
+                                              class="form-control"
+                                              placeholder="Alias hero"
+                                              v-model="editHero.alias"
+                                            />
+                                          </div>
+                                        </div>
+                                        <div class="col-md-6 col-lg-4">
+                                          <div class="mb-3">
+                                            <label class="control-label">Tanggal Rilis</label>
+                                            <input type="date" class="form-control" id="release_date" v-model="editHero.release_date"/>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="row">
+                                        <div class="col-md-6 col-lg-4">
+                                          <div class="mb-3">
+                                            <label class="control-label">Role</label>
+                                            <div class="row">
+                                              <template v-for="(option, index) in roleOptions" :key="'edit-role-' + option">
+                                                <div class="col-md-6 py-2">
+                                                  <div class="form-check form-check-inline">
+                                                    <input
+                                                      class="form-check-input primary"
+                                                      type="checkbox"
+                                                      :id="'edit-role-' + index"
+                                                      :value="option"
+                                                      :checked="editRoleEdit.includes(option)"
+                                                      @change="e => {
+                                                        const value = (e.target as HTMLInputElement).value;
+                                                        if ((e.target as HTMLInputElement).checked) {
+                                                          if (editRoleEdit.length < 2) editRoleEdit.push(value);
+                                                          else (e.target as HTMLInputElement).checked = false;
+                                                        } else {
+                                                          editRoleEdit.splice(editRoleEdit.indexOf(value), 1);
+                                                        }
+                                                      }"
+                                                    />
+                                                    <label class="form-check-label" :for="'edit-role-' + index">{{ option }}</label>
+                                                  </div>
+                                                </div>
+                                              </template>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div class="col-md-6 col-lg-4">
+                                          <div class="mb-3">
+                                            <label class="control-label">Tipe</label>
+                                            <div class="row">
+                                                <template v-for="(option, index) in typeOptions" :key="'edit-type-' + option">
+                                                <div class="col-md-6 py-2">
+                                                  <div class="form-check form-check-inline">
+                                                    <input
+                                                      class="form-check-input primary"
+                                                      type="checkbox"
+                                                      :id="'edit-type-' + index"
+                                                      :value="option"
+                                                      :checked="editTypeEdit.includes(option)"
+                                                      @change="e => {
+                                                        const value = (e.target as HTMLInputElement).value;
+                                                        if ((e.target as HTMLInputElement).checked) {
+                                                          if (editTypeEdit.length < 2) editTypeEdit.push(value);
+                                                          else (e.target as HTMLInputElement).checked = false;
+                                                        } else {
+                                                          editTypeEdit.splice(editTypeEdit.indexOf(value), 1);
+                                                        }
+                                                      }"
+                                                    />
+                                                    <label class="form-check-label" :for="'edit-type-' + index">{{ option }}</label>
+                                                  </div>
+                                                </div>
+                                              </template>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div class="col-md-6 col-lg-4">
+                                          <div class="mb-3">
+                                            <label class="control-label">Deskripsi Singkat</label>
+                                            <textarea
+                                              id="short_description"
+                                              class="form-control"
+                                              rows="5"
+                                              placeholder="Deskripsi Singkat Hero"
+                                              v-model="editHero.short_description"
+                                              required  
+                                            ></textarea>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="row">
+                                        <div class="col-md-6">
+                                          <div class="mb-3">
+                                            <label class="control-label">Gambar</label>
+                                            <input
+                                              type="text"
+                                              class="form-control"
+                                              placeholder="Avatar URL"
+                                              v-model="editHero.image"
+                                              required
+                                            />
+                                          </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                          <div class="mb-3">
+                                            <label class="control-label">Avatar</label>
+                                            <input
+                                              type="text"
+                                              class="form-control"
+                                              placeholder="Avatar URL"
+                                              v-model="editHero.avatar"
+                                              required
+                                            />
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="row">
+                                        <div class="col-sm-6 col-md-4 col-lg-3">
+                                          <div class="mb-3">
+                                            <label class="control-label">Durability</label>
+                                            <div class="form-group">
+                                              <input type="number" class="form-control" min="1" max="10" placeholder="Range 1 - 10" v-model="editHero.durability"/>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div class="col-sm-6 col-md-4 col-lg-3">
+                                          <div class="mb-3">
+                                            <label class="control-label">Offense</label>
+                                            <div class="form-group">
+                                              <input type="number" class="form-control" min="1" max="10" placeholder="Range 1 - 10" v-model="editHero.offense"/>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div class="col-sm-6 col-md-4 col-lg-3">
+                                          <div class="mb-3">
+                                            <label class="control-label">Control Effect</label>
+                                            <div class="form-group">
+                                              <input type="number" class="form-control" min="1" max="10" placeholder="Range 1 - 10" v-model="editHero.control_effect"/>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div class="col-sm-6 col-md-4 col-lg-3">
+                                          <div class="mb-3">
+                                            <label class="control-label">Difficulty</label>
+                                            <div class="form-group">
+                                              <input type="number" class="form-control" min="1" max="10" placeholder="Range 1 - 10" v-model="editHero.difficulty"/>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div class="modal-footer">
+                                    <button
+                                      type="submit"
+                                      class="btn btn-info waves-effect"
+                                      :disabled="isSubmitting"
+                                    >
+                                      {{ isSubmitting ? 'Saving...' : 'Save' }}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      class="btn btn-default waves-effect"
+                                      data-bs-dismiss="modal"
+                                      @click="resetForm"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </form>
+                              </div>
+                            </div>
+                            <!-- /.modal-content -->
+                          </div>
+                        </div>
+                      </div>
+                    </td>
                   </tr>
                 </tbody>
               </table>
