@@ -1,83 +1,24 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import DashboardLayout from '../../components/DashboardLayout.vue';
-// import { useQuery, useMutation } from '@vue/apollo-composable'
-// import { gql } from '@apollo/client/core'
+// import {alertConfirm} from "../../lib/alert.ts";
+import Swal from 'sweetalert2';
+import { useHeroes, useCreateHero, useUpdateHero, useDeleteHero } from '../../lib/api/HeroApi.ts';
 
-const heroes = ref<Array<any>>([]);
+const { result: heroResult, refetch } = useHeroes();
+const heroes = computed(() => heroResult.value?.heroes || []);
 
-const query = `
-  query GetHeroes {
-    heroes {
-      _id
-      name
-      alias
-      role
-      type
-      short_description
-      avatar
-      image
-      release_date
-      durability
-      offense
-      control_effect
-      difficulty
-    }
-  }
-`;
+const { createHero } = useCreateHero();
+const { updateHero } = useUpdateHero();
+const { deleteHero } = useDeleteHero();
 
-const createHeroMutation = `
-  mutation CreateHero($input: CreateHeroInput!) {
-    createHero(input: $input) {
-      _id
-      name
-      alias
-      role
-      type
-      short_description
-      avatar
-      image
-      release_date
-      durability
-      offense
-      control_effect
-      difficulty
-    }
-  }
-`;
-
-onMounted(async () => {
-  const response = await fetch('http://localhost:3000/graphql', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ query })
-  });
-  const result = await response.json();
-  heroes.value = result.data?.heroes || [];
-});
-
-const createHero = async (input: any) => {
-  const response = await fetch('http://localhost:3000/graphql', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      query: createHeroMutation,
-      variables: { input }
-    })
-  });
-  const result = await response.json();
-  return result.data?.createHero;
-};
+const isSubmitting = ref(false);
 
 const heroForm = ref({
   name: '',
   alias: '',
-  role: '',
-  type: '',
+  role: [],
+  type: [],
   short_description: '',
   avatar: '',
   image: '',
@@ -87,17 +28,18 @@ const heroForm = ref({
   control_effect: '',
   difficulty: ''
 });
-const isSubmitting = ref(false);
 
-const typeOptions = [
-  'Tank', 'Assassin', 'Fighter', 'Marksman', 'Mage', 'Support'
-];
-const roleOptions = [
-  'Roam', 'Jungle', 'Midlane', 'Explane', 'Goldlane'
-];
-const editType = ref<string[]>([]);
+const editHero = ref<any>({});
+const editRoleEdit = ref<string[]>([]);
+const editTypeEdit = ref<string[]>([]);
+
 const editRole = ref<string[]>([]);
+const editType = ref<string[]>([]);
 
+const typeOptions = ['Tank', 'Assassin', 'Fighter', 'Marksman', 'Mage', 'Support'];
+const roleOptions = ['Roam', 'Jungle', 'Midlane', 'Explane', 'Goldlane'];
+
+// FUNGSI BANTUAN
 function handleTypeChange(e: Event) {
   const value = (e.target as HTMLInputElement).value;
   if ((e.target as HTMLInputElement).checked) {
@@ -128,8 +70,8 @@ const resetForm = () => {
   heroForm.value = {
     name: '',
     alias: '',
-    role: '',
-    type: '',
+    role: [],
+    type: [],
     short_description: '',
     avatar: '',
     image: '',
@@ -139,53 +81,96 @@ const resetForm = () => {
     control_effect: '',
     difficulty: ''
   };
+  editType.value = [];
+  editRole.value = [];
 };
 
 const handleAddHero = async () => {
   isSubmitting.value = true;
   try {
-    // Ambil role dan type dari checkbox (editRole, editType)
     const input = {
       ...heroForm.value,
       role: [...editRole.value],
       type: [...editType.value]
     };
-    const newHero = await createHero(input);
-    if (newHero) {
-      // Refresh data
-      const response = await fetch('http://localhost:3000/graphql', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: query })
-      });
-      const result = await response.json();
-      heroes.value = result.data?.heroes || [];
-      // Tutup modal
-      (window as any).bootstrap?.Modal?.getOrCreateInstance(document.getElementById('add-hero'))?.hide();
-      resetForm();
-      editRole.value = [];
-      editType.value = [];
-    }
+    await createHero({ input });
+    await refetch();
+    Swal.fire('Berhasil', 'Hero berhasil ditambahkan!', 'success');
+    (window as any).bootstrap?.Modal?.getOrCreateInstance(document.getElementById('add-hero'))?.hide();
+    resetForm();
+    editRole.value = [];
+    editType.value = [];
+  } catch (error) {
+    Swal.fire('Gagal', 'Gagal menambahkan hero.', 'error');
+    console.error(error);
   } finally {
     isSubmitting.value = false;
   }
 };
 
-const editHero = ref<any>({});
-const editRoleEdit = ref<string[]>([]);
-const editTypeEdit = ref<string[]>([]);
-
 function openEditModal(hero: any) {
-  // Format release_date to 'YYYY-MM-DD' for input type="date"
   let formattedReleaseDate = hero.release_date;
   if (formattedReleaseDate && typeof formattedReleaseDate === 'string') {
     formattedReleaseDate = formattedReleaseDate.slice(0, 10);
   }
   editHero.value = { ...hero, release_date: formattedReleaseDate };
-  // Pastikan role/type selalu array
   editRoleEdit.value = Array.isArray(hero.role) ? [...hero.role] : hero.role ? [hero.role] : [];
   editTypeEdit.value = Array.isArray(hero.type) ? [...hero.type] : hero.type ? [hero.type] : [];
 }
+
+const handleEditHero = async () => {
+  isSubmitting.value = true;
+  try {
+    const input = {
+      name: editHero.value.name,
+      alias: editHero.value.alias,
+      role: [...editRoleEdit.value],
+      type: [...editTypeEdit.value],
+      short_description: editHero.value.short_description,
+      avatar: editHero.value.avatar,
+      image: editHero.value.image,
+      release_date: editHero.value.release_date,
+      durability: Number(editHero.value.durability),
+      offense: Number(editHero.value.offense),
+      control_effect: Number(editHero.value.control_effect),
+      difficulty: Number(editHero.value.difficulty)
+    };
+    await updateHero({ id: editHero.value._id, input });
+    await refetch();
+    Swal.fire('Berhasil', 'Data hero berhasil diupdate.', 'success');
+    (window as any).bootstrap?.Modal?.getOrCreateInstance(document.getElementById('edit-hero'))?.hide();
+    resetForm();
+    editRoleEdit.value = [];
+    editTypeEdit.value = [];
+  } catch (error) {
+    Swal.fire('Gagal', 'Gagal mengupdate hero.', 'error');
+    console.error(error);
+  } finally {
+    isSubmitting.value = false;
+  }
+};
+
+const handleDeleteHero = async (id: string) => {
+  const confirm = await Swal.fire({
+    title: 'Yakin hapus?',
+    text: 'Data hero akan dihapus permanen!',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Ya, hapus!',
+    cancelButtonText: 'Batal'
+  });
+
+  if (confirm.isConfirmed) {
+    try {
+      await deleteHero({ id });
+      await refetch();
+      Swal.fire('Terhapus!', 'Data hero berhasil dihapus.', 'success');
+    } catch (error) {
+      Swal.fire('Gagal!', 'Gagal menghapus data.', 'error');
+    }
+  }
+};
+
 </script>
 
 <template>
@@ -411,9 +396,7 @@ function openEditModal(hero: any) {
                     </form>
                   </div>
                 </div>
-                <!-- /.modal-content -->
               </div>
-              <!-- /.modal-dialog -->
             </div>
             <div class="table-responsive">
               <table
@@ -433,8 +416,8 @@ function openEditModal(hero: any) {
                     <th>Nama</th>
                     <th>Avatar</th>
                     <th>Alias</th>
-                    <th>Tipe</th>
                     <th>Role</th>
+                    <th>Tipe</th>
                     <th>Deskripsi Singkat</th>
                     <th>Tanggal Rilis</th>
                     <td>Aksi</td>
@@ -452,6 +435,13 @@ function openEditModal(hero: any) {
                       <img :src="hero.avatar" class="w-50 rounded-circle" alt="Avatar">
                     </td>
                     <td>{{ hero.alias }}</td>
+                    <td><span
+                        v-for="(role, i) in Array.isArray(hero.role) ? hero.role : [hero.role]"
+                        :key="i"
+                        class="badge bg-danger me-1"
+                      > 
+                        {{ role }}
+                      </span></td>
                     <td>
                       <span
                         v-for="(type, i) in Array.isArray(hero.type) ? hero.type : [hero.type]"
@@ -461,13 +451,6 @@ function openEditModal(hero: any) {
                         {{ type }}
                       </span>
                     </td>
-                    <td><span
-                        v-for="(role, i) in Array.isArray(hero.role) ? hero.role : [hero.role]"
-                        :key="i"
-                        class="badge bg-danger me-1"
-                      > 
-                        {{ role }}
-                      </span></td>
                     <td>{{ hero.short_description }}</td>
                     <td>{{ new Date(hero.release_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) }}</td>
                     <td>
@@ -480,7 +463,6 @@ function openEditModal(hero: any) {
                         >
                           Edit
                         </button>
-                        <!-- sample modal content -->
                         <div
                           class="modal fade"
                           id="edit-hero"
@@ -504,7 +486,7 @@ function openEditModal(hero: any) {
                                 ></button>
                               </div>
                               <div class="modal-body text-start">
-                                <form action="#">
+                                <form class="form-horizontal form-material" @submit.prevent="handleEditHero">
                                   <div>
                                     <div class="card-body">
                                       <h5>Data Hero</h5>
@@ -697,9 +679,14 @@ function openEditModal(hero: any) {
                                 </form>
                               </div>
                             </div>
-                            <!-- /.modal-content -->
                           </div>
                         </div>
+                        <button
+                          class="btn btn-danger btn-lg px-3 fs-3 font-medium"
+                          @click="handleDeleteHero(hero._id)"
+                        >
+                          Hapus
+                        </button>
                       </div>
                     </td>
                   </tr>
