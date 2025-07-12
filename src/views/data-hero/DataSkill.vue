@@ -1,19 +1,38 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import DashboardLayout from '../../components/DashboardLayout.vue';
-import { useSkills } from '../../lib/api/SkillApi.ts';
+import { useAddSkillToHero, useSkills } from '../../lib/api/SkillApi.ts';
+import { useHeroes } from '../../lib/api/HeroApi.ts';
+import Swal from 'sweetalert2';
 
-const currentStep = ref(1);
+const { result: heroResult, refetch } = useHeroes();
+const heroes = computed(() => heroResult.value?.heroes || []);
 
-const formData = ref({
+const { addSkillToHero, loading } = useAddSkillToHero();
+
+const isSubmitting = ref(false);
+
+const skillForm = ref({
+  heroId: '',
   name: '',
   type: '',
-  description: '',
-  skillIcon: '',
-  tags: '',
+  tag: [],
+  // attack_effect: '',
+  skill_icon: '',
+  lite_description: '',
+  full_description: '',
 });
 
-// Validasi setiap langkah
+// const currentStep = ref(1);
+
+// const formData = ref({
+//   name: '',
+//   type: '',
+//   description: '',
+//   skillIcon: '',
+//   tags: '',
+// });
+
 // function validateStep(step: number) {
 //   if (step === 1) {
 //     return formData.value.name.trim() !== '' && formData.value.type.trim() !== '';
@@ -37,8 +56,23 @@ const formData = ref({
 //   if (currentStep.value > 1) currentStep.value--;
 // }
 
-function handleSubmit() {
-  alert('Data berhasil disimpan:\n' + JSON.stringify(formData.value, null, 2));
+// function handleSubmit() {
+//   alert('Data berhasil disimpan:\n' + JSON.stringify(formData.value, null, 2));
+// }
+const editTag = ref<string[]>([]);
+const tagOptions = ['Buff', 'CC', 'Area Efek', 'Conceal', 'Heal', 'Blink'];
+
+function handleTagChange(e: Event) {
+  const value = (e.target as HTMLInputElement).value;
+  if ((e.target as HTMLInputElement).checked) {
+    if (editTag.value.length < 2) {
+      editTag.value.push(value);
+    } else {
+      (e.target as HTMLInputElement).checked = false;
+    }
+  } else {
+    editTag.value = editTag.value.filter(t => t !== value);
+  }
 }
 
 const { result: skillResult } = useSkills();
@@ -64,6 +98,64 @@ const skills = computed(() => {
     }))) || [];
 });
 
+const resetForm = () => {
+  skillForm.value = {
+    heroId: '',
+    name: '',
+    type: '',
+    tag: [],
+    // attack_effect: '',
+    skill_icon: '',
+    lite_description: '',
+    full_description: '',
+  };
+  editTag.value = [];
+};
+
+const handleAddSkill = async () => {
+  isSubmitting.value = true;
+
+  try {
+    if (!skillForm.value.heroId) {
+      Swal.fire('Gagal', 'Pilih hero terlebih dahulu.', 'error');
+      isSubmitting.value = false;
+      return;
+    }
+    await addSkillToHero({
+      heroId: skillForm.value.heroId,
+      input: {
+        name: skillForm.value.name,
+        type: skillForm.value.type,
+        tag: [...editTag.value],
+        skill_icon: skillForm.value.skill_icon,
+        lite_description: skillForm.value.lite_description,
+        full_description: skillForm.value.full_description,
+      }
+    });
+    await refetch();
+    Swal.fire({
+      icon: 'success',
+      title: 'Skill berhasil ditambahkan',
+      showConfirmButton: false,
+      timer: 1500
+    });
+    (window as any).bootstrap?.Modal.getOrCreateInstance(document.getElementById('add-hero-skill'))?.hide();
+    skillForm.value = {
+      heroId: '',
+      name: '',
+      type: '',
+      tag: [],
+      skill_icon: '',
+      lite_description: '',
+      full_description: '',
+    };
+  } catch (error) {
+    Swal.fire('Gagal', 'Gagal menambahkan skill.', 'error');
+    console.error(error);
+  } finally {
+    isSubmitting.value = false;
+  }
+};
 </script>
 
 <template>
@@ -126,6 +218,129 @@ const skills = computed(() => {
                     <div class="col-12">
                       <div class="card">
                         <div class="card-body wizard-content">
+                          <form class="form-horizontal form-material" @submit.prevent="handleAddSkill">
+                            <div class="form-group">
+                              <div class="row">
+                                <div class="col-md-12">
+                                  <div class="mb-3">
+                                    <label class="control-label">Nama Hero</label>
+                                    <select class="form-select" required v-model="skillForm.heroId">
+                                      <option value="">Pilih Hero</option>
+                                      <option v-for="hero in heroes" :key="hero._id" :value="hero._id">{{ hero.name }}</option>
+                                    </select>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="row pt-3">
+                                <div class="col-md-6 col-lg-4">
+                                  <div class="mb-3">
+                                    <label class="control-label">Nama Skill</label>
+                                    <input
+                                      type="text"
+                                      class="form-control"
+                                      placeholder="Nama Skill"
+                                      required v-model="skillForm.name"
+                                    />
+                                  </div>
+                                </div>
+                                <div class="col-md-6 col-lg-4">
+                                  <div class="mb-3">
+                                    <label class="control-label">Tipe</label>
+                                    <input
+                                      type="text"
+                                      class="form-control"
+                                      placeholder="Tipe"
+                                      required v-model="skillForm.type"
+                                    />
+                                  </div>
+                                </div>
+                                <!-- <div class="col-md-6 col-lg-4">
+                                  <div class="mb-3">
+                                    <label class="control-label">Efek Basic Attack</label>
+                                    <input
+                                      type="text"
+                                      class="form-control"
+                                      placeholder="Efek Basic Attack"
+                                    />
+                                  </div>
+                                </div> -->
+                              </div>
+                              <div class="row">
+                                <div class="col-md-4">
+                                  <div class="mb-3">
+                                    <label class="control-label">Skill Icon</label>
+                                    <input
+                                      type="text"
+                                      class="form-control"
+                                      placeholder="Skill Icon URL"
+                                      required v-model="skillForm.skill_icon"
+                                    />
+                                  </div>
+                                </div>
+                                <div class="col-md-8">
+                                  <div class="mb-3">
+                                    <label class="control-label">Tag</label>
+                                    <div class="row">
+                                      <template v-for="option in tagOptions" :key="option">
+                                        <div class="col-md-3 py-2">
+                                          <div class="form-check form-check-inline">
+                                            <input class="form-check-input primary" type="checkbox" id="primary-check" 
+                                            :value="option"
+                                            :checked="editTag.includes(option)"
+                                            @change="handleTagChange">
+                                            <label class="form-check-label" for="primary-check">{{option}}</label>
+                                          </div>
+                                        </div>
+                                      </template>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="row">
+                                <div class="col-md-4">
+                                  <div class="mb-3">
+                                    <label class="control-label">Deskripsi Singkat</label>
+                                    <textarea
+                                      id="short_description"
+                                      class="form-control"
+                                      rows="5"
+                                      placeholder="Deskripsi Singkat Hero"
+                                      required v-model="skillForm.lite_description"
+                                    ></textarea>
+                                  </div>
+                                </div>
+                                <div class="col-md-8">
+                                  <div class="mb-3">
+                                    <label class="control-label">Deskripsi Lengkap</label>
+                                    <textarea
+                                      id="short_description"
+                                      class="form-control"
+                                      rows="5"
+                                      placeholder="Deskripsi Lengkap Hero"
+                                      required v-model="skillForm.full_description"
+                                    ></textarea>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="modal-footer">
+                              <button
+                                type="submit"
+                                class="btn btn-info waves-effect"
+                                
+                              >
+                                Simpan
+                              </button>
+                              <button
+                                type="button"
+                                class="btn btn-default waves-effect"
+                                data-bs-dismiss="modal"
+                                
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </form>
                           <!-- <form @submit.prevent="handleSubmit">
                             <div>Langkah {{ currentStep }} dari 4</div>
 
