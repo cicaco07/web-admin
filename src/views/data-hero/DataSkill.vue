@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import DashboardLayout from '../../components/DashboardLayout.vue';
-import { useAddSkillToHero, useSkills } from '../../lib/api/SkillApi.ts';
-import { useHeroes } from '../../lib/api/HeroApi.ts';
+import { useAddSkillToHero, useDeleteSkill, useSkills } from '../../lib/api/SkillApi.ts';
+import { useHeroes, } from '../../lib/api/HeroApi.ts';
 import Swal from 'sweetalert2';
 
 const { result: heroResult, refetch } = useHeroes();
 const heroes = computed(() => heroResult.value?.heroes || []);
 
-const { addSkillToHero, loading } = useAddSkillToHero();
+const { addSkillToHero } = useAddSkillToHero();
+const { deleteSkill } = useDeleteSkill();
 
 const isSubmitting = ref(false);
 
@@ -140,15 +141,7 @@ const handleAddSkill = async () => {
       timer: 1500
     });
     (window as any).bootstrap?.Modal.getOrCreateInstance(document.getElementById('add-hero-skill'))?.hide();
-    skillForm.value = {
-      heroId: '',
-      name: '',
-      type: '',
-      tag: [],
-      skill_icon: '',
-      lite_description: '',
-      full_description: '',
-    };
+    resetForm();
   } catch (error) {
     Swal.fire('Gagal', 'Gagal menambahkan skill.', 'error');
     console.error(error);
@@ -156,6 +149,27 @@ const handleAddSkill = async () => {
     isSubmitting.value = false;
   }
 };
+
+const handleDeleteSkill = async (id: string) => {
+  const confirm = await Swal.fire({
+    title: 'Yakin hapus?',
+    text: 'Data skill akan dihapus permanen!',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Ya, hapus!',
+    cancelButtonText: 'Batal'
+  });
+
+  if (confirm.isConfirmed) {
+    try {
+      await deleteSkill({ id });
+      await refetch();
+      Swal.fire('Terhapus!', 'Data skill berhasil dihapus.', 'success');
+    } catch (error) {
+      Swal.fire('Gagal!', 'Gagal menghapus data.', 'error');
+    }
+  }
+}
 </script>
 
 <template>
@@ -472,7 +486,7 @@ const handleAddSkill = async () => {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(skill, index) in skills" :key="skill.id">
+                  <tr v-for="(skill, index) in skills" :key="skill._id">
                     <td class="text-center">{{ index + 1 }}</td>
                     <td class="text-center">{{ skill.heroName }}</td>
                     <td class="text-center">
@@ -489,7 +503,7 @@ const handleAddSkill = async () => {
                     <td class="text-center">
                       <button class="btn btn-md btn-secondary mx-1">Detail</button>
                       <button class="btn btn-md btn-primary mx-1">Edit</button>
-                      <button class="btn btn-md btn-danger mx-1">Hapus</button>
+                      <button class="btn btn-md btn-danger mx-1" @click="handleDeleteSkill(skill._id)">Hapus</button>
                     </td>
                   </tr>
                 </tbody>

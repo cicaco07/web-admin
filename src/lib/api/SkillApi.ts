@@ -6,6 +6,7 @@ const GET_SKILLS = gql`
     heroes {
       name
       skills {
+        _id
         name
         type
         tag
@@ -27,11 +28,24 @@ const ADD_SKILL_TO_HERO = gql`
   }
 `;
 
+const DELETE_SKILL = gql`
+  mutation DeleteSkill($id: ID!) {
+    removeSkill(id: $id) {
+      _id
+    }
+  }
+`;
+
 export function useSkills() {
   return useQuery(GET_SKILLS);
 }
 
 export function useAddSkillToHero() {
-  const { mutate: addSkillToHero, loading, error } = useMutation(ADD_SKILL_TO_HERO);
-  return { addSkillToHero, loading, error };
+  const { mutate: addSkillToHero, onDone, onError } = useMutation(ADD_SKILL_TO_HERO);
+  return { addSkillToHero, onDone, onError };
+}
+
+export function useDeleteSkill() {
+  const { mutate: deleteSkill, onDone, onError } = useMutation(DELETE_SKILL);
+  return { deleteSkill, onDone, onError };
 }
