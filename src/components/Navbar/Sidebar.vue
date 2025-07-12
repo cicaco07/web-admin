@@ -34,12 +34,38 @@
             </a>
           </li>
           <li class="sidebar-item">
-            <a class="sidebar-link" href="/data-hero" aria-expanded="false">
-              <span>
+            <a class="sidebar-link has-arrow" href="#" aria-expanded="false">
+              <span class="d-flex">
                 <i class="ti ti-shopping-cart"></i>
               </span>
               <span class="hide-menu">Data Hero</span>
             </a>
+            <ul aria-expanded="false" class="collapse first-level">
+              <li class="sidebar-item">
+                <a href="/data-hero/hero" class="sidebar-link">
+                  <div class="round-16 d-flex align-items-center justify-content-center">
+                    <i class="ti ti-circle"></i>
+                  </div>
+                  <span class="hide-menu">Hero</span>
+                </a>
+              </li>
+              <li class="sidebar-item">
+                <a href="/data-hero/skill" class="sidebar-link">
+                  <div class="round-16 d-flex align-items-center justify-content-center">
+                    <i class="ti ti-circle"></i>
+                  </div>
+                  <span class="hide-menu">Skill</span>
+                </a>
+              </li>
+              <li class="sidebar-item">
+                <a href="/data-hero/base-stat" class="sidebar-link">
+                  <div class="round-16 d-flex align-items-center justify-content-center">
+                    <i class="ti ti-circle"></i>
+                  </div>
+                  <span class="hide-menu">Base Stat</span>
+                </a>
+              </li>
+            </ul>
           </li>
           <li class="sidebar-item">
             <a class="sidebar-link has-arrow" href="#" aria-expanded="false">

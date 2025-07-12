@@ -7,10 +7,16 @@ import Register from "./views/auth/Register.vue";
 import Login from "./views/auth/Login.vue";
 import Dashboard from "./views/dashboard/Dashboard.vue";
 import DataHero from "./views/data-hero/DataHero.vue";
+import DataSkill from "./views/data-hero/DataSkill.vue";
+import DataBaseStat from "./views/data-hero/DataBaseStat.vue";
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
+    {
+      path: "/",
+      redirect: "/login",
+    },
     {
       path: "/login",
       component: Login,
@@ -24,9 +30,17 @@ const router = createRouter({
       component: Dashboard,
     },
     {
-      path: "/data-hero",
+      path: "/data-hero/hero",
       component: DataHero,
     },
+    {
+      path: "/data-hero/skill",
+      component: DataSkill,
+    },
+    {
+      path: "/data-hero/base-stat",
+      component: DataBaseStat,
+    }
   ],
 });
 

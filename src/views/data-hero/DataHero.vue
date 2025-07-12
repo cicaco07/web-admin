@@ -184,6 +184,7 @@ const handleDeleteHero = async (id: string) => {
               <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a class="text-muted " href="/dashboard">Dashboard</a></li>
                 <li class="breadcrumb-item" aria-current="page">Data Hero</li>
+                <li class="breadcrumb-item" aria-current="page">Hero</li>
               </ol>
             </nav>
           </div>
@@ -212,7 +213,6 @@ const handleDeleteHero = async (id: string) => {
                 Tambah Data Hero
               </button>
             </div>
-            <!-- Add Contact Popup Model -->
             <div
               id="add-hero"
               class="modal fade"
@@ -239,7 +239,7 @@ const handleDeleteHero = async (id: string) => {
                               <input
                                 type="text"
                                 class="form-control"
-                                placeholder="name"
+                                placeholder="Nama"
                                 v-model="heroForm.name"
                                 required
                               />
@@ -346,7 +346,7 @@ const handleDeleteHero = async (id: string) => {
                             <div class="mb-3">
                               <label class="control-label">Durability</label>
                               <div class="form-group">
-                                <input type="number" class="form-control" min="1" max="10" placeholder="Range 1 - 10" v-model="heroForm.durability"/>
+                                <input type="number" class="form-control" min="1" max="100" placeholder="Range 1 - 10" v-model="heroForm.durability"/>
                               </div>
                             </div>
                           </div>
@@ -354,7 +354,7 @@ const handleDeleteHero = async (id: string) => {
                             <div class="mb-3">
                               <label class="control-label">Offense</label>
                               <div class="form-group">
-                                <input type="number" class="form-control" min="1" max="10" placeholder="Range 1 - 10" v-model="heroForm.offense"/>
+                                <input type="number" class="form-control" min="1" max="100" placeholder="Range 1 - 10" v-model="heroForm.offense"/>
                               </div>
                             </div>
                           </div>
@@ -362,7 +362,7 @@ const handleDeleteHero = async (id: string) => {
                             <div class="mb-3">
                               <label class="control-label">Control Effect</label>
                               <div class="form-group">
-                                <input type="number" class="form-control" min="1" max="10" placeholder="Range 1 - 10" v-model="heroForm.control_effect"/>
+                                <input type="number" class="form-control" min="1" max="100" placeholder="Range 1 - 10" v-model="heroForm.control_effect"/>
                               </div>
                             </div>
                           </div>
@@ -370,7 +370,7 @@ const handleDeleteHero = async (id: string) => {
                             <div class="mb-3">
                               <label class="control-label">Difficulty</label>
                               <div class="form-group">
-                                <input type="number" class="form-control" min="1" max="10" placeholder="Range 1 - 10" v-model="heroForm.difficulty"/>
+                                <input type="number" class="form-control" min="1" max="100" placeholder="Range 1 - 10" v-model="heroForm.difficulty"/>
                               </div>
                             </div>
                           </div>
@@ -628,7 +628,7 @@ const handleDeleteHero = async (id: string) => {
                                           <div class="mb-3">
                                             <label class="control-label">Durability</label>
                                             <div class="form-group">
-                                              <input type="number" class="form-control" min="1" max="10" placeholder="Range 1 - 10" v-model="editHero.durability"/>
+                                              <input type="number" class="form-control" min="1" max="100" placeholder="Range 1 - 10" v-model="editHero.durability"/>
                                             </div>
                                           </div>
                                         </div>
@@ -636,7 +636,7 @@ const handleDeleteHero = async (id: string) => {
                                           <div class="mb-3">
                                             <label class="control-label">Offense</label>
                                             <div class="form-group">
-                                              <input type="number" class="form-control" min="1" max="10" placeholder="Range 1 - 10" v-model="editHero.offense"/>
+                                              <input type="number" class="form-control" min="1" max="100" placeholder="Range 1 - 10" v-model="editHero.offense"/>
                                             </div>
                                           </div>
                                         </div>
@@ -644,7 +644,7 @@ const handleDeleteHero = async (id: string) => {
                                           <div class="mb-3">
                                             <label class="control-label">Control Effect</label>
                                             <div class="form-group">
-                                              <input type="number" class="form-control" min="1" max="10" placeholder="Range 1 - 10" v-model="editHero.control_effect"/>
+                                              <input type="number" class="form-control" min="1" max="100" placeholder="Range 1 - 10" v-model="editHero.control_effect"/>
                                             </div>
                                           </div>
                                         </div>
@@ -652,7 +652,7 @@ const handleDeleteHero = async (id: string) => {
                                           <div class="mb-3">
                                             <label class="control-label">Difficulty</label>
                                             <div class="form-group">
-                                              <input type="number" class="form-control" min="1" max="10" placeholder="Range 1 - 10" v-model="editHero.difficulty"/>
+                                              <input type="number" class="form-control" min="1" max="100" placeholder="Range 1 - 10" v-model="editHero.difficulty"/>
                                             </div>
                                           </div>
                                         </div>
