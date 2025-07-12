@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import DashboardLayout from '../../components/DashboardLayout.vue';
-import { useAddSkillToHero, useDeleteSkill, useSkills } from '../../lib/api/SkillApi.ts';
+import { useAddSkillToHero, useDeleteSkill, useSkills, useUpdateSkill } from '../../lib/api/SkillApi.ts';
 import { useHeroes, } from '../../lib/api/HeroApi.ts';
 import Swal from 'sweetalert2';
 
@@ -9,6 +9,7 @@ const { result: heroResult, refetch } = useHeroes();
 const heroes = computed(() => heroResult.value?.heroes || []);
 
 const { addSkillToHero } = useAddSkillToHero();
+const { updateSkill } = useUpdateSkill();
 const { deleteSkill } = useDeleteSkill();
 
 const isSubmitting = ref(false);
@@ -60,7 +61,9 @@ const skillForm = ref({
 // function handleSubmit() {
 //   alert('Data berhasil disimpan:\n' + JSON.stringify(formData.value, null, 2));
 // }
+const editSkill = ref<any>({});
 const editTag = ref<string[]>([]);
+const editTagEdit = ref<string[]>([]);
 const tagOptions = ['Buff', 'CC', 'Area Efek', 'Conceal', 'Heal', 'Blink'];
 
 function handleTagChange(e: Event) {
@@ -144,6 +147,36 @@ const handleAddSkill = async () => {
     resetForm();
   } catch (error) {
     Swal.fire('Gagal', 'Gagal menambahkan skill.', 'error');
+    console.error(error);
+  } finally {
+    isSubmitting.value = false;
+  }
+};
+
+function openEditModal(skill: any) {
+  editSkill.value = { ...skill };
+  editTagEdit.value = Array.isArray(skill.tag) ? [...skill.tag] : skill.tag ? [skill.tag] : [];
+}
+
+const handleEditSkill = async () => {
+  isSubmitting.value = true;
+  try {
+    const input = {
+      name: editSkill.value.name,
+      type: editSkill.value.type,
+      tag: [...editTagEdit.value],
+      skill_icon: editSkill.value.skill_icon,
+      lite_description: editSkill.value.lite_description,
+      full_description: editSkill.value.full_description,
+    };
+    await updateSkill({ id: editSkill.value._id, input });
+    await refetch();
+    Swal.fire('Berhasil', 'Data skill berhasil diupdate.', 'success');
+    (window as any).bootstrap?.Modal?.getOrCreateInstance(document.getElementById('edit-skill'))?.hide();
+    resetForm();
+    editTagEdit.value = [];
+  } catch (error) {
+    Swal.fire('Gagal', 'Gagal mengupdate skill.', 'error');
     console.error(error);
   } finally {
     isSubmitting.value = false;
@@ -502,7 +535,156 @@ const handleDeleteSkill = async (id: string) => {
                     <!-- <td class="text-center">{{ skill.lite_description }}</td> -->
                     <td class="text-center">
                       <button class="btn btn-md btn-secondary mx-1">Detail</button>
-                      <button class="btn btn-md btn-primary mx-1">Edit</button>
+                      <button class="btn btn-md btn-primary mx-1"
+                      data-bs-toggle="modal"
+                      data-bs-target="#edit-skill"
+                      @click="openEditModal(skill)">Edit</button>
+                      <div
+                        class="modal fade"
+                        id="edit-skill"
+                        tabindex="-1"
+                        aria-labelledby="bs-example-modal-lg"
+                        aria-hidden="true"
+                      >
+                        <div class="modal-dialog modal-xl">
+                          <div class="modal-content">
+                            <div
+                              class="modal-header d-flex"
+                            >
+                              <h4 class="modal-title" id="myLargeModalLabel1">
+                                Edit Data Skill
+                              </h4>
+                              <button
+                                type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Close"
+                              ></button>
+                            </div>
+                            <div class="modal-body text-start">
+                                <form class="form-horizontal form-material" @submit.prevent="handleEditSkill">
+                                  <div>
+                                    <div class="card-body">
+                                      <h5>Data Hero</h5>
+                                      <div class="row pt-3">
+                                        <div class="col-md-6 col-lg-4">
+                                          <div class="mb-3">
+                                            <label class="control-label">Nama Skill</label>
+                                            <input
+                                              type="text"
+                                              id="name"
+                                              class="form-control"
+                                              placeholder="Nama Skill"
+                                              v-model="editSkill.name"
+                                            />
+                                          </div>
+                                        </div>
+                                        <div class="col-md-6 col-lg-4">
+                                          <div class="mb-3">
+                                            <label class="control-label">Tipe</label>
+                                            <input
+                                              type="text"
+                                              id="type"
+                                              class="form-control"
+                                              placeholder="Alias hero"
+                                              v-model="editSkill.type"
+                                            />
+                                          </div>
+                                        </div>
+                                        <div class="col-md-12 col-lg-4">
+                                          <div class="mb-3">
+                                            <label class="control-label">Skill Icon</label>
+                                            <input
+                                              type="text"
+                                              class="form-control"
+                                              placeholder="Skill Icon URL"
+                                              required v-model="editSkill.skill_icon"
+                                            />
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="row">
+                                        <div class="col-md-6 col-lg-4">
+                                          <div class="mb-3">
+                                            <label class="control-label">Role</label>
+                                            <div class="row">
+                                              <template v-for="(option, index) in tagOptions" :key="'edit-tag-' + option">
+                                                <div class="col-md-6 py-2">
+                                                  <div class="form-check form-check-inline">
+                                                    <input
+                                                      class="form-check-input primary"
+                                                      type="checkbox"
+                                                      :id="'edit-tag-' + index"
+                                                      :value="option"
+                                                      :checked="editTagEdit.includes(option)"
+                                                      @change="e => {
+                                                        const value = (e.target as HTMLInputElement).value;
+                                                        if ((e.target as HTMLInputElement).checked) {
+                                                          if (editTagEdit.length < 2) editTagEdit.push(value);
+                                                          else (e.target as HTMLInputElement).checked = false;
+                                                        } else {
+                                                          editTagEdit.splice(editTagEdit.indexOf(value), 1);
+                                                        }
+                                                      }"
+                                                    />
+                                                    <label class="form-check-label" :for="'edit-tag-' + index">{{ option }}</label>
+                                                  </div>
+                                                </div>
+                                              </template>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div class="col-md-6 col-lg-4">
+                                          <div class="mb-3">
+                                            <label class="control-label">Deskripsi Singkat</label>
+                                            <textarea
+                                              id="short_description"
+                                              class="form-control"
+                                              rows="5"
+                                              placeholder="Deskripsi Singkat Hero"
+                                              v-model="editSkill.lite_description"
+                                              required  
+                                            ></textarea>
+                                          </div>
+                                        </div>
+                                        <div class="col-md-12 col-lg-4">
+                                          <div class="mb-3">
+                                            <label class="control-label">Deskripsi Lengkap</label>
+                                            <textarea
+                                              id="full_description"
+                                              class="form-control"
+                                              rows="5"
+                                              placeholder="Deskripsi Lengkap Skill"
+                                              v-model="editSkill.full_description"
+                                              required  
+                                            ></textarea>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div class="modal-footer">
+                                    <button
+                                      type="submit"
+                                      class="btn btn-info waves-effect"
+                                      :disabled="isSubmitting"
+                                    >
+                                      {{ isSubmitting ? 'Saving...' : 'Save' }}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      class="btn btn-default waves-effect"
+                                      data-bs-dismiss="modal"
+                                      @click="resetForm"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </form>
+                              </div>
+                          </div>
+                        </div>
+                      </div>
                       <button class="btn btn-md btn-danger mx-1" @click="handleDeleteSkill(skill._id)">Hapus</button>
                     </td>
                   </tr>
