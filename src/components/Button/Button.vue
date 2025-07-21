@@ -7,8 +7,10 @@ const props = defineProps<{
   size?: string,
   disabled?: boolean,
   class?: string,
+  loading?: boolean,
   onClick?: (e: MouseEvent) => void
 }>();
+
 const computedClass = computed(() => {
   let classes = ['btn'];
   if (props.variant) classes.push(`btn-${props.variant}`);
@@ -16,15 +18,27 @@ const computedClass = computed(() => {
   if (props.class) classes.push(props.class);
   return classes.join(' ');
 });
+
+function handleClick(e: MouseEvent) {
+  if (!props.loading && !props.disabled) {
+    props.onClick?.(e);
+  }
+}
 </script>
 
 <template>
   <button
-    :type="type"
+    :type="props.type || 'button'"
     :class="computedClass"
-    :disabled="disabled"
-    @click="onClick"
+    :disabled="props.disabled || props.loading"
+    @click="handleClick"
   >
-    <slot />
+    <template v-if="props.loading">
+      <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+      <span class="ms-2">Loading...</span>
+    </template>
+    <template v-else>
+      <slot>Simpan</slot>
+    </template>
   </button>
 </template>
