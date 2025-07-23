@@ -9,6 +9,7 @@ import Dashboard from "./views/dashboard/Dashboard.vue";
 import DataHero from "./views/data-hero/DataHero.vue";
 import DataSkill from "./views/data-hero/DataSkill.vue";
 import DataBaseStat from "./views/data-hero/DataBaseStat.vue";
+import DataItem from "./views/data-persiapan/DataItem.vue";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -40,6 +41,10 @@ const router = createRouter({
     {
       path: "/data-hero/base-stat",
       component: DataBaseStat,
+    },
+    {
+      path: "/data-persiapan/data-item",
+      component: DataItem,
     }
   ],
 });
