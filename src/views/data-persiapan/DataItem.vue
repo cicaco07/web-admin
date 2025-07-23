@@ -11,6 +11,7 @@ import { useItems } from '../../lib/api/ItemApi';
 import FormInput from '../../components/FormInput/FormInput.vue';
 import FormTextarea from '../../components/FormInput/FormTextarea.vue';
 import Button from '../../components/Button/Button.vue';
+import Badge from '../../components/Badge/Badge.vue';
 
 const { result: itemResult, refetch } = useItems();
 const items = computed(() => itemResult.value?.items || []);
@@ -278,6 +279,60 @@ const removeTextareaField = (i: number) => textareaFields.value.splice(i, 1);
                       >
                         Detail
                       </ModalButton>
+                      <Modal :id="'detail-item-' + item._id" size="xl">
+                        <ModalHeader :backgroundColor="'primary'">Detail Item {{ item.name }}</ModalHeader>
+                        <ModalBody>
+                          <div class="row">
+                            <div class="col-md-6 col-lg-4 d-flex align-items-center">
+                              <div class="row">
+                                <div class="col-md-6 d-flex justify-content-center">
+                                  <div class="d-flex flex-column">
+                                    <img :src="item.image" alt="" class="img-fluid mb-3" />
+                                    <Badge
+                                      v-if="item.price"
+                                      color="warning"
+                                      class="mb-2"
+                                    >
+                                      {{ item.price }}
+                                    </Badge>
+                                  </div>
+                                </div>
+                                <div class="col-md-6">
+                                  <Badge
+                                    v-if="item.type"
+                                    :color="item.type === 'Attack' ? 'danger' : item.type === 'Magic' ? 'info' : item.type === 'Defense' ? 'success' : item.type === 'Movement' ? 'primary' : item.type === 'Jungle' ? 'warning' : 'secondary'"
+                                    class="mb-2"
+                                  >
+                                    {{ item.type }}
+                                  </Badge>
+                                  <h5 class="mb-1">{{ item.name }}</h5>
+                                  <p class="text-muted">{{ item.tag }}</p>
+                                </div>
+                              </div>
+                              
+                            </div>
+                            <div class="col-md-6 col-lg-8">
+                              <h5>Cerita</h5>
+                              <p>{{ item.story }}</p>
+                              <hr>
+                              <div class="row">
+                                <div class="col-4">
+                                  <h5>Attribut</h5>
+                                  <ul class="list-unstyled">
+                                    <li v-for="(attr, idx) in item.attributes" :key="idx">{{ attr }}</li>
+                                  </ul>
+                                </div>
+                                <div class="col-8">
+                                  <h5>Deskripsi</h5>
+                                  <ul class="list-unstyled">
+                                    <li v-for="(desc, idx) in item.description" :key="idx">{{ desc }}</li>
+                                  </ul>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </ModalBody>
+                      </Modal>
                       <ModalButton
                         variant="warning"
                         font="medium"
