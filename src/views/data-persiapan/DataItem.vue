@@ -1,5 +1,4 @@
 <script setup lang="ts">
-
 import { computed, ref } from 'vue';
 import Breadcrumb from '../../components/Breadcrumb/Breadcrumb.vue';
 import DashboardLayout from '../../components/DashboardLayout.vue';
@@ -15,14 +14,10 @@ import Button from '../../components/Button/Button.vue';
 
 const { result: itemResult, refetch } = useItems();
 const items = computed(() => itemResult.value?.items || []);
-const safeRefetch = async () => {
-  const result = await refetch();
-  return result ?? Promise.resolve();
-};
-
+const safeRefetch = async () => (await refetch()) ?? Promise.resolve();
 const { handleAddItem } = useItemService(safeRefetch);
 
-const itemForm = ref<{
+const defaultForm = (): {
   name: string;
   type: string;
   tag: string;
@@ -32,8 +27,8 @@ const itemForm = ref<{
   story: string;
   description: string[];
   tips: string;
-  parent_items: string[];
-}>({
+  parent_items: any[];
+} => ({
   name: '',
   type: '',
   tag: '',
@@ -45,73 +40,35 @@ const itemForm = ref<{
   tips: '',
   parent_items: [],
 });
-
-const resetForm = () => {
-  itemForm.value = {
-    name: '',
-    type: '',
-    tag: '',
-    attributes: [],
-    price: '',
-    image: '',
-    story: '',
-    description: [],
-    tips: '',
-    parent_items: [],
-  };
-  textFields.value = [{ id: Date.now(), value: '' }];
-  textareaFields.value = [{ id: Date.now() + 1, textarea: '' }];
-}
+const itemForm = ref(defaultForm());
 
 const isSubmitting = ref(false);
+
+const textFields = ref([{ id: Date.now(), value: '' }]);
+const textareaFields = ref([{ id: Date.now() + 1, textarea: '' }]);
+
+const resetForm = () => {
+  itemForm.value = defaultForm();
+  textFields.value = [{ id: Date.now(), value: '' }];
+  textareaFields.value = [{ id: Date.now() + 1, textarea: '' }];
+};
 
 const onAddItem = async () => {
   isSubmitting.value = true;
   try {
-    itemForm.value.description = textareaFields.value.map(f => f.textarea).filter(v => v.trim() !== '');
-    itemForm.value.attributes = textFields.value.map(f => f.value).filter(v => v.trim() !== '');
+    itemForm.value.description = textareaFields.value.map(f => f.textarea).filter(Boolean);
+    itemForm.value.attributes = textFields.value.map(f => f.value).filter(Boolean);
     await handleAddItem(itemForm.value);
     resetForm();
-    textFields.value = [{ id: Date.now(), value: '' }];
-    textareaFields.value = [{ id: Date.now() + 1, textarea: '' }];
   } finally {
     isSubmitting.value = false;
   }
-}
+};
 
-interface TextField {
-  id: number;
-  value: string;
-}
-
-interface TextAreaField {
-  id: number;
-  textarea: string;
-}
-
-const textFields = ref<TextField[]>([
-  { id: Date.now(), value: '' }
-]);
-
-const textareaFields = ref<TextAreaField[]>([
-  { id: Date.now() + 1, textarea: '' }
-]);
-
-function addTextField() {
-  textFields.value.push({ id: Date.now() + Math.random(), value: '' });
-}
-
-function removeTextField(index: number) {
-  textFields.value.splice(index, 1);
-}
-
-function addTextareaField() {
-  textareaFields.value.push({ id: Date.now() + Math.random(), textarea: '' });
-}
-
-function removeTextareaField(index: number) {
-  textareaFields.value.splice(index, 1);
-}
+const addTextField = () => textFields.value.push({ id: Date.now() + Math.random(), value: '' });
+const removeTextField = (i: number) => textFields.value.splice(i, 1);
+const addTextareaField = () => textareaFields.value.push({ id: Date.now() + Math.random(), textarea: '' });
+const removeTextareaField = (i: number) => textareaFields.value.splice(i, 1);
 </script>
 
 <template>
