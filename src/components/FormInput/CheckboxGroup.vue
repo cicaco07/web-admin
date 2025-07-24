@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { defineProps, defineEmits } from 'vue';
 
 const props = defineProps<{
   options: string[],
   modelValue: string[],
   label?: string,
   max?: number
+  column?: number
 }>();
 
 const emit = defineEmits<{
@@ -34,7 +34,7 @@ function handleChange(e: Event) {
     <label v-if="label" class="control-label">{{ label }}</label>
     <div class="row">
       <template v-for="(option) in options" :key="option">
-        <div class="col-md-6 py-2">
+        <div :class="['col-md-' + (props.column ?? 6), 'py-2']">
           <div class="form-check form-check-inline">
             <input
               class="form-check-input primary"

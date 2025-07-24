@@ -199,11 +199,13 @@ const onEditHero = async () => {
                   </div>
                 </div>
                 <div class="modal-footer">
-                  <Button type="submit"
-                    class="btn btn-success waves-effect"
+                  <Button
+                    type="submit"
+                    class="btn-success waves-effect"
                     :disabled="isSubmitting"
+                    :loading="isSubmitting"
                   >
-                    {{ isSubmitting ? 'Saving...' : 'Save' }}
+                    Simpan
                   </Button>
                   <Button
                     type="button"
@@ -211,7 +213,7 @@ const onEditHero = async () => {
                     data-bs-dismiss="modal"
                     @click="resetForm"
                   >
-                    Cancel
+                    Batal
                   </Button>
                 </div>
               </ModalBody>
@@ -432,10 +434,11 @@ const onEditHero = async () => {
                             <div class="modal-footer">
                               <Button
                                 type="submit"
-                                class="btn btn-success waves-effect"
+                                class="btn-success waves-effect"
                                 :disabled="isSubmitting"
+                                :loading="isSubmitting"
                               >
-                                {{ isSubmitting ? 'Saving...' : 'Save' }}
+                                Simpan
                               </Button>
                               <Button
                                 type="button"
