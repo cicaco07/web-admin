@@ -16,7 +16,7 @@ import Badge from '../../components/Badge/Badge.vue';
 const { result: itemResult, refetch } = useItems();
 const items = computed(() => itemResult.value?.items || []);
 const safeRefetch = async () => (await refetch()) ?? Promise.resolve();
-const { handleAddItem } = useItemService(safeRefetch);
+const { handleAddItem, handleEditItem } = useItemService(safeRefetch);
 
 const defaultForm = (): {
   name: string;
@@ -43,6 +43,21 @@ const defaultForm = (): {
 });
 const itemForm = ref(defaultForm());
 
+function openEditModal(item: any) {
+  itemForm.value = {
+    ...item,
+  };
+
+  textFields.value = (item.attributes && item.attributes.length > 0)
+    ? item.attributes.map((val: string) => ({ id: Date.now() + Math.random(), value: val }))
+    : [{ id: Date.now(), value: '' }];
+
+  // Isi ulang textareaFields dari description (array of string)
+  textareaFields.value = (item.description && item.description.length > 0)
+    ? item.description.map((val: string) => ({ id: Date.now() + Math.random(), textarea: val }))
+    : [{ id: Date.now() + 1, textarea: '' }];
+}
+
 const isSubmitting = ref(false);
 
 const textFields = ref([{ id: Date.now(), value: '' }]);
@@ -65,6 +80,18 @@ const onAddItem = async () => {
     isSubmitting.value = false;
   }
 };
+
+const onEditItem = async () => {
+  isSubmitting.value = true;
+  try {
+    itemForm.value.description = textareaFields.value.map(f => f.textarea).filter(Boolean);
+    itemForm.value.attributes = textFields.value.map(f => f.value).filter(Boolean);
+    await handleEditItem(itemForm.value);
+    resetForm();
+  } finally {
+    isSubmitting.value = false;
+  }
+}
 
 const addTextField = () => textFields.value.push({ id: Date.now() + Math.random(), value: '' });
 const removeTextField = (i: number) => textFields.value.splice(i, 1);
@@ -330,6 +357,15 @@ const removeTextareaField = (i: number) => textareaFields.value.splice(i, 1);
                                 </div>
                               </div>
                             </div>
+                            <div class="text-end">
+                              <Button
+                                type="button"
+                                class="btn btn-primary waves-effect"
+                                data-bs-dismiss="modal"
+                                >
+                                Close
+                              </Button>
+                            </div>
                           </div>
                         </ModalBody>
                       </Modal>
@@ -338,9 +374,144 @@ const removeTextareaField = (i: number) => textareaFields.value.splice(i, 1);
                         font="medium"
                         size="lg"
                         dataBsTarget="edit-item"
+                        @click="openEditModal(item)"
                       >
                         Edit
                       </ModalButton>
+                      <Modal id="edit-item" size="xl">
+                        <ModalHeader backgroundColor="primary">Edit Data Item</ModalHeader>
+                        <ModalBody :onSubmit="onEditItem">
+                          <div class="form-group">
+                            <div class="row pt-3">
+                              <div class="col-md-6 col-lg-4">
+                                <FormInput type="text" v-model="itemForm.name" label="Nama Item" required />
+                              </div>
+                              <div class="col-md-6 col-lg-4">
+                                <FormInput type="text" v-model="itemForm.tag" label="Tag Item" required />
+                              </div>
+                              <div class="col-md-6 col-lg-4 mb-3">
+                                <label for="">Tipe</label>
+                                <select class="form-select" v-model="itemForm.type" required>
+                                  <option value="" disabled selected>Pilih Tipe</option>
+                                  <option value="Attack">Attack</option>
+                                  <option value="Magic">Magic</option>
+                                  <option value="Defense">Defense</option>
+                                  <option value="Movement">Movement</option>
+                                  <option value="Jungle">Jungle</option>
+                                  <option value="Roaming">Roaming</option>
+                                </select>
+                              </div>
+                            </div>
+                            <div class="row">
+                              <div class="col-md-6 col-lg-4">
+                                <FormInput type="number" v-model="itemForm.price" :min="1" label="Harga" required />
+                              </div>
+                              <div class="col-md-6 col-lg-4">
+                                <FormInput type="text" v-model="itemForm.image" label="Gambar" required />
+                              </div>
+                              <div class="col-md-6 col-lg-4">
+                                <FormTextarea
+                                  v-model="itemForm.tips"
+                                  label="Tips"
+                                  :rows="3"
+                                />
+                              </div>
+                            </div>
+                            <div class="row">
+                              <div class="col-md-6 col-lg-4">
+                                <label>Attribut</label>
+                                <div
+                                  v-for="(field, idx) in textFields"
+                                  :key="field.id"
+                                  class="d-flex align-items-center mb-3"
+                                  style="width: 100%;"
+                                >
+                                  <input
+                                    type="text"
+                                    class="form-control me-2"
+                                    v-model="field.value"
+                                    placeholder="Masukkan Attribut"
+                                    style="flex: 1 1 auto;"
+                                  />
+                                  <button
+                                    v-if="idx === 0"
+                                    @click.prevent="addTextField"
+                                    class="btn btn-success"
+                                    type="button"
+                                    style="flex-shrink: 0;"
+                                  >
+                                    <i class="ti ti-circle-plus fs-5"></i>
+                                  </button>
+                                  <button
+                                    v-else
+                                    @click.prevent="removeTextField(idx)"
+                                    class="btn btn-danger"
+                                    type="button"
+                                    style="flex-shrink: 0;"
+                                  >
+                                    <i class="ti ti-minus fs-5"></i>
+                                  </button>
+                                </div>
+                              </div>
+                              <div class="col-md-6 col-lg-4">
+                                <label>Deskripsi</label>
+                                <div
+                                  v-for="(field, idx) in textareaFields"
+                                  :key="field.id"
+                                  class="d-flex align-items-center mb-3 w-full"
+                                >
+                                  <textarea
+                                    class="form-control me-2"
+                                    rows="3"
+                                    placeholder="Masukkan Deskripsi"
+                                    v-model="field.textarea"
+                                    style="flex: 1 1 auto;"
+                                  ></textarea>
+                                  <button
+                                    v-if="idx === 0"
+                                    @click.prevent="addTextareaField"
+                                    class="btn btn-success"
+                                    type="button"
+                                    style="flex-shrink: 0;"
+                                  >
+                                    <i class="ti ti-circle-plus fs-5"></i>
+                                  </button>
+                                  <button
+                                    v-else
+                                    @click.prevent="removeTextareaField(idx)"
+                                    class="btn btn-danger"
+                                    type="button"
+                                    style="flex-shrink: 0;"
+                                  >
+                                    <i class="ti ti-minus fs-5"></i>
+                                  </button>
+                                </div>
+                              </div>
+                              <div class="col-md-6 col-lg-4">
+                                <FormTextarea v-model="itemForm.story" label="Cerita" :rows="5" />
+                              </div>
+                            </div>
+                          </div>
+                          <div class="modal-footer">
+                            <Button
+                              type="submit"
+                              class="btn-success waves-effect"
+                              :disabled="isSubmitting"
+                              :loading="isSubmitting"
+                            >
+                              Simpan
+                            </Button>
+                            <Button
+                              type="button"
+                              class="btn btn-primary waves-effect"
+                              data-bs-dismiss="modal"
+                              @click="resetForm"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </ModalBody>
+                      </Modal>
                       <Button
                         variant="danger"
                         size="md"
