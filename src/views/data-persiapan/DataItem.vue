@@ -16,7 +16,7 @@ import Badge from '../../components/Badge/Badge.vue';
 const { result: itemResult, refetch } = useItems();
 const items = computed(() => itemResult.value?.items || []);
 const safeRefetch = async () => (await refetch()) ?? Promise.resolve();
-const { handleAddItem, handleEditItem } = useItemService(safeRefetch);
+const { handleAddItem, handleEditItem, handleDeleteItem } = useItemService(safeRefetch);
 
 const defaultForm = (): {
   name: string;
@@ -363,7 +363,7 @@ const removeTextareaField = (i: number) => textareaFields.value.splice(i, 1);
                                 class="btn btn-primary waves-effect"
                                 data-bs-dismiss="modal"
                                 >
-                                Close
+                                Tutup
                               </Button>
                             </div>
                           </div>
@@ -507,7 +507,7 @@ const removeTextareaField = (i: number) => textareaFields.value.splice(i, 1);
                               data-bs-dismiss="modal"
                               @click="resetForm"
                             >
-                              Cancel
+                              Batal
                             </button>
                           </div>
                         </ModalBody>
@@ -517,6 +517,7 @@ const removeTextareaField = (i: number) => textareaFields.value.splice(i, 1);
                         size="md"
                         class="me-1 m-t-10 mb-2 px-3 fs-3"
                         type="button"
+                        @click="handleDeleteItem(item._id)"
                       >
                         Hapus
                       </Button>

@@ -1,9 +1,10 @@
-import { alertError, alertSuccess } from "../alert";
-import { useCreateItem, useUpdateItem } from "../api/ItemApi";
+import { alertConfirm, alertError, alertSuccess } from "../alert";
+import { useCreateItem, useDeleteItem, useUpdateItem } from "../api/ItemApi";
 
 export const useItemService = (refetch: () => Promise<any>) => {
   const { createItem } = useCreateItem();
   const { updateItem } = useUpdateItem();
+  const { deleteItem } = useDeleteItem();
 
   const handleAddItem = async (itemForm: any) => {
     console.log("handleAddItem", itemForm);
@@ -48,8 +49,24 @@ export const useItemService = (refetch: () => Promise<any>) => {
     }
   }
 
+  const handleDeleteItem = async (id: string) => {
+    const confirm = await alertConfirm('Yakin ingin menghapus item ini? Data item akan dihapus permanen!');
+    if (confirm == true) {
+      try {
+        await deleteItem({ id });
+        await refetch();
+        alertSuccess('Item berhasil dihapus!');
+      } catch (error) {
+        alertError('Gagal menghapus item.');
+        console.error(error);
+        throw error;
+      }
+    }
+  };
+
   return {
     handleAddItem,
     handleEditItem,
+    handleDeleteItem
   };
 }
