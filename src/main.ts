@@ -10,6 +10,7 @@ import DataHero from "./views/data-hero/DataHero.vue";
 import DataSkill from "./views/data-hero/DataSkill.vue";
 import DataBaseStat from "./views/data-hero/DataBaseStat.vue";
 import DataItem from "./views/data-persiapan/DataItem.vue";
+import NotFound from "./components/Error/NotFound.vue";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -45,6 +46,11 @@ const router = createRouter({
     {
       path: "/data-persiapan/data-item",
       component: DataItem,
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'NotFound',
+      component: NotFound,
     }
   ],
 });
