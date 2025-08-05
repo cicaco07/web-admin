@@ -7,6 +7,7 @@ import DataSkill from '../views/data-hero/DataSkill.vue';
 import DataBaseStat from '../views/data-hero/DataBaseStat.vue';
 import DataItem from '../views/data-persiapan/DataItem.vue';
 import NotFound from '../components/Error/NotFound.vue';
+import DataEmblem from '../views/data-persiapan/DataEmblem.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -33,7 +34,6 @@ const router = createRouter({
     {
       path: "/data-hero",
       name: "DataHero",
-      component: DataHero,
       children: [
         {
           path: "hero",
@@ -53,12 +53,25 @@ const router = createRouter({
       ],
     },
     {
-      path: "/data-hero/base-stat",
-      component: DataBaseStat,
-    },
-    {
-      path: "/data-persiapan/data-item",
-      component: DataItem,
+      path: "/data-persiapan",
+      name: "DataPersiapan",
+      children: [
+        {
+          path: "data-item",
+          name: "DataItem",
+          component: DataItem,
+        },
+        {
+          path: "data-emblem",
+          name: "DataEmblem",
+          component: DataEmblem,
+        },
+        // {
+        //   path: "data-battle-spell",
+        //   name: "DataBattleSpell",
+        //   component: () => import('../views/data-persiapan/DataBattleSpell.vue'),
+        // }
+      ],
     },
     {
       path: '/:pathMatch(.*)*',
