@@ -38,6 +38,15 @@ const UPDATE_SKILL = gql`
   }
 `;
 
+const UPDATE_HERO_WITH_SKILLS = gql`
+  mutation updateHeroWithSkills($fromHeroId: ID!, $toHeroId: ID!, $skillId: ID!, $input: UpdateSkillInput!) {
+    updateHeroWithSkills(fromHeroId: $fromHeroId, toHeroId: $toHeroId, skillId: $skillId, input: $input) {
+      _id
+      name
+    }
+  }
+`;
+
 const DELETE_SKILL = gql`
   mutation DeleteSkill($id: ID!) {
     removeSkill(id: $id) {
@@ -58,6 +67,11 @@ export function useAddSkillToHero() {
 export function useUpdateSkill() {
   const { mutate: updateSkill, onDone, onError } = useMutation(UPDATE_SKILL);
   return { updateSkill, onDone, onError };
+}
+
+export function useUpdateHeroWithSkills() {
+  const { mutate: updateHeroWithSkills, onDone, onError } = useMutation(UPDATE_HERO_WITH_SKILLS);
+  return { updateHeroWithSkills, onDone, onError };
 }
 
 export function useDeleteSkill() {

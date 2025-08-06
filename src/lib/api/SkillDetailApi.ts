@@ -23,6 +23,15 @@ const ADD_SKILL_DETAIL_TO_SKILL = gql`
   }
 `;
 
+const UPDATE_SKILL_DETAIL_TO_SKILL = gql`
+  mutation UpdateSkillDetailToSkill($skillId: ID!, $input: [UpdateSkillDetailInput!]!) {
+    updateSkillDetailToSkill(skillId: $skillId, input: $input) {
+      level
+      attributes
+    }
+  }
+`;
+
 export const useSkillsDetail = () => {
   return useQuery(GET_SKILLS_DETAIL);
 }
@@ -30,4 +39,9 @@ export const useSkillsDetail = () => {
 export function useAddSkillDetailToSkill() {
   const { mutate: addSkillDetailToSkill, onDone, onError } = useMutation(ADD_SKILL_DETAIL_TO_SKILL);
   return { addSkillDetailToSkill, onDone, onError };
+}
+
+export function useUpdateSkillDetailToSkill() {
+  const { mutate: updateSkillDetailToSkill, onDone, onError } = useMutation(UPDATE_SKILL_DETAIL_TO_SKILL);
+  return { updateSkillDetailToSkill, onDone, onError };
 }

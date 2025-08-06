@@ -1,10 +1,29 @@
 import { useQuery, useMutation } from '@vue/apollo-composable';
 import { gql } from 'graphql-tag';
-// import { ref } from 'vue';
 
-const GET_HEROES = gql`
+const GET_ALL_HEROES = gql`
   query GetHeroes {
     heroes {
+      _id
+      name
+      alias
+      image
+      avatar
+      role
+      type
+      short_description
+      release_date
+      durability
+      offense
+      control_effect
+      difficulty
+    }
+  }
+`;
+
+const GET_HERO_BY_ID = gql`
+  query findById($id: ID!) {
+    hero(id: $id) {
       _id
       name
       alias
@@ -49,7 +68,11 @@ const DELETE_HERO = gql`
 `;
 
 export function useHeroes() {
-  return useQuery(GET_HEROES);
+  return useQuery(GET_ALL_HEROES);
+}
+
+export function useHeroById(id: string) {
+  return useQuery(GET_HERO_BY_ID, () => ({ id }));
 }
 
 export function useCreateHero() {
