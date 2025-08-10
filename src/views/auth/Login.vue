@@ -1,21 +1,17 @@
 <script setup lang="ts">
 import AuthLayout from '../../components/Auth/AuthLayout.vue';
+import { useAuthService } from '../../lib/service/AuthService';
 
+const { email, password, loading, error, handleLogin } = useAuthService();
 </script>
 
 <template>
   <AuthLayout>
     <div class="row">
-      <div class="col-6 mb-2 mb-sm-0">
+      <div class="col-12 mb-2 mb-sm-0">
         <a class="btn btn-white text-dark border fw-normal d-flex align-items-center justify-content-center rounded-2 py-8" href="javascript:void(0)" role="button">
           <img src="/dist/images/svgs/google-icon.svg" alt="" class="img-fluid me-2" width="18" height="18">
           <span class="d-none d-sm-block me-1 flex-shrink-0">Sign in with</span>Google
-        </a>
-      </div>
-      <div class="col-6">
-        <a class="btn btn-white text-dark border fw-normal d-flex align-items-center justify-content-center rounded-2 py-8" href="javascript:void(0)" role="button">
-          <img src="/dist/images/svgs/facebook-icon.svg" alt="" class="img-fluid me-2" width="18" height="18">
-          <span class="d-none d-sm-block me-1 flex-shrink-0">Sign in with</span>FB
         </a>
       </div>
     </div>
@@ -23,14 +19,14 @@ import AuthLayout from '../../components/Auth/AuthLayout.vue';
       <p class="mb-0 fs-4 px-3 d-inline-block bg-white text-dark z-index-5 position-relative">or sign in with</p>
       <span class="border-top w-100 position-absolute top-50 start-50 translate-middle"></span>
     </div>
-    <form>
+    <form @submit="handleLogin">
       <div class="mb-3">
-        <label for="exampleInputEmail1" class="form-label">Username</label>
-        <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
+        <label for="exampleInputEmail1" class="form-label">Email</label>
+        <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" v-model="email" required>
       </div>
       <div class="mb-4">
         <label for="exampleInputPassword1" class="form-label">Password</label>
-        <input type="password" class="form-control" id="exampleInputPassword1">
+        <input type="password" class="form-control" id="exampleInputPassword1" v-model="password" required>
       </div>
       <div class="d-flex align-items-center justify-content-between mb-4">
         <div class="form-check">
@@ -41,7 +37,15 @@ import AuthLayout from '../../components/Auth/AuthLayout.vue';
         </div>
         <a class="text-primary fw-medium" href="./authentication-forgot-password.html">Forgot Password ?</a>
       </div>
-      <a href="./index.html" class="btn btn-primary w-100 py-8 mb-4 rounded-2">Sign In</a>
+      <button
+        type="submit"
+        class="btn btn-primary w-100 py-8 mb-4 rounded-2"
+        :disabled="loading"
+      >
+        <span v-if="loading">Signing In...</span>
+        <span v-else>Sign In</span>
+      </button>
+      <div v-if="error" class="alert alert-danger">{{ error }}</div>
       <div class="d-flex align-items-center justify-content-center">
         <p class="fs-4 mb-0 fw-medium">New to Modernize?</p>
         <a class="text-primary fw-medium ms-2" href="/register">Create an account</a>
