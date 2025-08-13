@@ -1,3 +1,133 @@
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+
+interface NavigationItem {
+  _id: string;
+  name: string;
+  parent_id?: string;
+  icon: string;
+  route: string;
+  is_header: boolean;
+  is_active: boolean;
+  order: number;
+  roles: string[];
+  permissions: string[];
+  level: number;
+  component: string;
+  is_visible: boolean;
+  children?: NavigationItem[];
+}
+
+const navigationTree = ref<NavigationItem[]>([]);
+const loading = ref(false);
+
+async function fetchNavigationTree() {
+  try {
+    loading.value = true;
+    const token = localStorage.getItem('token');
+    
+    const response = await fetch('http://localhost:3000/graphql', {
+      method: 'POST', // Changed from GET to POST for GraphQL
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        query: `
+          query {
+            getNavigationTree {
+              _id
+              name
+              parent_id
+              icon
+              route
+              is_header
+              is_active
+              order
+              roles
+              permissions
+              level
+              component
+              is_visible
+              children {
+                _id
+                name
+                parent_id
+                icon
+                route
+                is_header
+                is_active
+                order
+                roles
+                permissions
+                level
+                component
+                is_visible
+                children {
+                  _id
+                  name
+                  parent_id
+                  icon
+                  route
+                  is_header
+                  is_active
+                  order
+                  roles
+                  permissions
+                  level
+                  component
+                  is_visible
+                }
+              }
+            }
+          }
+        `,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.errors) {
+      throw new Error(data.errors[0].message);
+    }
+
+    navigationTree.value = data.data.getNavigationTree || [];
+  } catch (error) {
+    console.error('Error fetching navigation tree:', error);
+    navigationTree.value = [];
+  } finally {
+    loading.value = false;
+  }
+}
+
+function renderNavigationItem(item: NavigationItem): any {
+  if (!item.is_visible) return null;
+
+  if (item.is_header) {
+    return {
+      type: 'header',
+      name: item.name,
+      icon: item.icon
+    };
+  }
+
+  return {
+    type: 'item',
+    ...item,
+    hasChildren: item.children && item.children.length > 0
+  };
+}
+
+onMounted(() => {
+  fetchNavigationTree();
+});
+console.log('Navigation Tree:', navigationTree);
+</script>
+
 <template>
   <!-- Sidebar Start -->
   <aside class="left-sidebar">
@@ -25,7 +155,37 @@
           <!-- =================== -->
           <!-- Dashboard -->
           <!-- =================== -->
-          <li class="sidebar-item">
+          <li v-for="child in navigationTree">
+            <a class="sidebar-link" :href="child.route" aria-expanded="false">
+              <span class="">
+                <i :class="child.icon"></i>
+              </span>
+              <span class="hide-menu">{{ child.name }}</span>
+            </a>
+          </li>
+          <li v-for="navigationHeader in navigationTree" class="sidebar-item">
+            <template v-if="navigationHeader.children && navigationHeader.children.length == 0">
+              <a class="sidebar-link" :href="navigationHeader.route" aria-expanded="false">
+                <span class="">
+                  <i :class="navigationHeader.icon"></i>
+                </span>
+                <span class="hide-menu">{{ navigationHeader.name }}</span>
+              </a>
+            </template>
+            <template v-else>
+              <a class="sidebar-link has-arrow" href="#" aria-expanded="false">
+                <span class="d-flex">
+                  <i :class="navigationHeader.icon"></i>
+                </span>
+                <span class="hide-menu">{{ navigationHeader.name }}</span>
+              </a>
+              <ul aria-expanded="false" class="collapse first-level">
+                
+              </ul>
+            </template>
+          </li>
+          
+          <!-- <li class="sidebar-item">
             <a class="sidebar-link" href="/dashboard" aria-expanded="false">
               <span>
                 <i class="ti ti-aperture"></i>
@@ -116,7 +276,7 @@
               </span>
               <span class="hide-menu">Patch Notes</span>
             </a>
-          </li>
+          </li> -->
         </ul>
       </nav>
       <div class="fixed-profile p-3 bg-light-secondary rounded sidebar-ad mt-3">
