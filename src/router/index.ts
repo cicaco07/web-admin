@@ -8,6 +8,7 @@ import DataSkill from '../views/data-hero/DataSkill.vue';
 import DataItem from '../views/data-persiapan/DataItem.vue';
 import NotFound from '../components/Error/NotFound.vue';
 import DataEmblem from '../views/data-persiapan/DataEmblem.vue';
+import DataBattleSpell from '../views/data-persiapan/DataBattleSpell.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -66,11 +67,11 @@ const router = createRouter({
           name: "DataEmblem",
           component: DataEmblem,
         },
-        // {
-        //   path: "data-battle-spell",
-        //   name: "DataBattleSpell",
-        //   component: () => import('../views/data-persiapan/DataBattleSpell.vue'),
-        // }
+        {
+          path: "data-battle-spell",
+          name: "DataBattleSpell",
+          component: DataBattleSpell
+        }
       ],
     },
     {
