@@ -15,7 +15,10 @@ const emit = defineEmits<{
 
 <template>
   <div class="mb-3">
-    <label class="control-label">{{ props.label }}</label>
+    <label class="form-label">
+      {{ props.label }}
+      <span v-if="props.required" class="text-danger">*</span>
+    </label>
     <textarea
       class="form-control"
       :rows="props.rows ?? 5"

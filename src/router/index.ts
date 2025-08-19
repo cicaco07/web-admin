@@ -4,10 +4,11 @@ import Register from '../views/auth/Register.vue';
 import Dashboard from '../views/dashboard/Dashboard.vue';
 import DataHero from '../views/data-hero/DataHero.vue';
 import DataSkill from '../views/data-hero/DataSkill.vue';
-import DataBaseStat from '../views/data-hero/DataBaseStat.vue';
+// import DataBaseStat from '../views/data-hero/DataBaseStat.vue';
 import DataItem from '../views/data-persiapan/DataItem.vue';
 import NotFound from '../components/Error/NotFound.vue';
 import DataEmblem from '../views/data-persiapan/DataEmblem.vue';
+import DataBattleSpell from '../views/data-persiapan/DataBattleSpell.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -45,11 +46,11 @@ const router = createRouter({
           name: "Skill",
           component: DataSkill,
         },
-        {
-          path: "base-stat",
-          name: "BaseStat",
-          component: DataBaseStat,
-        },
+        // {
+        //   path: "base-stat",
+        //   name: "BaseStat",
+        //   component: DataBaseStat,
+        // },
       ],
     },
     {
@@ -66,11 +67,11 @@ const router = createRouter({
           name: "DataEmblem",
           component: DataEmblem,
         },
-        // {
-        //   path: "data-battle-spell",
-        //   name: "DataBattleSpell",
-        //   component: () => import('../views/data-persiapan/DataBattleSpell.vue'),
-        // }
+        {
+          path: "data-battle-spell",
+          name: "DataBattleSpell",
+          component: DataBattleSpell
+        }
       ],
     },
     {
@@ -79,6 +80,17 @@ const router = createRouter({
       component: NotFound,
     }
   ],
+});
+
+router.beforeEach((to, from, next) => {
+  const publicPages = ['/login', '/register'];
+  const authRequired = !publicPages.includes(to.path);
+  const token = localStorage.getItem('token');
+
+  if (authRequired && !token) {
+    return next('/login');
+  }
+  next();
 });
 
 export default router

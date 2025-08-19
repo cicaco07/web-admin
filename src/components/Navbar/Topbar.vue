@@ -1,3 +1,9 @@
+<script setup lang="ts">
+import { useAuthService } from '../../lib/service/AuthService';
+
+const { handleLogout } = useAuthService();
+</script>
+
 <template>
    <!--  Header Start -->
   <header class="app-header"> 
@@ -348,7 +354,7 @@
                         </div>
                       </div>
                     </div>
-                    <a href="./authentication-login.html" class="btn btn-outline-primary">Log Out</a>
+                    <button class="btn btn-outline-primary" @click="handleLogout">Log Out</button>
                   </div>
                 </div>
               </div>
