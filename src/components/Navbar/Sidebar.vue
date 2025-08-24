@@ -1,5 +1,13 @@
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue';
+import { onMounted, reactive, computed, watch } from 'vue';
+import { useGetUserNavigations } from '../../lib/api/NavigationApi';
+
+const token = localStorage.getItem('token') ?? '';
+if (!token) {
+  console.error('No token found in localStorage');
+}
+const { result: navigationResult, loading, refetch } = useGetUserNavigations(token);
+const navigations = computed(() => navigationResult.value?.getUserNavigations || []);
 
 interface NavigationItem {
   _id: string;
@@ -18,144 +26,11 @@ interface NavigationItem {
   children?: NavigationItem[];
 }
 
-interface User {
-  role: string;
-}
-
-const navigationTree = ref<NavigationItem[]>([]);
-const currentUser = ref<User | null>(null);
-const loading = ref(false);
-
 const expandedMenus = reactive<Record<string, boolean>>({});
-
-async function fetchNavigationTree() {
-  try {
-    loading.value = true;
-    const token = localStorage.getItem('token');
-    
-    const response = await fetch('http://localhost:3000/graphql', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify({
-        query: `
-          query {
-            getNavigationTree {
-              _id
-              name
-              parent_id
-              icon
-              route
-              is_header
-              is_active
-              order
-              roles
-              permissions
-              level
-              component
-              is_visible
-              children {
-                _id
-                name
-                parent_id
-                icon
-                route
-                is_header
-                is_active
-                order
-                roles
-                permissions
-                level
-                component
-                is_visible
-                children {
-                  _id
-                  name
-                  parent_id
-                  icon
-                  route
-                  is_header
-                  is_active
-                  order
-                  roles
-                  permissions
-                  level
-                  component
-                  is_visible
-                }
-              }
-            }
-          }
-        `,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    if (data.errors) {
-      throw new Error(data.errors[0].message);
-    }
-
-    navigationTree.value = data.data.getNavigationTree || [];
-    
-    // Initialize expanded state untuk semua parent menus
-    initializeExpandedState();
-    
-  } catch (error) {
-    console.error('Error fetching navigation tree:', error);
-    navigationTree.value = [];
-  } finally {
-    loading.value = false;
-  }
-}
-
-async function fetchCurrentUser() {
-  try {
-    const token = localStorage.getItem('token');
-    
-    const response = await fetch('http://localhost:3000/graphql', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify({
-        query: `
-          query {
-            me {
-              role
-            }
-          }
-        `,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    if (data.errors) {
-      throw new Error(data.errors[0].message);
-    }
-
-    currentUser.value = data.data.me;
-
-  } catch (error) {
-    console.error('Error fetching current user:', error);
-  }
-}
 
 // Function untuk initialize expanded state
 function initializeExpandedState() {
-  navigationTree.value.forEach(item => {
+  navigations.value.forEach((item: NavigationItem) => {
     if (item.children && item.children.length > 0) {
       // Set default ke false
       expandedMenus[item._id] = false;
@@ -194,7 +69,7 @@ function isMenuActive(item: NavigationItem): boolean {
 
 // Function untuk auto expand menu yang active (optional)
 function autoExpandActiveMenu() {
-  navigationTree.value.forEach(item => {
+  navigations.value.forEach((item: NavigationItem) => {
     if (item.children && item.children.length > 0) {
       const hasActiveChild = item.children.some(child => 
         child.route === window.location.pathname
@@ -207,11 +82,17 @@ function autoExpandActiveMenu() {
   });
 }
 
+// Watch navigations untuk auto-initialize saat data tersedia
+watch(navigations, (newNavigations) => {
+  if (newNavigations.length > 0) {
+    initializeExpandedState();
+    autoExpandActiveMenu();
+  }
+}, { immediate: true });
+
 onMounted(async () => {
-  await fetchNavigationTree();
-  await fetchCurrentUser();
-  // Auto expand menu yang active setelah data dimuat
-  autoExpandActiveMenu();
+  // Refetch untuk memastikan data terbaru
+  await refetch();
 });
 </script>
 
@@ -233,7 +114,7 @@ onMounted(async () => {
             <span class="hide-menu">Home</span>
             <slot />
           </li>
-          
+
           <!-- Loading state -->
           <li v-if="loading" class="sidebar-item">
             <div class="d-flex align-items-center justify-content-center p-3">
@@ -244,7 +125,7 @@ onMounted(async () => {
           </li>
           
           <template v-else>
-            <li v-for="navigationHeader in navigationTree" :key="navigationHeader._id" class="sidebar-item">
+            <li v-for="navigationHeader in navigations" :key="navigationHeader._id" class="sidebar-item">
               <template v-if="!navigationHeader.children || navigationHeader.children.length === 0">
                 <!-- Dynamic active class -->
                 <a 
@@ -322,7 +203,6 @@ onMounted(async () => {
   </aside>
 </template>
 
-<!-- CSS untuk smooth transitions -->
 <style scoped>
 .collapse {
   display: none;
@@ -341,7 +221,6 @@ onMounted(async () => {
   color: white;
 }
 
-/* Smooth animation untuk collapse */
 .first-level {
   transition: max-height 0.3s ease, opacity 0.3s ease;
   max-height: 0;
@@ -350,11 +229,10 @@ onMounted(async () => {
 }
 
 .first-level.show {
-  max-height: 500px; /* Sesuaikan dengan kebutuhan */
+  max-height: 500px;
   opacity: 1;
 }
 
-/* Hover effects */
 .sidebar-link:hover {
   background-color: rgba(var(--bs-primary-rgb), 0.1);
   transform: translateX(2px);
