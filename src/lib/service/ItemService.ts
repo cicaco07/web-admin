@@ -2,9 +2,10 @@ import { alertConfirm, alertError, alertSuccess } from "../alert";
 import { useCreateItem, useDeleteItem, useUpdateItem } from "../api/ItemApi";
 
 export const useItemService = (refetch: () => Promise<any>) => {
-  const { createItem } = useCreateItem();
-  const { updateItem } = useUpdateItem();
-  const { deleteItem } = useDeleteItem();
+  const token = localStorage.getItem('token') || '';
+  const { createItem } = useCreateItem(token);
+  const { updateItem } = useUpdateItem(token);
+  const { deleteItem } = useDeleteItem(token);
 
   const handleAddItem = async (itemForm: any) => {
     console.log("handleAddItem", itemForm);

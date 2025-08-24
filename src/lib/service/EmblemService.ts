@@ -2,10 +2,10 @@ import { alertConfirm, alertError, alertSuccess } from "../alert";
 import { useCreateEmblem, useDeleteEmblem, useUpdateEmblem } from "../api/EmblemApi";
 
 export const useEmblemService = (refetch: () => Promise<any>) => {
-
-  const { createEmblem } = useCreateEmblem();
-  const { updateEmblem } = useUpdateEmblem();
-  const { deleteEmblem } = useDeleteEmblem();
+  const token = localStorage.getItem('token') || '';
+  const { createEmblem } = useCreateEmblem(token);
+  const { updateEmblem } = useUpdateEmblem(token);
+  const { deleteEmblem } = useDeleteEmblem(token);
 
   const handleAddEmblem = async (emblemForm: any) => {
     try {

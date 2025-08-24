@@ -49,17 +49,35 @@ export function useItems() {
   return useQuery(GET_ITEMS);
 }
 
-export function useCreateItem() {
-  const { mutate: createItem, onDone, onError } = useMutation(CREATE_ITEM);
+export function useCreateItem(token: string) {
+  const { mutate: createItem, onDone, onError } = useMutation(CREATE_ITEM, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
   return { createItem, onDone, onError };
 }
 
-export function useUpdateItem() {
-  const { mutate: updateItem, onDone, onError } = useMutation(UPDATE_ITEM);
+export function useUpdateItem(token: string) {
+  const { mutate: updateItem, onDone, onError } = useMutation(UPDATE_ITEM, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
   return { updateItem, onDone, onError };
 }
 
-export function useDeleteItem() {
-  const { mutate: deleteItem, onDone, onError } = useMutation(DELETE_ITEM);
+export function useDeleteItem(token: string) {
+  const { mutate: deleteItem, onDone, onError } = useMutation(DELETE_ITEM, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
   return { deleteItem, onDone, onError };
 }

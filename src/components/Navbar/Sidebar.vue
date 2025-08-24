@@ -1,5 +1,13 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { onMounted, reactive, computed, watch } from 'vue';
+import { useGetUserNavigations } from '../../lib/api/NavigationApi';
+
+const token = localStorage.getItem('token') ?? '';
+if (!token) {
+  console.error('No token found in localStorage');
+}
+const { result: navigationResult, loading, refetch } = useGetUserNavigations(token);
+const navigations = computed(() => navigationResult.value?.getUserNavigations || []);
 
 interface NavigationItem {
   _id: string;
@@ -18,120 +26,78 @@ interface NavigationItem {
   children?: NavigationItem[];
 }
 
-const navigationTree = ref<NavigationItem[]>([]);
-const loading = ref(false);
+const expandedMenus = reactive<Record<string, boolean>>({});
 
-async function fetchNavigationTree() {
-  try {
-    loading.value = true;
-    const token = localStorage.getItem('token');
-    
-    const response = await fetch('http://localhost:3000/graphql', {
-      method: 'POST', // Changed from GET to POST for GraphQL
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify({
-        query: `
-          query {
-            getNavigationTree {
-              _id
-              name
-              parent_id
-              icon
-              route
-              is_header
-              is_active
-              order
-              roles
-              permissions
-              level
-              component
-              is_visible
-              children {
-                _id
-                name
-                parent_id
-                icon
-                route
-                is_header
-                is_active
-                order
-                roles
-                permissions
-                level
-                component
-                is_visible
-                children {
-                  _id
-                  name
-                  parent_id
-                  icon
-                  route
-                  is_header
-                  is_active
-                  order
-                  roles
-                  permissions
-                  level
-                  component
-                  is_visible
-                }
-              }
-            }
-          }
-        `,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+// Function untuk initialize expanded state
+function initializeExpandedState() {
+  navigations.value.forEach((item: NavigationItem) => {
+    if (item.children && item.children.length > 0) {
+      // Set default ke false
+      expandedMenus[item._id] = false;
     }
-
-    const data = await response.json();
-    
-    if (data.errors) {
-      throw new Error(data.errors[0].message);
-    }
-
-    navigationTree.value = data.data.getNavigationTree || [];
-  } catch (error) {
-    console.error('Error fetching navigation tree:', error);
-    navigationTree.value = [];
-  } finally {
-    loading.value = false;
-  }
+  });
 }
 
-function renderNavigationItem(item: NavigationItem): any {
-  if (!item.is_visible) return null;
-
-  if (item.is_header) {
-    return {
-      type: 'header',
-      name: item.name,
-      icon: item.icon
-    };
-  }
-
-  return {
-    type: 'item',
-    ...item,
-    hasChildren: item.children && item.children.length > 0
-  };
+// Function untuk toggle menu
+function toggleMenu(menuId: string) {
+  expandedMenus[menuId] = !expandedMenus[menuId];
+  
+  // Close other menus jika ingin accordion behavior
+  Object.keys(expandedMenus).forEach(key => {
+    if (key !== menuId) {
+      expandedMenus[key] = false;
+    }
+  });
 }
 
-onMounted(() => {
-  fetchNavigationTree();
+// Function untuk check apakah menu sedang active (optional)
+function isMenuActive(item: NavigationItem): boolean {
+  const currentPath = window.location.pathname;
+  
+  // Check jika current path sama dengan item route
+  if (item.route === currentPath) {
+    return true;
+  }
+  
+  // Check jika salah satu children active
+  if (item.children) {
+    return item.children.some(child => child.route === currentPath);
+  }
+  
+  return false;
+}
+
+// Function untuk auto expand menu yang active (optional)
+function autoExpandActiveMenu() {
+  navigations.value.forEach((item: NavigationItem) => {
+    if (item.children && item.children.length > 0) {
+      const hasActiveChild = item.children.some(child => 
+        child.route === window.location.pathname
+      );
+      
+      if (hasActiveChild) {
+        expandedMenus[item._id] = true;
+      }
+    }
+  });
+}
+
+// Watch navigations untuk auto-initialize saat data tersedia
+watch(navigations, (newNavigations) => {
+  if (newNavigations.length > 0) {
+    initializeExpandedState();
+    autoExpandActiveMenu();
+  }
+}, { immediate: true });
+
+onMounted(async () => {
+  // Refetch untuk memastikan data terbaru
+  await refetch();
 });
-console.log('Navigation Tree:', navigationTree);
 </script>
 
 <template>
-  <!-- Sidebar Start -->
   <aside class="left-sidebar">
-    <!-- Sidebar scroll-->
     <div>
       <div class="brand-logo d-flex align-items-center justify-content-between">
         <a href="#" class="text-nowrap logo-img">
@@ -141,142 +107,82 @@ console.log('Navigation Tree:', navigationTree);
           <i class="ti ti-x fs-8 text-muted"></i>
         </div>
       </div>
-      <!-- Sidebar navigation-->
       <nav class="sidebar-nav scroll-sidebar" data-simplebar>
         <ul id="sidebarnav">
-          <!-- ============================= -->
-          <!-- Home -->
-          <!-- ============================= -->
           <li class="nav-small-cap">
             <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
             <span class="hide-menu">Home</span>
             <slot />
           </li>
-          <!-- =================== -->
-          <!-- Dashboard -->
-          <!-- =================== -->
-          <li v-for="child in navigationTree">
-            <a class="sidebar-link" :href="child.route" aria-expanded="false">
-              <span class="">
-                <i :class="child.icon"></i>
-              </span>
-              <span class="hide-menu">{{ child.name }}</span>
-            </a>
-          </li>
-          <li v-for="navigationHeader in navigationTree" class="sidebar-item">
-            <template v-if="navigationHeader.children && navigationHeader.children.length == 0">
-              <a class="sidebar-link" :href="navigationHeader.route" aria-expanded="false">
-                <span class="">
-                  <i :class="navigationHeader.icon"></i>
-                </span>
-                <span class="hide-menu">{{ navigationHeader.name }}</span>
-              </a>
-            </template>
-            <template v-else>
-              <a class="sidebar-link has-arrow" href="#" aria-expanded="false">
-                <span class="d-flex">
-                  <i :class="navigationHeader.icon"></i>
-                </span>
-                <span class="hide-menu">{{ navigationHeader.name }}</span>
-              </a>
-              <ul aria-expanded="false" class="collapse first-level">
-                
-              </ul>
-            </template>
+
+          <!-- Loading state -->
+          <li v-if="loading" class="sidebar-item">
+            <div class="d-flex align-items-center justify-content-center p-3">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
           </li>
           
-          <!-- <li class="sidebar-item">
-            <a class="sidebar-link" href="/dashboard" aria-expanded="false">
-              <span>
-                <i class="ti ti-aperture"></i>
-              </span>
-              <span class="hide-menu">Dashboard</span>
-            </a>
-          </li>
-          <li class="sidebar-item">
-            <a class="sidebar-link has-arrow" href="#" aria-expanded="false">
-              <span class="d-flex">
-                <i class="ti ti-shopping-cart"></i>
-              </span>
-              <span class="hide-menu">Data Hero</span>
-            </a>
-            <ul aria-expanded="false" class="collapse first-level">
-              <li class="sidebar-item">
-                <a href="/data-hero/hero" class="sidebar-link">
-                  <div class="round-16 d-flex align-items-center justify-content-center">
-                    <i class="ti ti-circle"></i>
-                  </div>
-                  <span class="hide-menu">Hero</span>
+          <template v-else>
+            <li v-for="navigationHeader in navigations" :key="navigationHeader._id" class="sidebar-item">
+              <template v-if="!navigationHeader.children || navigationHeader.children.length === 0">
+                <!-- Dynamic active class -->
+                <a 
+                  class="sidebar-link" 
+                  :class="{ 'active': isMenuActive(navigationHeader) }"
+                  :href="navigationHeader.route" 
+                  aria-expanded="false"
+                >
+                  <span class="">
+                    <i :class="navigationHeader.icon"></i>
+                  </span>
+                  <span class="hide-menu">{{ navigationHeader.name }}</span>
                 </a>
-              </li>
-              <li class="sidebar-item">
-                <a href="/data-hero/skill" class="sidebar-link">
-                  <div class="round-16 d-flex align-items-center justify-content-center">
-                    <i class="ti ti-circle"></i>
-                  </div>
-                  <span class="hide-menu">Skill</span>
+              </template>
+              <template v-else>
+                <!-- Click handler dan dynamic aria-expanded -->
+                <a 
+                  class="sidebar-link has-arrow" 
+                  :class="{ 'active': isMenuActive(navigationHeader) }"
+                  href="#" 
+                  :aria-expanded="expandedMenus[navigationHeader._id] ? 'true' : 'false'"
+                  @click.prevent="toggleMenu(navigationHeader._id)"
+                >
+                  <span class="d-flex">
+                    <i :class="navigationHeader.icon"></i>
+                  </span>
+                  <span class="hide-menu">{{ navigationHeader.name }}</span>
                 </a>
-              </li>
-              <li class="sidebar-item">
-                <a href="/data-hero/base-stat" class="sidebar-link">
-                  <div class="round-16 d-flex align-items-center justify-content-center">
-                    <i class="ti ti-circle"></i>
-                  </div>
-                  <span class="hide-menu">Base Stat</span>
-                </a>
-              </li>
-            </ul>
-          </li>
-          <li class="sidebar-item">
-            <a class="sidebar-link has-arrow" href="#" aria-expanded="false">
-              <span class="d-flex">
-                <i class="ti ti-cards"></i>
-              </span>
-              <span class="hide-menu">Data Persiapan</span>
-            </a>
-            <ul aria-expanded="false" class="collapse first-level">
-              <li class="sidebar-item">
-                <a href="/data-persiapan/data-emblem" class="sidebar-link">
-                  <div class="round-16 d-flex align-items-center justify-content-center">
-                    <i class="ti ti-circle"></i>
-                  </div>
-                  <span class="hide-menu">Emblems</span>
-                </a>
-              </li>
-              <li class="sidebar-item">
-                <a href="/data-persiapan/data-item" class="sidebar-link">
-                  <div class="round-16 d-flex align-items-center justify-content-center">
-                    <i class="ti ti-circle"></i>
-                  </div>
-                  <span class="hide-menu">Items</span>
-                </a>
-              </li>
-              <li class="sidebar-item">
-                <a href="/data-persiapan/data-battle-spell" class="sidebar-link">
-                  <div class="round-16 d-flex align-items-center justify-content-center">
-                    <i class="ti ti-circle"></i>
-                  </div>
-                  <span class="hide-menu">Battle Spells</span>
-                </a>
-              </li>
-            </ul>
-          </li>
-          <li class="sidebar-item">
-            <a class="sidebar-link" href="./build" aria-expanded="false">
-              <span>
-                <i class="ti ti-cpu"></i>
-              </span>
-              <span class="hide-menu">Builds</span>
-            </a>
-          </li>
-          <li class="sidebar-item">
-            <a class="sidebar-link" href="./patch-note" aria-expanded="false">
-              <span>
-                <i class="ti ti-activity-heartbeat"></i>
-              </span>
-              <span class="hide-menu">Patch Notes</span>
-            </a>
-          </li> -->
+                <!-- Dynamic collapse classes dan transition -->
+                <ul
+                  :aria-expanded="expandedMenus[navigationHeader._id] ? 'true' : 'false'" 
+                  :class="[
+                    'first-level', 
+                    'collapse',
+                    { 'show': expandedMenus[navigationHeader._id] }
+                  ]"
+                  :style="{
+                    transition: 'all 0.3s ease',
+                    overflow: 'hidden'
+                  }"
+                >
+                  <li v-for="child in navigationHeader.children" :key="child._id" class="sidebar-item">
+                    <a 
+                      :href="child.route" 
+                      class="sidebar-link"
+                      :class="{ 'active': isMenuActive(child) }"
+                    >
+                      <div class="round-16 d-flex align-items-center justify-content-center">
+                        <i class="ti ti-circle"></i>
+                      </div>
+                      <span class="hide-menu">{{ child.name }}</span>
+                    </a>
+                  </li>
+                </ul>
+              </template>
+            </li>
+          </template>
         </ul>
       </nav>
       <div class="fixed-profile p-3 bg-light-secondary rounded sidebar-ad mt-3">
@@ -293,9 +199,43 @@ console.log('Navigation Tree:', navigationTree);
           </button>
         </div>
       </div>  
-      <!-- End Sidebar navigation -->
     </div>
-    <!-- End Sidebar scroll-->
   </aside>
-  <!--  Sidebar End -->
 </template>
+
+<style scoped>
+.collapse {
+  display: none;
+}
+
+.collapse.show {
+  display: block;
+}
+
+.sidebar-link.active {
+  background-color: var(--bs-primary);
+  color: white;
+}
+
+.sidebar-link.active i {
+  color: white;
+}
+
+.first-level {
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.first-level.show {
+  max-height: 500px;
+  opacity: 1;
+}
+
+.sidebar-link:hover {
+  background-color: rgba(var(--bs-primary-rgb), 0.1);
+  transform: translateX(2px);
+  transition: all 0.2s ease;
+}
+</style>

@@ -58,17 +58,17 @@ const router = createRouter({
       name: "DataPersiapan",
       children: [
         {
-          path: "data-item",
+          path: "item",
           name: "DataItem",
           component: DataItem,
         },
         {
-          path: "data-emblem",
+          path: "emblem",
           name: "DataEmblem",
           component: DataEmblem,
         },
         {
-          path: "data-battle-spell",
+          path: "battle-spell",
           name: "DataBattleSpell",
           component: DataBattleSpell
         }
