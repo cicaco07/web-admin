@@ -3,9 +3,10 @@ import { useCreateHero, useUpdateHero, useDeleteHero } from '../api/HeroApi';
 import { alertSuccess, alertError, alertConfirm } from '../alert';
 
 export function useHeroService(refetch: () => Promise<any>) {
-  const { createHero } = useCreateHero();
-  const { updateHero } = useUpdateHero();
-  const { deleteHero } = useDeleteHero();
+  const token = localStorage.getItem('token') || '';
+  const { createHero } = useCreateHero(token);
+  const { updateHero } = useUpdateHero(token);
+  const { deleteHero } = useDeleteHero(token);
 
   const handleAddHero = async (heroForm: any, editRole: string[], editType: string[]) => {
     console.log('handleAddHero', heroForm, editRole, editType);

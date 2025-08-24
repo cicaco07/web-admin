@@ -45,17 +45,35 @@ export function useEmblems() {
   return useQuery(GET_EMBLEMS);
 }
 
-export function useCreateEmblem() {
-  const { mutate: createEmblem, onDone, onError } = useMutation(CREATE_EMBLEM);
+export function useCreateEmblem(token: string) {
+  const { mutate: createEmblem, onDone, onError } = useMutation(CREATE_EMBLEM, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
   return { createEmblem, onDone, onError };
 }
 
-export function useUpdateEmblem() {
-  const { mutate: updateEmblem, onDone, onError } = useMutation(UPDATE_EMBLEM);
+export function useUpdateEmblem(token: string) {
+  const { mutate: updateEmblem, onDone, onError } = useMutation(UPDATE_EMBLEM, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
   return { updateEmblem, onDone, onError };
 }
 
-export function useDeleteEmblem() {
-  const { mutate: deleteEmblem, onDone, onError } = useMutation(DELETE_EMBLEM);
+export function useDeleteEmblem(token: string) {
+  const { mutate: deleteEmblem, onDone, onError } = useMutation(DELETE_EMBLEM, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
   return { deleteEmblem, onDone, onError };
 }

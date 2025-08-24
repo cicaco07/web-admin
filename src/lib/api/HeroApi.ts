@@ -68,24 +68,42 @@ const DELETE_HERO = gql`
 `;
 
 export function useHeroes() {
-  return useQuery(GET_ALL_HEROES);
+  return useQuery(GET_ALL_HEROES, );
 }
 
 export function useHeroById(id: string) {
   return useQuery(GET_HERO_BY_ID, () => ({ id }));
 }
 
-export function useCreateHero() {
-  const { mutate: createHero, onDone, onError } = useMutation(CREATE_HERO);
+export function useCreateHero(token: string) {
+  const { mutate: createHero, onDone, onError } = useMutation(CREATE_HERO, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
   return { createHero, onDone, onError };
 }
 
-export function useUpdateHero() {
-  const { mutate: updateHero, onDone, onError } = useMutation(UPDATE_HERO);
+export function useUpdateHero(token: string) {
+  const { mutate: updateHero, onDone, onError } = useMutation(UPDATE_HERO, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
   return { updateHero, onDone, onError };
 }
 
-export function useDeleteHero() {
-  const { mutate: deleteHero, onDone, onError } = useMutation(DELETE_HERO);
+export function useDeleteHero(token: string) {
+  const { mutate: deleteHero, onDone, onError } = useMutation(DELETE_HERO, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
   return { deleteHero, onDone, onError };
 }
