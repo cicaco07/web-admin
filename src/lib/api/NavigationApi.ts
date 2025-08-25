@@ -1,6 +1,28 @@
 import { useMutation, useQuery } from "@vue/apollo-composable";
 import gql from "graphql-tag";
 
+const GET_NAVIGATION_TREE = gql`
+  query {
+    getNavigationTree {
+      _id
+      name
+      icon
+      route
+      roles
+      order
+      is_header
+      children {
+        _id
+        name
+        route
+        roles
+        order
+        is_header
+      }
+    }
+  }
+`;
+
 const GET_USER_NAVIGATIONS = gql`
   query {
     getUserNavigations {
@@ -52,20 +74,38 @@ const GET_USER_NAVIGATIONS = gql`
 `;
 
 const CREATE_NAVIGATION = gql`
-  mutation CreateNavigation($input: NavigationInput!) {
-    createNavigation(createNavigationInput: $input) {
+  mutation CreateNavigation($createNavigationInput: CreateNavigationInput!) {
+    createNavigation(createNavigationInput: $createNavigationInput) {
       _id
     }
   }
 `;
 
 const UPDATE_NAVIGATION = gql`
-  mutation UpdateNavigation($id: ID!, $input: NavigationInput!) {
-    updateNavigation(id: $id, updateNavigationInput: $input) {
+  mutation UpdateNavigation($updateNavigationInput: UpdateNavigationInput!) {
+    updateNavigation(updateNavigationInput: $updateNavigationInput) {
       _id
     }
   }
 `;
+
+const REMOVE_NAVIGATION = gql`
+  mutation RemoveNavigation($id: ID!) {
+    removeNavigation(id: $id) {
+      _id
+    }
+  }
+`;
+
+export function useGetNavigationTree(token: string) {
+  return useQuery(GET_NAVIGATION_TREE, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+}
 
 export function useGetUserNavigations(token: string) {
   return useQuery(GET_USER_NAVIGATIONS, {
@@ -98,4 +138,15 @@ export function useUpdateNavigation(token: string) {
   });
 
   return { updateNavigation, onDone, onError };
+}
+
+export function useDeleteNavigation(token: string) {
+  const { mutate: deleteNavigation, onDone, onError } = useMutation(REMOVE_NAVIGATION, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+  return { deleteNavigation, onDone, onError };
 }
