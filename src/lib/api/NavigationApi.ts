@@ -6,17 +6,23 @@ const GET_NAVIGATION_TREE = gql`
     getNavigationTree {
       _id
       name
+      parent_id
       icon
       route
       roles
       order
       is_header
+      component
+      level
       children {
         _id
         name
+        parent_id
         route
         roles
         order
+        component
+        level
         is_header
       }
     }
@@ -91,9 +97,7 @@ const UPDATE_NAVIGATION = gql`
 
 const REMOVE_NAVIGATION = gql`
   mutation RemoveNavigation($id: ID!) {
-    removeNavigation(id: $id) {
-      _id
-    }
+    removeNavigation(id: $id)
   }
 `;
 
