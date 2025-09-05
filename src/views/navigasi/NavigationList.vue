@@ -229,14 +229,14 @@ const openEditModal = (navigation: any) => {
 };
 
 const onAddNavigation = async () => {
-  // Validasi order sebelum submit
   if (!validateOrder()) {
     return;
   }
   
   isSubmitting.value = true;
   try {
-    await handleAddNavigation(navigationForm.value, editRole.value);
+    const { _id, ...navigationData } = navigationForm.value;
+    await handleAddNavigation(navigationData, editRole.value);
     resetForm();
     editRole.value = [];
   } catch (error) {
@@ -295,7 +295,7 @@ onMounted(() => {
             </div>
             <Modal id="add-navigation" size="xl">
               <ModalHeader backgroundColor="primary">Tambah Data Navigasi</ModalHeader>
-              <ModalBody :onSubmit="onAddNavigation">
+              <ModalBody @submit.prevent="onAddNavigation">
                 <div class="form-group">
                   <div class="row pt-3">
                     <div class="col-md-6 col-lg-4">
@@ -363,7 +363,7 @@ onMounted(() => {
                       </small>
                     </div>
                     <div class="col-md-6 col-lg-4">
-                      <FormInput type="text" v-model="navigationForm.component" label="Component" required/>
+                      <FormInput type="text" v-model="navigationForm.component" label="Component"/>
                     </div>
                     <div class="col-md-6 col-lg-4">
                       <FormInput type="number" v-model="navigationForm.level" label="Level" required/>
@@ -489,7 +489,7 @@ onMounted(() => {
                         </ModalButton>
                         <Modal id="edit-navigation" size="xl">
                           <ModalHeader backgroundColor="warning">Edit Data Navigasi</ModalHeader>
-                          <ModalBody :onSubmit="onEditNavigation">
+                          <ModalBody @submit.prevent="onEditNavigation">
                             <div class="form-group">
                               <div class="row pt-3">
                                 <div class="col-md-6 col-lg-4">
@@ -565,7 +565,7 @@ onMounted(() => {
                                 </div>
                                 
                                 <div class="col-md-6 col-lg-4">
-                                  <FormInput type="text" v-model="editNavigationForm.component" label="Component" required/>
+                                  <FormInput type="text" v-model="editNavigationForm.component" label="Component"/>
                                 </div>
                                 
                                 <div class="col-md-6 col-lg-4">

@@ -8,7 +8,6 @@ export function useNavigationService(refetch: () => Promise<any>) {
   const { deleteNavigation } = useDeleteNavigation(token);
 
   const handleAddNavigation = async (navigationForm: any, roleType: string[]) => {
-    console.log(roleType);
     try {
       const createNavigationInput = {
         ...navigationForm,
