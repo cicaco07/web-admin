@@ -115,14 +115,17 @@ onMounted(async () => {
             <slot />
           </li>
 
-          <!-- Loading state -->
-          <li v-if="loading" class="sidebar-item">
-            <div class="d-flex align-items-center justify-content-center p-3">
-              <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
+          <!-- Skeleton Loading state -->
+          <template v-if="loading">
+            <li v-for="n in 6" :key="`skeleton-${n}`" class="sidebar-item">
+              <div class="sidebar-link skeleton-item">
+                <span class="d-flex align-items-center">
+                  <div class="skeleton skeleton-icon me-3"></div>
+                  <div class="skeleton skeleton-text"></div>
+                </span>
               </div>
-            </div>
-          </li>
+            </li>
+          </template>
           
           <template v-else>
             <li v-for="navigationHeader in navigations" :key="navigationHeader._id" class="sidebar-item">
@@ -237,5 +240,39 @@ onMounted(async () => {
   background-color: rgba(var(--bs-primary-rgb), 0.1);
   transform: translateX(2px);
   transition: all 0.2s ease;
+}
+
+/* Skeleton styles */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 4px;
+}
+
+.skeleton-item {
+  padding: 24px 32px;
+  margin-bottom: 4px;
+}
+
+.skeleton-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.skeleton-text {
+  height: 24px;
+  width: 150px;
+  border-radius: 4px;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 </style>
