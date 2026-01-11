@@ -1,4 +1,3 @@
-// lib/services/HeroService.ts
 import { useCreateHero, useUpdateHero, useDeleteHero } from '../api/HeroApi';
 import { alertSuccess, alertError, alertConfirm } from '../alert';
 
@@ -9,10 +8,10 @@ export function useHeroService(refetch: () => Promise<any>) {
   const { deleteHero } = useDeleteHero(token);
 
   const handleAddHero = async (heroForm: any, editRole: string[], editType: string[]) => {
-    console.log('handleAddHero', heroForm, editRole, editType);
     try {
-      const input = {
+      const createHeroInput = {
         ...heroForm,
+        hero_order: Number(heroForm.hero_order),
         durability: Number(heroForm.durability),
         offense: Number(heroForm.offense),
         control_effect: Number(heroForm.control_effect),
@@ -20,7 +19,7 @@ export function useHeroService(refetch: () => Promise<any>) {
         role: [...editRole],
         type: [...editType]
       };
-      await createHero({ input });
+      await createHero({ createHeroInput });
       await refetch();
       alertSuccess('Hero berhasil ditambahkan!');
       (window as any).bootstrap?.Modal?.getOrCreateInstance(document.getElementById('add-hero'))?.hide();
@@ -31,23 +30,26 @@ export function useHeroService(refetch: () => Promise<any>) {
     }
   };
 
-  const handleEditHero = async (editHero: any, roleEdit: string[], typeEdit: string[]) => {
+  const handleEditHero = async (heroForm: any, roleEdit: string[], typeEdit: string[]) => {
     try {
       const input = {
-        name: editHero.name,
-        alias: editHero.alias,
+        name: heroForm.name,
+        alias: heroForm.alias,
         role: [...roleEdit],
         type: [...typeEdit],
-        short_description: editHero.short_description,
-        avatar: editHero.avatar,
-        image: editHero.image,
-        release_date: editHero.release_date,
-        durability: Number(editHero.durability),
-        offense: Number(editHero.offense),
-        control_effect: Number(editHero.control_effect),
-        difficulty: Number(editHero.difficulty)
+        speciality: heroForm.speciality,
+        region: heroForm.region,
+        hero_order: Number(heroForm.hero_order),
+        short_description: heroForm.short_description,
+        avatar: heroForm.avatar,
+        image: heroForm.image,
+        release_date: heroForm.release_date,
+        durability: Number(heroForm.durability),
+        offense: Number(heroForm.offense),
+        control_effect: Number(heroForm.control_effect),
+        difficulty: Number(heroForm.difficulty)
       };
-      await updateHero({ id: editHero._id, input });
+      await updateHero({ id: heroForm._id, updateHeroInput: input });
       await refetch();
       alertSuccess('Hero berhasil diupdate!');
       (window as any).bootstrap?.Modal?.getOrCreateInstance(document.getElementById('edit-hero'))?.hide();
