@@ -11,7 +11,7 @@ import DataItem from '../views/data-persiapan/DataItem.vue';
 import NotFound from '../components/Error/NotFound.vue';
 import DataEmblem from '../views/data-persiapan/DataEmblem.vue';
 import DataBattleSpell from '../views/data-persiapan/DataBattleSpell.vue';
-import NavigationList from '../views/navigasi/NavigationList.vue';
+import NavigationList from '../views/navigasi/data-navigasi/NavigationList.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
