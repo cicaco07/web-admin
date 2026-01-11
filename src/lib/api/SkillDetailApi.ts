@@ -7,6 +7,7 @@ const GET_SKILLS_DETAIL = gql`
       _id
       name
       skills_detail {
+        _id
         level
         attributes
       }
@@ -17,6 +18,7 @@ const GET_SKILLS_DETAIL = gql`
 const ADD_SKILL_DETAIL_TO_SKILL = gql`
   mutation AddSkillDetailToSkill($skillId: ID!, $input: [CreateSkillDetailInput!]!) {
     addSkillDetailToSkill(skillId: $skillId, input: $input) {
+      _id
       level
       attributes
     }
@@ -24,8 +26,9 @@ const ADD_SKILL_DETAIL_TO_SKILL = gql`
 `;
 
 const UPDATE_SKILL_DETAIL_TO_SKILL = gql`
-  mutation UpdateSkillDetailToSkill($skillId: ID!, $input: [UpdateSkillDetailInput!]!) {
-    updateSkillDetailToSkill(skillId: $skillId, input: $input) {
+  mutation UpdateSkillDetailToSkill($skillId: ID!, $skillDetailId: ID!, $input: UpdateSkillDetailInput!) {
+    updateSkillDetailToSkill(skillId: $skillId, skillDetailId: $skillDetailId, input: $input) {
+      _id
       level
       attributes
     }
