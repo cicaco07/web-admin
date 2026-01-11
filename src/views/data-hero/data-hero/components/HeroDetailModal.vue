@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import Modal from '../../../components/Modal/Modal.vue';
-import ModalHeader from '../../../components/Modal/ModalHeader.vue';
-import ModalBody from '../../../components/Modal/ModalBody.vue';
-import Button from '../../../components/Button/Button.vue';
-import Badge from '../../../components/Badge/Badge.vue';
-import type { Hero } from '../../../types/Hero';
+import Modal from '../../../../components/Modal/Modal.vue';
+import ModalHeader from '../../../../components/Modal/ModalHeader.vue';
+import ModalBody from '../../../../components/Modal/ModalBody.vue';
+import Button from '../../../../components/Button/Button.vue';
+import Badge from '../../../../components/Badge/Badge.vue';
+import type { Hero } from '../../../../types/Hero';
 
 defineProps<{
   hero: Hero;

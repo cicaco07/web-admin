@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../views/auth/Login.vue';
 import Register from '../views/auth/Register.vue';
 import Dashboard from '../views/dashboard/Dashboard.vue';
-import DataHero from '../views/data-hero/DataHero.vue';
+import DataHero from '../views/data-hero/data-hero/DataHero.vue';
 import DataSkill from '../views/data-hero/DataSkill.vue';
 // import DataBaseStat from '../views/data-hero/DataBaseStat.vue';
 import DataItem from '../views/data-persiapan/DataItem.vue';

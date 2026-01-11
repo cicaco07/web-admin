@@ -2,24 +2,24 @@
 import { ref, computed } from 'vue';
 
 // Layout & Components
-import DashboardLayout from '../../components/DashboardLayout.vue';
-import Breadcrumb from '../../components/Breadcrumb/Breadcrumb.vue';
-import Button from '../../components/Button/Button.vue';
-import Badge from '../../components/Badge/Badge.vue';
-import ModalButton from '../../components/Modal/ModalButton.vue';
-import TablePagination from '../../components/Table/TablePagination.vue';
+import DashboardLayout from '../../../components/DashboardLayout.vue';
+import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb.vue';
+import Button from '../../../components/Button/Button.vue';
+import Badge from '../../../components/Badge/Badge.vue';
+import ModalButton from '../../../components/Modal/ModalButton.vue';
+import TablePagination from '../../../components/Table/TablePagination.vue';
 
 // Hero Components
 import HeroDetailModal from './components/HeroDetailModal.vue';
 import HeroFormModal from './components/HeroFormModal.vue';
 
 // API & Services
-import { useHeroes } from '../../lib/api/HeroApi';
-import { useHeroService } from '../../lib/service/HeroService';
+import { useHeroes } from '../../../lib/api/HeroApi';
+import { useHeroService } from '../../../lib/service/HeroService';
 
 // Types
-import type { Hero, HeroFormData } from '../../types/Hero';
-import { createDefaultHeroForm } from '../../types/Hero';
+import type { Hero, HeroFormData } from '../../../types/Hero';
+import { createDefaultHeroForm } from '../../../types/Hero';
 
 // ==================== Data Fetching ====================
 const { result: heroResult, refetch } = useHeroes();
@@ -245,9 +245,11 @@ const toArray = (value: string | string[]): string[] => {
                         <!-- Delete Button -->
                         <Button
                           variant="danger"
+                          font="medium"
                           size="sm"
                           type="button"
                           @click="handleDeleteHero(hero._id)"
+                          class="me-1 m-t-10 mb-2 px-3 fs-3"
                         >
                           <i class="ti ti-trash"></i>
                         </Button>

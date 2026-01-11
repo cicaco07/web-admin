@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import Modal from '../../../components/Modal/Modal.vue';
-import ModalHeader from '../../../components/Modal/ModalHeader.vue';
-import ModalBody from '../../../components/Modal/ModalBody.vue';
-import Button from '../../../components/Button/Button.vue';
-import FormInput from '../../../components/FormInput/FormInput.vue';
-import FormTextarea from '../../../components/FormInput/FormTextarea.vue';
-import CheckboxGroup from '../../../components/FormInput/CheckboxGroup.vue';
-import type { HeroFormData } from '../../../types/Hero';
-import { HERO_TYPE_OPTIONS, HERO_ROLE_OPTIONS } from '../../../types/Hero';
+import Modal from '../../../../components/Modal/Modal.vue';
+import ModalHeader from '../../../../components/Modal/ModalHeader.vue';
+import ModalBody from '../../../../components/Modal/ModalBody.vue';
+import Button from '../../../../components/Button/Button.vue';
+import FormInput from '../../../../components/FormInput/FormInput.vue';
+import FormTextarea from '../../../../components/FormInput/FormTextarea.vue';
+import CheckboxGroup from '../../../../components/FormInput/CheckboxGroup.vue';
+import type { HeroFormData } from '../../../../types/Hero';
+import { HERO_TYPE_OPTIONS, HERO_ROLE_OPTIONS } from '../../../../types/Hero';
 
 const props = defineProps<{
   modalId: string;
