@@ -7,10 +7,13 @@ const GET_ALL_HEROES = gql`
       _id
       name
       alias
-      image
-      avatar
       role
       type
+      speciality
+      region
+      hero_order
+      avatar  
+      image
       short_description
       release_date
       durability
@@ -42,8 +45,8 @@ const GET_HERO_BY_ID = gql`
 `;
 
 const CREATE_HERO = gql`
-  mutation CreateHero($input: CreateHeroInput!) {
-    createHero(input: $input) {
+  mutation CreateHero($createHeroInput: CreateHeroInput!) {
+    createHero(createHeroInput: $createHeroInput) {
       _id
       name
     }
@@ -51,8 +54,8 @@ const CREATE_HERO = gql`
 `;
 
 const UPDATE_HERO = gql`
-  mutation UpdateHero($id: ID!, $input: UpdateHeroInput!) {
-    updateHero(id: $id, input: $input) {
+  mutation UpdateHero($id: ID!, $updateHeroInput: UpdateHeroInput!) {
+    updateHero(id: $id, updateHeroInput: $updateHeroInput) {
       _id
       name
     }

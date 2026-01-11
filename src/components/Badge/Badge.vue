@@ -7,7 +7,7 @@ const props = defineProps<{
 </script>
 
 <template>
-  <span :class="`badge bg-${props.color ?? 'primary'} ${props.class ?? ''}`">
+  <span :class="`badge bg-${props.color ?? 'primary'} ${props.class ?? ''} me-1 mb-1`">
     <slot />
   </span>
 </template>
