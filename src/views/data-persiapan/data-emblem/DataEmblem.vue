@@ -184,7 +184,7 @@ const onEditEmblem = async (attributes: EmblemAttribute[]) => {
                     :key="emblem._id" 
                     class="text-center align-middle"
                   >
-                    <td>{{ getRowNumber(index) }}</td>
+                    <td>{{ getRowNumber(Number(index)) }}</td>
                     <td>
                       <img 
                         :src="emblem.icon" 

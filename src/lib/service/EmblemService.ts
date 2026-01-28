@@ -31,7 +31,7 @@ export const useEmblemService = (refetch: () => Promise<any>) => {
         icon: editEmblem.icon,
         benefit: editEmblem.benefit,
         description: editEmblem.description,
-        cooldown: Number(editEmblem.cooldown),
+        cooldown: String(editEmblem.cooldown),
       };
       await updateEmblem({ id: editEmblem._id, input });
       await refetch();
