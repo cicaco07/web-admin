@@ -18,13 +18,39 @@ import { useItemService } from '../../../lib/service/ItemService';
 
 // Types
 import type { Item, ItemFormData } from '../../../types/Item';
-import { createDefaultItemForm } from '../../../types/Item';
+import { createDefaultItemForm, ITEM_TYPE_OPTIONS } from '../../../types/Item';
 
 // ==================== Data Fetching ====================
-const { result: itemResult, refetch } = useItems();
+const { result: itemResult, loading: itemLoading, refetch } = useItems();
 const items = computed(() => itemResult.value?.items || []);
 const safeRefetch = async () => (await refetch()) ?? Promise.resolve();
 const { handleAddItem, handleEditItem, handleDeleteItem } = useItemService(safeRefetch);
+
+// ==================== Search & Filter ====================
+const searchQuery = ref('');
+const selectedFilterType = ref('');
+
+const filteredItems = computed(() => {
+  let filtered = items.value;
+
+  // Filter by search query
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase().trim();
+    filtered = filtered.filter(item => 
+      item.name.toLowerCase().includes(query) ||
+      item.tag.toLowerCase().includes(query) ||
+      item.type.toLowerCase().includes(query) ||
+      (item.attributes && item.attributes.join(' ').toLowerCase().includes(query))
+    );
+  }
+
+  // Filter by type
+  if (selectedFilterType.value) {
+    filtered = filtered.filter(item => item.type === selectedFilterType.value);
+  }
+
+  return filtered;
+});
 
 // ==================== Pagination ====================
 const currentPage = ref(1);
@@ -33,7 +59,7 @@ const itemsPerPage = ref(10);
 const paginatedItems = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value;
   const end = start + itemsPerPage.value;
-  return items.value.slice(start, end);
+  return filteredItems.value.slice(start, end);
 });
 
 const getRowNumber = (index: number) => {
@@ -125,17 +151,84 @@ const onEditItem = async (data: { attributes: string[]; description: string[] })
           </div>
 
           <div class="card-body">
-            <!-- Add Button -->
-            <div class="d-flex justify-content-end mb-3">
-              <ModalButton
-                variant="info"
-                font="medium"
-                size="lg"
-                dataBsTarget="add-item"
-              >
-                <i class="ti ti-plus me-1"></i>
-                Tambah Item
-              </ModalButton>
+            <!-- Search & Filter Section -->
+            <div class="row mb-3">
+              <div class="col-md-8">
+                <div class="input-group">
+                  <span class="input-group-text bg-primary text-white">
+                    <i class="ti ti-search"></i>
+                  </span>
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    placeholder="Cari nama, tag, tipe, atau attribut..."
+                    v-model="searchQuery"
+                    @keyup="currentPage = 1"
+                  >
+                  <button 
+                    v-if="searchQuery"
+                    class="btn btn-outline-secondary"
+                    type="button"
+                    @click="searchQuery = ''; currentPage = 1"
+                  >
+                    <i class="ti ti-x"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="col-md-2">
+                <select 
+                  class="form-select" 
+                  v-model="selectedFilterType"
+                  @change="currentPage = 1"
+                >
+                  <option value="">Semua Tipe</option>
+                  <option 
+                    v-for="type in ITEM_TYPE_OPTIONS" 
+                    :key="type" 
+                    :value="type"
+                  >
+                    {{ type }}
+                  </option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <button 
+                  class="btn btn-outline-secondary w-100"
+                  @click="searchQuery = ''; selectedFilterType = ''; currentPage = 1"
+                >
+                  <i class="ti ti-refresh me-1"></i>
+                  Reset Filter
+                </button>
+              </div>
+            </div>
+
+            <!-- Add Item Button -->
+            <div class="row mb-3">
+              <div class="col-md-12 d-flex justify-content-end">
+                <ModalButton
+                  variant="info"
+                  font="medium"
+                  size="lg"
+                  dataBsTarget="add-item"
+                >
+                  <i class="ti ti-plus me-1"></i>
+                  Tambah Item
+                </ModalButton>
+              </div>
+            </div>
+
+            <!-- Filter Info -->
+            <div v-if="searchQuery || selectedFilterType" class="alert alert-info py-2 mb-3">
+              <div class="d-flex align-items-center">
+                <i class="ti ti-filter me-2"></i>
+                <span>Menampilkan {{ filteredItems.length }} dari {{ items.length }} item</span>
+                <span v-if="searchQuery" class="ms-2">
+                  | Pencarian: <strong>{{ searchQuery }}</strong>
+                </span>
+                <span v-if="selectedFilterType" class="ms-2">
+                  | Tipe: <strong>{{ selectedFilterType }}</strong>
+                </span>
+              </div>
             </div>
 
             <!-- Add Modal -->
@@ -184,10 +277,24 @@ const onEditItem = async (data: { attributes: string[]; description: string[] })
                   </tr>
                 </thead>
                 <tbody>
+                  <!-- Loading State -->
+                  <tr v-if="itemLoading">
+                    <td colspan="8" class="text-center py-5">
+                      <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Loading...</span>
+                      </div>
+                      <div class="mt-3 text-muted fw-semibold">
+                        Memuat data item...
+                      </div>
+                    </td>
+                  </tr>
+
+                  <!-- Item Data Rows -->
                   <tr 
                     v-for="(item, index) in paginatedItems" 
                     :key="item._id" 
                     class="text-center align-middle"
+                    v-show="!itemLoading"
                   >
                     <td>{{ getRowNumber(index) }}</td>
                     <td>{{ item.name }}</td>
@@ -244,8 +351,16 @@ const onEditItem = async (data: { attributes: string[]; description: string[] })
                     </td>
                   </tr>
 
-                  <!-- Empty State -->
-                  <tr v-if="items.length === 0">
+                  <!-- Empty State - Filter Results -->
+                  <tr v-if="!itemLoading && paginatedItems.length === 0 && items.length > 0">
+                    <td colspan="8" class="text-center py-4 text-muted">
+                      <i class="ti ti-filter-off fs-1 d-block mb-2"></i>
+                      Tidak ada item yang sesuai dengan filter
+                    </td>
+                  </tr>
+
+                  <!-- Empty State - No Data -->
+                  <tr v-if="!itemLoading && items.length === 0">
                     <td colspan="8" class="text-center py-4 text-muted">
                       <i class="ti ti-database-off fs-1 d-block mb-2"></i>
                       Tidak ada data item
@@ -257,10 +372,10 @@ const onEditItem = async (data: { attributes: string[]; description: string[] })
 
             <!-- Pagination -->
             <TablePagination
-              v-if="items.length > 0"
+              v-if="!itemLoading && filteredItems.length > 0"
               v-model:currentPage="currentPage"
               v-model:itemsPerPage="itemsPerPage"
-              :totalItems="items.length"
+              :totalItems="filteredItems.length"
               :pageSizeOptions="[10, 25, 50]"
             />
           </div>

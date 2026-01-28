@@ -27,7 +27,7 @@ const router = useRouter();
 
 // ==================== Data Fetching ====================
 const { result: heroResult, refetch } = useHeroes();
-const { result: skillResult } = useSkills();
+const { result: skillResult, loading: skillLoading } = useSkills();
 const { result: skillDetailResult } = useSkillsDetail();
 const { deleteSkill } = useDeleteSkill();
 
@@ -57,6 +57,26 @@ const getSkillDetails = computed(() => {
   );
 });
 
+// ==================== Search & Filter ====================
+const searchQuery = ref('');
+
+const filteredSkills = computed(() => {
+  let filtered = skills.value;
+
+  // Filter by search query
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase().trim();
+    filtered = filtered.filter(skill => 
+      skill.heroName.toLowerCase().includes(query) ||
+      skill.name.toLowerCase().includes(query) ||
+      skill.type.toLowerCase().includes(query) ||
+      (Array.isArray(skill.tag) ? skill.tag.join(' ') : skill.tag || '').toLowerCase().includes(query)
+    );
+  }
+
+  return filtered;
+});
+
 // ==================== Pagination ====================
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
@@ -64,7 +84,7 @@ const itemsPerPage = ref(10);
 const paginatedSkills = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value;
   const end = start + itemsPerPage.value;
-  return skills.value.slice(start, end);
+  return filteredSkills.value.slice(start, end);
 });
 
 const getRowNumber = (index: number) => {
@@ -131,15 +151,63 @@ const toArray = (value: string | string[]): string[] => {
           </div>
 
           <div class="card-body">
-            <!-- Add Button -->
-            <div class="d-flex justify-content-end mb-3">
-              <Button
-                variant="info"
-                @click="goToCreate"
-              >
-                <i class="ti ti-plus me-1"></i>
-                Tambah Data Skill
-              </Button>
+            <!-- Search & Filter Section -->
+            <div class="row mb-3">
+              <div class="col-md-10">
+                <div class="input-group">
+                  <span class="input-group-text bg-primary text-white">
+                    <i class="ti ti-search"></i>
+                  </span>
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    placeholder="Cari nama hero, nama skill, tipe, atau tag..."
+                    v-model="searchQuery"
+                    @keyup="currentPage = 1"
+                  >
+                  <button 
+                    v-if="searchQuery"
+                    class="btn btn-outline-secondary"
+                    type="button"
+                    @click="searchQuery = ''; currentPage = 1"
+                  >
+                    <i class="ti ti-x"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="col-md-2">
+                <button 
+                  class="btn btn-outline-secondary w-100"
+                  @click="searchQuery = ''; currentPage = 1"
+                >
+                  <i class="ti ti-refresh me-1"></i>
+                  Reset Filter
+                </button>
+              </div>
+            </div>
+
+            <!-- Add Skill Button -->
+            <div class="row mb-3">
+              <div class="col-md-12 d-flex justify-content-end">
+                <Button
+                  variant="info"
+                  @click="goToCreate"
+                >
+                  <i class="ti ti-plus me-1"></i>
+                  Tambah Data Skill
+                </Button>
+              </div>
+            </div>
+
+            <!-- Filter Info -->
+            <div v-if="searchQuery" class="alert alert-info py-2 mb-3">
+              <div class="d-flex align-items-center">
+                <i class="ti ti-filter me-2"></i>
+                <span>Menampilkan {{ filteredSkills.length }} dari {{ skills.length }} skill</span>
+                <span class="ms-2">
+                  | Pencarian: <strong>{{ searchQuery }}</strong>
+                </span>
+              </div>
             </div>
 
             <!-- Skills Table -->
@@ -157,10 +225,24 @@ const toArray = (value: string | string[]): string[] => {
                   </tr>
                 </thead>
                 <tbody>
+                  <!-- Loading State -->
+                  <tr v-if="skillLoading">
+                    <td colspan="7" class="text-center py-5">
+                      <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Loading...</span>
+                      </div>
+                      <div class="mt-3 text-muted fw-semibold">
+                        Memuat data skill...
+                      </div>
+                    </td>
+                  </tr>
+
+                  <!-- Skill Data Rows -->
                   <tr
                     v-for="(skill, index) in paginatedSkills"
                     :key="skill._id"
                     class="text-center align-middle"
+                    v-show="!skillLoading"
                   >
                     <td>{{ getRowNumber(index) }}</td>
                     <td class="fw-semibold">{{ skill.heroName }}</td>
@@ -219,8 +301,16 @@ const toArray = (value: string | string[]): string[] => {
                     </td>
                   </tr>
 
-                  <!-- Empty State -->
-                  <tr v-if="skills.length === 0">
+                  <!-- Empty State - Filter Results -->
+                  <tr v-if="!skillLoading && paginatedSkills.length === 0 && skills.length > 0">
+                    <td colspan="7" class="text-center py-4 text-muted">
+                      <i class="ti ti-filter-off fs-1 d-block mb-2"></i>
+                      Tidak ada skill yang sesuai dengan filter
+                    </td>
+                  </tr>
+
+                  <!-- Empty State - No Data -->
+                  <tr v-if="!skillLoading && skills.length === 0">
                     <td colspan="7" class="text-center py-4 text-muted">
                       <i class="ti ti-database-off fs-1 d-block mb-2"></i>
                       Tidak ada data skill
@@ -232,10 +322,10 @@ const toArray = (value: string | string[]): string[] => {
 
             <!-- Pagination -->
             <TablePagination
-              v-if="skills.length > 0"
+              v-if="!skillLoading && filteredSkills.length > 0"
               v-model:currentPage="currentPage"
               v-model:itemsPerPage="itemsPerPage"
-              :totalItems="skills.length"
+              :totalItems="filteredSkills.length"
               :pageSizeOptions="[10, 25, 50]"
             />
           </div>

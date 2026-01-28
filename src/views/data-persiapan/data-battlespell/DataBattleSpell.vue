@@ -21,10 +21,29 @@ import type { BattleSpell, BattleSpellFormData } from '../../../types/BattleSpel
 import { createDefaultBattleSpellForm } from '../../../types/BattleSpell';
 
 // ==================== Data Fetching ====================
-const { result: battleSpellResult, refetch } = useBattleSpell();
+const { result: battleSpellResult, loading: battleSpellLoading, refetch } = useBattleSpell();
 const battleSpells = computed(() => battleSpellResult.value?.battleSpells || []);
 const safeRefetch = async () => (await refetch()) ?? Promise.resolve();
 const { handleAddBattleSpell, handleEditBattleSpell, handleDeleteBattleSpell } = useBattleSpellService(safeRefetch);
+
+// ==================== Search & Filter ====================
+const searchQuery = ref('');
+
+const filteredBattleSpells = computed(() => {
+  let filtered = battleSpells.value;
+
+  // Filter by search query
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase().trim();
+    filtered = filtered.filter(spell => 
+      spell.name.toLowerCase().includes(query) ||
+      spell.tag.toLowerCase().includes(query) ||
+      spell.description.toLowerCase().includes(query)
+    );
+  }
+
+  return filtered;
+});
 
 // ==================== Pagination ====================
 const currentPage = ref(1);
@@ -33,7 +52,7 @@ const itemsPerPage = ref(10);
 const paginatedBattleSpells = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value;
   const end = start + itemsPerPage.value;
-  return battleSpells.value.slice(start, end);
+  return filteredBattleSpells.value.slice(start, end);
 });
 
 const getRowNumber = (index: number) => {
@@ -121,17 +140,65 @@ const onEditBattleSpell = async () => {
           </div>
 
           <div class="card-body">
-            <!-- Add Button -->
-            <div class="d-flex justify-content-end mb-3">
-              <ModalButton
-                variant="info"
-                font="medium"
-                size="lg"
-                dataBsTarget="add-battle-spell"
-              >
-                <i class="ti ti-plus me-1"></i>
-                Tambah Battle Spell
-              </ModalButton>
+            <!-- Search & Filter Section -->
+            <div class="row mb-3">
+              <div class="col-md-10">
+                <div class="input-group">
+                  <span class="input-group-text bg-primary text-white">
+                    <i class="ti ti-search"></i>
+                  </span>
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    placeholder="Cari nama, tag, atau deskripsi..."
+                    v-model="searchQuery"
+                    @keyup="currentPage = 1"
+                  >
+                  <button 
+                    v-if="searchQuery"
+                    class="btn btn-outline-secondary"
+                    type="button"
+                    @click="searchQuery = ''; currentPage = 1"
+                  >
+                    <i class="ti ti-x"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="col-md-2">
+                <button 
+                  class="btn btn-outline-secondary w-100"
+                  @click="searchQuery = ''; currentPage = 1"
+                >
+                  <i class="ti ti-refresh me-1"></i>
+                  Reset Filter
+                </button>
+              </div>
+            </div>
+
+            <!-- Add Battle Spell Button -->
+            <div class="row mb-3">
+              <div class="col-md-12 d-flex justify-content-end">
+                <ModalButton
+                  variant="info"
+                  font="medium"
+                  size="lg"
+                  dataBsTarget="add-battle-spell"
+                >
+                  <i class="ti ti-plus me-1"></i>
+                  Tambah Battle Spell
+                </ModalButton>
+              </div>
+            </div>
+
+            <!-- Filter Info -->
+            <div v-if="searchQuery" class="alert alert-info py-2 mb-3">
+              <div class="d-flex align-items-center">
+                <i class="ti ti-filter me-2"></i>
+                <span>Menampilkan {{ filteredBattleSpells.length }} dari {{ battleSpells.length }} battle spell</span>
+                <span class="ms-2">
+                  | Pencarian: <strong>{{ searchQuery }}</strong>
+                </span>
+              </div>
             </div>
 
             <!-- Add Modal -->
@@ -180,10 +247,24 @@ const onEditBattleSpell = async () => {
                   </tr>
                 </thead>
                 <tbody>
+                  <!-- Loading State -->
+                  <tr v-if="battleSpellLoading">
+                    <td colspan="7" class="text-center py-5">
+                      <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Loading...</span>
+                      </div>
+                      <div class="mt-3 text-muted fw-semibold">
+                        Memuat data battle spell...
+                      </div>
+                    </td>
+                  </tr>
+
+                  <!-- Battle Spell Data Rows -->
                   <tr 
                     v-for="(spell, index) in paginatedBattleSpells" 
                     :key="spell._id" 
                     class="text-center align-middle"
+                    v-show="!battleSpellLoading"
                   >
                     <td>{{ getRowNumber(index) }}</td>
                     <td>{{ spell.name }}</td>
@@ -237,8 +318,16 @@ const onEditBattleSpell = async () => {
                     </td>
                   </tr>
 
-                  <!-- Empty State -->
-                  <tr v-if="battleSpells.length === 0">
+                  <!-- Empty State - Filter Results -->
+                  <tr v-if="!battleSpellLoading && paginatedBattleSpells.length === 0 && battleSpells.length > 0">
+                    <td colspan="7" class="text-center py-4 text-muted">
+                      <i class="ti ti-filter-off fs-1 d-block mb-2"></i>
+                      Tidak ada battle spell yang sesuai dengan filter
+                    </td>
+                  </tr>
+
+                  <!-- Empty State - No Data -->
+                  <tr v-if="!battleSpellLoading && battleSpells.length === 0">
                     <td colspan="7" class="text-center py-4 text-muted">
                       <i class="ti ti-database-off fs-1 d-block mb-2"></i>
                       Tidak ada data battle spell
@@ -250,10 +339,10 @@ const onEditBattleSpell = async () => {
 
             <!-- Pagination -->
             <TablePagination
-              v-if="battleSpells.length > 0"
+              v-if="!battleSpellLoading && filteredBattleSpells.length > 0"
               v-model:currentPage="currentPage"
               v-model:itemsPerPage="itemsPerPage"
-              :totalItems="battleSpells.length"
+              :totalItems="filteredBattleSpells.length"
               :pageSizeOptions="[10, 25, 50]"
             />
           </div>
