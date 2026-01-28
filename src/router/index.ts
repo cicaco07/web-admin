@@ -7,10 +7,10 @@ import DataSkill from '../views/data-hero/data-skill/DataSkill.vue';
 import SkillCreate from '../views/data-hero/data-skill/SkillCreate.vue';
 import SkillEdit from '../views/data-hero/data-skill/SkillEdit.vue';
 // import DataBaseStat from '../views/data-hero/DataBaseStat.vue';
-import DataItem from '../views/data-persiapan/DataItem.vue';
+import DataItem from '../views/data-persiapan/data-item/DataItem.vue';
 import NotFound from '../components/Error/NotFound.vue';
-import DataEmblem from '../views/data-persiapan/DataEmblem.vue';
-import DataBattleSpell from '../views/data-persiapan/DataBattleSpell.vue';
+import DataEmblem from '../views/data-persiapan/data-emblem/DataEmblem.vue';
+import DataBattleSpell from '../views/data-persiapan/data-battlespell/DataBattleSpell.vue';
 import NavigationList from '../views/navigasi/data-navigasi/NavigationList.vue';
 
 const router = createRouter({
