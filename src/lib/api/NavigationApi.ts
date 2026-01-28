@@ -113,6 +113,7 @@ export function useGetNavigationTree(token: string) {
 
 export function useGetUserNavigations(token: string) {
   return useQuery(GET_USER_NAVIGATIONS, {
+    fetchPolicy: 'cache-first',
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -123,6 +124,7 @@ export function useGetUserNavigations(token: string) {
 
 export function useCreateNavigation(token: string) {
   const { mutate: createNavigation, onDone, onError } = useMutation(CREATE_NAVIGATION, {
+    refetchQueries: ['getUserNavigations', 'getNavigationTree'],
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -134,6 +136,7 @@ export function useCreateNavigation(token: string) {
 
 export function useUpdateNavigation(token: string) {
   const { mutate: updateNavigation, onDone, onError } = useMutation(UPDATE_NAVIGATION, {
+    refetchQueries: ['getUserNavigations', 'getNavigationTree'],
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -146,6 +149,7 @@ export function useUpdateNavigation(token: string) {
 
 export function useDeleteNavigation(token: string) {
   const { mutate: deleteNavigation, onDone, onError } = useMutation(REMOVE_NAVIGATION, {
+    refetchQueries: ['getUserNavigations', 'getNavigationTree'],
     context: {
       headers: {
         Authorization: `Bearer ${token}`,

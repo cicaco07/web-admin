@@ -90,10 +90,6 @@ watch(navigations, (newNavigations) => {
   }
 }, { immediate: true });
 
-onMounted(async () => {
-  // Refetch untuk memastikan data terbaru
-  await refetch();
-});
 </script>
 
 <template>
