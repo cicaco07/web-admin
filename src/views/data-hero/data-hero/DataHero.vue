@@ -19,13 +19,53 @@ import { useHeroService } from '../../../lib/service/HeroService';
 
 // Types
 import type { Hero, HeroFormData } from '../../../types/Hero';
-import { createDefaultHeroForm } from '../../../types/Hero';
+import { createDefaultHeroForm, HERO_TYPE_OPTIONS, HERO_ROLE_OPTIONS } from '../../../types/Hero';
 
 // ==================== Data Fetching ====================
-const { result: heroResult, refetch } = useHeroes();
+const { result: heroResult, loading: heroLoading, refetch } = useHeroes();
 const heroes = computed<Hero[]>(() => heroResult.value?.heroes || []);
 const safeRefetch = async () => (await refetch()) ?? Promise.resolve();
 const { handleAddHero, handleEditHero, handleDeleteHero } = useHeroService(safeRefetch);
+
+// ==================== Search & Filter ====================
+const searchQuery = ref('');
+const selectedFilterRole = ref('');
+const selectedFilterType = ref('');
+
+const filteredHeroes = computed(() => {
+  let filtered = heroes.value;
+
+  // Filter by search query
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase().trim();
+    filtered = filtered.filter(hero => 
+      hero.name.toLowerCase().includes(query) ||
+      hero.alias.toLowerCase().includes(query) ||
+      hero.speciality.toLowerCase().includes(query) ||
+      hero.region.toLowerCase().includes(query)
+    );
+  }
+
+  // Filter by role
+  if (selectedFilterRole.value) {
+    filtered = filtered.filter(hero => 
+      Array.isArray(hero.role) 
+        ? hero.role.includes(selectedFilterRole.value)
+        : hero.role === selectedFilterRole.value
+    );
+  }
+
+  // Filter by type
+  if (selectedFilterType.value) {
+    filtered = filtered.filter(hero => 
+      Array.isArray(hero.type) 
+        ? hero.type.includes(selectedFilterType.value)
+        : hero.type === selectedFilterType.value
+    );
+  }
+
+  return filtered;
+});
 
 // ==================== Pagination ====================
 const currentPage = ref(1);
@@ -34,7 +74,7 @@ const itemsPerPage = ref(10);
 const paginatedHeroes = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value;
   const end = start + itemsPerPage.value;
-  return heroes.value.slice(start, end);
+  return filteredHeroes.value.slice(start, end);
 });
 
 const getRowNumber = (index: number) => {
@@ -111,17 +151,103 @@ const toArray = (value: string | string[]): string[] => {
           </div>
 
           <div class="card-body">
-            <!-- Add Button -->
-            <div class="d-flex justify-content-end mb-3">
-              <ModalButton 
-                variant="info"
-                font="medium"
-                size="lg"
-                dataBsTarget="add-hero"
-              >
-                <i class="ti ti-plus me-1"></i>
-                Tambah Data Hero
-              </ModalButton>
+            <!-- Search & Filter Section -->
+            <div class="row mb-3">
+              <div class="col-md-5">
+                <div class="input-group">
+                  <span class="input-group-text bg-primary text-white">
+                    <i class="ti ti-search"></i>
+                  </span>
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    placeholder="Cari nama, alias, spesialitas, atau region..."
+                    v-model="searchQuery"
+                    @keyup="currentPage = 1"
+                  >
+                  <button 
+                    v-if="searchQuery"
+                    class="btn btn-outline-secondary"
+                    type="button"
+                    @click="searchQuery = ''; currentPage = 1"
+                  >
+                    <i class="ti ti-x"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <select 
+                  class="form-select" 
+                  v-model="selectedFilterRole"
+                  @change="currentPage = 1"
+                >
+                  <option value="">Semua Role</option>
+                  <option 
+                    v-for="role in HERO_ROLE_OPTIONS" 
+                    :key="role" 
+                    :value="role"
+                  >
+                    {{ role }}
+                  </option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <select 
+                  class="form-select" 
+                  v-model="selectedFilterType"
+                  @change="currentPage = 1"
+                >
+                  <option value="">Semua Tipe</option>
+                  <option 
+                    v-for="type in HERO_TYPE_OPTIONS" 
+                    :key="type" 
+                    :value="type"
+                  >
+                    {{ type }}
+                  </option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <button 
+                  class="btn btn-outline-secondary w-100"
+                  @click="searchQuery = ''; selectedFilterRole = ''; selectedFilterType = ''; currentPage = 1"
+                >
+                  <i class="ti ti-refresh me-1"></i>
+                  Reset Filter
+                </button>
+              </div>
+            </div>
+
+            <!-- Add Hero Button -->
+            <div class="row mb-3">
+              <div class="col-md-12 d-flex justify-content-end">
+                <ModalButton 
+                  variant="info"
+                  font="medium"
+                  size="lg"
+                  dataBsTarget="add-hero"
+                >
+                  <i class="ti ti-plus me-1"></i>
+                  Tambah Hero
+                </ModalButton>
+              </div>
+            </div>
+
+            <!-- Filter Info -->
+            <div v-if="searchQuery || selectedFilterRole || selectedFilterType" class="alert alert-info py-2 mb-3">
+              <div class="d-flex align-items-center">
+                <i class="ti ti-filter me-2"></i>
+                <span>Menampilkan {{ filteredHeroes.length }} dari {{ heroes.length }} hero</span>
+                <span v-if="searchQuery" class="ms-2">
+                  | Pencarian: <strong>{{ searchQuery }}</strong>
+                </span>
+                <span v-if="selectedFilterRole" class="ms-2">
+                  | Role: <strong>{{ selectedFilterRole }}</strong>
+                </span>
+                <span v-if="selectedFilterType" class="ms-2">
+                  | Tipe: <strong>{{ selectedFilterType }}</strong>
+                </span>
+              </div>
             </div>
 
             <!-- Add Hero Modal -->
@@ -173,10 +299,24 @@ const toArray = (value: string | string[]): string[] => {
                   </tr>
                 </thead>
                 <tbody>
+                  <!-- Loading State -->
+                  <tr v-if="heroLoading">
+                    <td colspan="9" class="text-center py-5">
+                      <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Loading...</span>
+                      </div>
+                      <div class="mt-3 text-muted fw-semibold">
+                        Memuat data hero...
+                      </div>
+                    </td>
+                  </tr>
+
+                  <!-- Hero Data Rows -->
                   <tr
                     v-for="(hero, index) in paginatedHeroes"
                     :key="hero._id"
                     class="text-center align-middle"
+                    v-show="!heroLoading"
                   >
                     <td>{{ getRowNumber(index) }}</td>
                     <td class="fw-semibold">{{ hero.name }}</td>
@@ -257,8 +397,16 @@ const toArray = (value: string | string[]): string[] => {
                     </td>
                   </tr>
 
-                  <!-- Empty State -->
-                  <tr v-if="heroes.length === 0">
+                  <!-- Empty State - Filter Results -->
+                  <tr v-if="!heroLoading && paginatedHeroes.length === 0 && heroes.length > 0">
+                    <td colspan="9" class="text-center py-4 text-muted">
+                      <i class="ti ti-filter-off fs-1 d-block mb-2"></i>
+                      Tidak ada hero yang sesuai dengan filter
+                    </td>
+                  </tr>
+
+                  <!-- Empty State - No Data -->
+                  <tr v-if="!heroLoading && heroes.length === 0">
                     <td colspan="9" class="text-center py-4 text-muted">
                       <i class="ti ti-database-off fs-1 d-block mb-2"></i>
                       Tidak ada data hero
@@ -270,10 +418,10 @@ const toArray = (value: string | string[]): string[] => {
 
             <!-- Pagination -->
             <TablePagination
-              v-if="heroes.length > 0"
+              v-if="!heroLoading && filteredHeroes.length > 0"
               v-model:currentPage="currentPage"
               v-model:itemsPerPage="itemsPerPage"
-              :totalItems="heroes.length"
+              :totalItems="filteredHeroes.length"
               :pageSizeOptions="[10, 25, 50]"
             />
           </div>
