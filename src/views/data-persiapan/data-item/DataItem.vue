@@ -22,7 +22,7 @@ import { createDefaultItemForm, ITEM_TYPE_OPTIONS } from '../../../types/Item';
 
 // ==================== Data Fetching ====================
 const { result: itemResult, loading: itemLoading, refetch } = useItems();
-const items = computed(() => itemResult.value?.items || []);
+const items = computed<Item[]>(() => itemResult.value?.items || []);
 const safeRefetch = async () => (await refetch()) ?? Promise.resolve();
 const { handleAddItem, handleEditItem, handleDeleteItem } = useItemService(safeRefetch);
 
@@ -30,13 +30,13 @@ const { handleAddItem, handleEditItem, handleDeleteItem } = useItemService(safeR
 const searchQuery = ref('');
 const selectedFilterType = ref('');
 
-const filteredItems = computed(() => {
+const filteredItems = computed<Item[]>(() => {
   let filtered = items.value;
 
   // Filter by search query
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase().trim();
-    filtered = filtered.filter(item => 
+    filtered = filtered.filter((item: Item) => 
       item.name.toLowerCase().includes(query) ||
       item.tag.toLowerCase().includes(query) ||
       item.type.toLowerCase().includes(query) ||
@@ -46,7 +46,7 @@ const filteredItems = computed(() => {
 
   // Filter by type
   if (selectedFilterType.value) {
-    filtered = filtered.filter(item => item.type === selectedFilterType.value);
+    filtered = filtered.filter((item: Item) => item.type === selectedFilterType.value);
   }
 
   return filtered;
@@ -56,7 +56,7 @@ const filteredItems = computed(() => {
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
 
-const paginatedItems = computed(() => {
+const paginatedItems = computed<Item[]>(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value;
   const end = start + itemsPerPage.value;
   return filteredItems.value.slice(start, end);

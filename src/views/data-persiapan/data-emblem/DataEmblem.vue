@@ -36,7 +36,7 @@ const filteredEmblems = computed(() => {
   // Filter by search query
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase().trim();
-    filtered = filtered.filter(emblem => 
+    filtered = filtered.filter((emblem: Emblem) => 
       emblem.name.toLowerCase().includes(query) ||
       emblem.type.toLowerCase().includes(query) ||
       (emblem.benefit && emblem.benefit.toLowerCase().includes(query)) ||
@@ -46,7 +46,7 @@ const filteredEmblems = computed(() => {
 
   // Filter by type
   if (selectedFilterType.value) {
-    filtered = filtered.filter(emblem => emblem.type === selectedFilterType.value);
+    filtered = filtered.filter((emblem: Emblem) => emblem.type === selectedFilterType.value);
   }
 
   return filtered;

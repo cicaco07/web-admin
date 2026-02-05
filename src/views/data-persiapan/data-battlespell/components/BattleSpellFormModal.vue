@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+// Removed unused imports
 import Modal from '../../../../components/Modal/Modal.vue';
 import ModalHeader from '../../../../components/Modal/ModalHeader.vue';
 import ModalBody from '../../../../components/Modal/ModalBody.vue';
@@ -23,60 +23,11 @@ const emit = defineEmits<{
   (e: 'update:battleSpellForm', value: BattleSpellFormData): void;
 }>();
 
-const imagePreview = ref<string | null>(null);
-const fileInput = ref<HTMLInputElement | null>(null);
-
 const updateFormField = <K extends keyof BattleSpellFormData>(field: K, value: BattleSpellFormData[K]) => {
   emit('update:battleSpellForm', { ...props.battleSpellForm, [field]: value });
 };
 
-// Reset preview when form changes (for edit modal)
-watch(() => props.battleSpellForm, () => {
-  imagePreview.value = null;
-  if (fileInput.value) {
-    fileInput.value.value = '';
-  }
-}, { deep: true });
-
-const handleFileChange = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  const file = target.files?.[0];
-  
-  if (file) {
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      alert('Please select a valid image file (JPEG, PNG, GIF, WebP)');
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      alert('File size must be less than 5MB');
-      return;
-    }
-
-    updateFormField('icon', file);
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      imagePreview.value = e.target?.result as string;
-    };
-    reader.readAsDataURL(file);
-  }
-};
-
-const removeImage = () => {
-  updateFormField('icon', null);
-  imagePreview.value = null;
-  if (fileInput.value) {
-    fileInput.value.value = '';
-  }
-};
-
 const handleCancel = () => {
-  imagePreview.value = null;
-  if (fileInput.value) {
-    fileInput.value.value = '';
-  }
   emit('cancel');
 };
 </script>
@@ -121,54 +72,15 @@ const handleCancel = () => {
         <div class="row">
           <div class="col-md-12">
             <div class="mb-3">
-              <label class="form-label fw-semibold">
-                Icon <span class="text-danger">*</span>
-              </label>
-              <input
-                ref="fileInput"
-                type="file"
-                class="form-control"
-                accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
-                @change="handleFileChange"
+              <FormInput 
+                type="text" 
+                label="Icon URL"
+                :modelValue="battleSpellForm.icon as string"
+                @update:modelValue="updateFormField('icon', $event)"
+                required
               />
-              <div class="form-text">
-                Upload icon (JPEG, PNG, GIF, WebP) - Max: 5MB
-              </div>
-
-              <!-- Image Previews -->
-              <div class="d-flex gap-4 mt-3">
-                <!-- Original Icon (edit mode) -->
-                <div v-if="originalIcon">
-                  <label class="form-label">Current Image</label>
-                  <div>
-                    <img
-                      :src="`http://localhost:3000${originalIcon}`"
-                      alt="Current icon"
-                      class="img-thumbnail"
-                      style="max-width: 100px; max-height: 100px; object-fit: cover;"
-                    />
-                  </div>
-                </div>
-
-                <!-- New Image Preview -->
-                <div v-if="imagePreview">
-                  <label class="form-label">{{ originalIcon ? 'New Image' : 'Preview' }}</label>
-                  <div class="d-flex align-items-center gap-3">
-                    <img
-                      :src="imagePreview"
-                      alt="Icon preview"
-                      class="img-thumbnail"
-                      style="max-width: 100px; max-height: 100px; object-fit: cover; border: 2px solid #28a745;"
-                    />
-                    <button
-                      type="button"
-                      class="btn btn-sm btn-outline-danger"
-                      @click="removeImage"
-                    >
-                      <i class="ti ti-trash"></i> Remove
-                    </button>
-                  </div>
-                </div>
+              <div class="form-text mt-n2 mb-2">
+                Masukkan URL gambar icon
               </div>
             </div>
           </div>

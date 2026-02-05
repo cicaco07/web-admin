@@ -137,7 +137,7 @@ const selectedHeroName = computed(() => {
           required
         />
         <small class="text-muted">
-          Gunakan <code>{{attribute_name}}</code> untuk nilai yang berubah berdasarkan level
+          Gunakan <code v-pre>{{attribute_name}}</code> untuk nilai yang berubah berdasarkan level
         </small>
       </div>
     </div>

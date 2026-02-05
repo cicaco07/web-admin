@@ -35,7 +35,7 @@ const filteredBattleSpells = computed(() => {
   // Filter by search query
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase().trim();
-    filtered = filtered.filter(spell => 
+    filtered = filtered.filter((spell: BattleSpell) => 
       spell.name.toLowerCase().includes(query) ||
       spell.tag.toLowerCase().includes(query) ||
       spell.description.toLowerCase().includes(query)
@@ -266,12 +266,12 @@ const onEditBattleSpell = async () => {
                     class="text-center align-middle"
                     v-show="!battleSpellLoading"
                   >
-                    <td>{{ getRowNumber(index) }}</td>
+                    <td>{{ getRowNumber(Number(index)) }}</td>
                     <td>{{ spell.name }}</td>
                     <td>{{ spell.tag }}</td>
                     <td>
                       <img 
-                        :src="`http://localhost:3000${spell.icon}`" 
+                        :src="`${spell.icon}`" 
                         alt="Icon" 
                         class="rounded" 
                         style="width: 50px; height: 50px;" 
