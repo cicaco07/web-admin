@@ -1,3 +1,7 @@
+<script setup lang="ts">
+import errorImg from '/dist/images/backgrounds/errorimg.svg';
+</script>
+
 <template>
   <div class="page-wrapper" id="main-wrapper" data-layout="vertical" data-sidebartype="full" data-sidebar-position="fixed" data-header-position="fixed">
     <div class="position-relative overflow-hidden min-vh-100 d-flex align-items-center justify-content-center">
@@ -5,7 +9,7 @@
         <div class="row justify-content-center w-100">
           <div class="col-lg-4">
             <div class="text-center">
-              <img src="/dist/images/backgrounds/errorimg.svg" alt="" class="img-fluid" width="500">
+              <img :src="errorImg" alt="Error page illustration" class="img-fluid" width="500">
               <h1 class="fw-semibold mb-7 fs-9">Opps!!!</h1>
               <h4 class="fw-semibold mb-7">This page you are looking for could not be found.</h4>
               <!-- <a class="btn btn-primary" href="./index.html" role="button">Go Back to Home</a> -->
