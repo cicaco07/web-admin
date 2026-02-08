@@ -1,6 +1,34 @@
 <script setup lang="ts">
 import { useAuthService } from '../../lib/service/AuthService';
 
+// Import SVG icons
+import iconChat from '/dist/images/svgs/icon-dd-chat.svg';
+import iconInvoice from '/dist/images/svgs/icon-dd-invoice.svg';
+import iconMobile from '/dist/images/svgs/icon-dd-mobile.svg';
+import iconMessageBox from '/dist/images/svgs/icon-dd-message-box.svg';
+import iconCart from '/dist/images/svgs/icon-dd-cart.svg';
+import iconDate from '/dist/images/svgs/icon-dd-date.svg';
+import iconLifebuoy from '/dist/images/svgs/icon-dd-lifebuoy.svg';
+import iconApplication from '/dist/images/svgs/icon-dd-application.svg';
+import iconAccount from '/dist/images/svgs/icon-account.svg';
+import iconInbox from '/dist/images/svgs/icon-inbox.svg';
+import iconTasks from '/dist/images/svgs/icon-tasks.svg';
+
+// Import flag icons
+import iconFlagEn from '/dist/images/svgs/icon-flag-en.svg';
+import iconFlagCn from '/dist/images/svgs/icon-flag-cn.svg';
+import iconFlagFr from '/dist/images/svgs/icon-flag-fr.svg';
+import iconFlagSa from '/dist/images/svgs/icon-flag-sa.svg';
+
+// Import logo and images
+import darkLogo from '/dist/images/logos/dark-logo.svg';
+import unlimitedBg from '/dist/images/backgrounds/unlimited-bg.png';
+import userProfile1 from '/dist/images/profile/user-1.jpg';
+import userProfile2 from '/dist/images/profile/user-2.jpg';
+import userProfile3 from '/dist/images/profile/user-3.jpg';
+import userProfile4 from '/dist/images/profile/user-4.jpg';
+import userProfile5 from '/dist/images/profile/user-5.jpg';
+
 const { handleLogout } = useAuthService();
 </script>
 
@@ -33,7 +61,7 @@ const { handleLogout } = useAuthService();
                         <div class="position-relative">
                           <a href="./app-chat.html" class="d-flex align-items-center pb-9 position-relative text-decoration-none text-decoration-none text-decoration-none text-decoration-none">
                             <div class="bg-light rounded-1 me-3 p-6 d-flex align-items-center justify-content-center">
-                              <img src="/dist/images/svgs/icon-dd-chat.svg" alt="" class="img-fluid" width="24" height="24">
+                              <img :src="iconChat" alt="Chat icon" class="img-fluid" width="24" height="24">
                             </div>
                             <div class="d-inline-block">
                               <h6 class="mb-1 fw-semibold bg-hover-primary">Chat Application</h6>
@@ -42,7 +70,7 @@ const { handleLogout } = useAuthService();
                           </a>
                           <a href="./app-invoice.html" class="d-flex align-items-center pb-9 position-relative text-decoration-none text-decoration-none text-decoration-none text-decoration-none">
                             <div class="bg-light rounded-1 me-3 p-6 d-flex align-items-center justify-content-center">
-                              <img src="/dist/images/svgs/icon-dd-invoice.svg" alt="" class="img-fluid" width="24" height="24">
+                              <img :src="iconInvoice" alt="Invoice icon" class="img-fluid" width="24" height="24">
                             </div>
                             <div class="d-inline-block">
                               <h6 class="mb-1 fw-semibold bg-hover-primary">Invoice App</h6>
@@ -51,7 +79,7 @@ const { handleLogout } = useAuthService();
                           </a>
                           <a href="./app-contact2.html" class="d-flex align-items-center pb-9 position-relative text-decoration-none text-decoration-none text-decoration-none text-decoration-none">
                             <div class="bg-light rounded-1 me-3 p-6 d-flex align-items-center justify-content-center">
-                              <img src="/dist/images/svgs/icon-dd-mobile.svg" alt="" class="img-fluid" width="24" height="24">
+                              <img :src="iconMobile" alt="Mobile icon" class="img-fluid" width="24" height="24">
                             </div>
                             <div class="d-inline-block">
                               <h6 class="mb-1 fw-semibold bg-hover-primary">Contact Application</h6>
@@ -60,7 +88,7 @@ const { handleLogout } = useAuthService();
                           </a>
                           <a href="./app-email.html" class="d-flex align-items-center pb-9 position-relative text-decoration-none text-decoration-none text-decoration-none text-decoration-none">
                             <div class="bg-light rounded-1 me-3 p-6 d-flex align-items-center justify-content-center">
-                              <img src="/dist/images/svgs/icon-dd-message-box.svg" alt="" class="img-fluid" width="24" height="24">
+                              <img :src="iconMessageBox" alt="Message icon" class="img-fluid" width="24" height="24">
                             </div>
                             <div class="d-inline-block">
                               <h6 class="mb-1 fw-semibold bg-hover-primary">Email App</h6>
@@ -73,7 +101,7 @@ const { handleLogout } = useAuthService();
                         <div class="position-relative">
                           <a href="./page-user-profile.html" class="d-flex align-items-center pb-9 position-relative text-decoration-none text-decoration-none text-decoration-none text-decoration-none">
                             <div class="bg-light rounded-1 me-3 p-6 d-flex align-items-center justify-content-center">
-                              <img src="/dist/images/svgs/icon-dd-cart.svg" alt="" class="img-fluid" width="24" height="24">
+                              <img :src="iconCart" alt="Cart icon" class="img-fluid" width="24" height="24">
                             </div>
                             <div class="d-inline-block">
                               <h6 class="mb-1 fw-semibold bg-hover-primary">User Profile</h6>
@@ -82,7 +110,7 @@ const { handleLogout } = useAuthService();
                           </a>
                           <a href="./app-calendar.html" class="d-flex align-items-center pb-9 position-relative text-decoration-none text-decoration-none text-decoration-none text-decoration-none">
                             <div class="bg-light rounded-1 me-3 p-6 d-flex align-items-center justify-content-center">
-                              <img src="/dist/images/svgs/icon-dd-date.svg" alt="" class="img-fluid" width="24" height="24">
+                              <img :src="iconDate" alt="Calendar icon" class="img-fluid" width="24" height="24">
                             </div>
                             <div class="d-inline-block">
                               <h6 class="mb-1 fw-semibold bg-hover-primary">Calendar App</h6>
@@ -91,7 +119,7 @@ const { handleLogout } = useAuthService();
                           </a>
                           <a href="./app-contact.html" class="d-flex align-items-center pb-9 position-relative text-decoration-none text-decoration-none text-decoration-none text-decoration-none">
                             <div class="bg-light rounded-1 me-3 p-6 d-flex align-items-center justify-content-center">
-                              <img src="/dist/images/svgs/icon-dd-lifebuoy.svg" alt="" class="img-fluid" width="24" height="24">
+                              <img :src="iconLifebuoy" alt="Help icon" class="img-fluid" width="24" height="24">
                             </div>
                             <div class="d-inline-block">
                               <h6 class="mb-1 fw-semibold bg-hover-primary">Contact List Table</h6>
@@ -100,7 +128,7 @@ const { handleLogout } = useAuthService();
                           </a>
                           <a href="./app-notes.html" class="d-flex align-items-center pb-9 position-relative text-decoration-none text-decoration-none text-decoration-none text-decoration-none">
                             <div class="bg-light rounded-1 me-3 p-6 d-flex align-items-center justify-content-center">
-                              <img src="/dist/images/svgs/icon-dd-application.svg" alt="" class="img-fluid" width="24" height="24">
+                              <img :src="iconApplication" alt="Application icon" class="img-fluid" width="24" height="24">
                             </div>
                             <div class="d-inline-block">
                               <h6 class="mb-1 fw-semibold bg-hover-primary">Notes Application</h6>
@@ -165,7 +193,7 @@ const { handleLogout } = useAuthService();
         </li>
       </ul>
       <div class="d-block d-lg-none">
-        <img src="/dist/images/logos/dark-logo.svg" class="dark-logo" width="180" alt="" />
+        <img :src="darkLogo" class="dark-logo" width="180" alt="Logo" />
       </div>
       <button class="navbar-toggler p-0 border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="p-2">
@@ -180,31 +208,31 @@ const { handleLogout } = useAuthService();
           <ul class="navbar-nav flex-row ms-auto align-items-center justify-content-center">
             <li class="nav-item dropdown">
               <a class="nav-link nav-icon-hover" href="javascript:void(0)" id="drop2" data-bs-toggle="dropdown" aria-expanded="false">
-                <img src="/dist/images/svgs/icon-flag-en.svg" alt="" class="rounded-circle object-fit-cover round-20">
+                <img :src="iconFlagEn" alt="English flag" class="rounded-circle object-fit-cover round-20">
               </a>
               <div class="dropdown-menu dropdown-menu-end dropdown-menu-animate-up" aria-labelledby="drop2">
                 <div class="message-body" data-simplebar>
                   <a href="javascript:void(0)" class="d-flex align-items-center gap-2 py-3 px-4 dropdown-item">
                     <div class="position-relative">
-                      <img src="/dist/images/svgs/icon-flag-en.svg" alt="" class="rounded-circle object-fit-cover round-20">
+                      <img :src="iconFlagEn" alt="English flag" class="rounded-circle object-fit-cover round-20">
                     </div>
                     <p class="mb-0 fs-3">English (UK)</p>
                   </a>
                   <a href="javascript:void(0)" class="d-flex align-items-center gap-2 py-3 px-4 dropdown-item">
                     <div class="position-relative">
-                      <img src="/dist/images/svgs/icon-flag-cn.svg" alt="" class="rounded-circle object-fit-cover round-20">
+                      <img :src="iconFlagCn" alt="Chinese flag" class="rounded-circle object-fit-cover round-20">
                     </div>
                     <p class="mb-0 fs-3">中国人 (Chinese)</p>
                   </a>
                   <a href="javascript:void(0)" class="d-flex align-items-center gap-2 py-3 px-4 dropdown-item">
                     <div class="position-relative">
-                      <img src="/dist/images/svgs/icon-flag-fr.svg" alt="" class="rounded-circle object-fit-cover round-20">
+                      <img :src="iconFlagFr" alt="French flag" class="rounded-circle object-fit-cover round-20">
                     </div>
                     <p class="mb-0 fs-3">français (French)</p>
                   </a>
                   <a href="javascript:void(0)" class="d-flex align-items-center gap-2 py-3 px-4 dropdown-item">
                     <div class="position-relative">
-                      <img src="/dist/images/svgs/icon-flag-sa.svg" alt="" class="rounded-circle object-fit-cover round-20">
+                      <img :src="iconFlagSa" alt="Arabic flag" class="rounded-circle object-fit-cover round-20">
                     </div>
                     <p class="mb-0 fs-3">عربي (Arabic)</p>
                   </a>
@@ -230,7 +258,7 @@ const { handleLogout } = useAuthService();
                 <div class="message-body" data-simplebar>
                   <a href="javascript:void(0)" class="py-6 px-7 d-flex align-items-center dropdown-item">
                     <span class="me-3">
-                      <img src="/dist/images/profile/user-1.jpg" alt="user" class="rounded-circle" width="48" height="48" />
+                      <img :src="userProfile1" alt="user" class="rounded-circle" width="48" height="48" />
                     </span>
                     <div class="w-75 d-inline-block v-middle">
                       <h6 class="mb-1 fw-semibold">Roman Joined the Team!</h6>
@@ -239,7 +267,7 @@ const { handleLogout } = useAuthService();
                   </a>
                   <a href="javascript:void(0)" class="py-6 px-7 d-flex align-items-center dropdown-item">
                     <span class="me-3">
-                      <img src="/dist/images/profile/user-2.jpg" alt="user" class="rounded-circle" width="48" height="48" />
+                      <img :src="userProfile2" alt="user" class="rounded-circle" width="48" height="48" />
                     </span>
                     <div class="w-75 d-inline-block v-middle">
                       <h6 class="mb-1 fw-semibold">New message</h6>
@@ -248,7 +276,7 @@ const { handleLogout } = useAuthService();
                   </a>
                   <a href="javascript:void(0)" class="py-6 px-7 d-flex align-items-center dropdown-item">
                     <span class="me-3">
-                      <img src="/dist/images/profile/user-3.jpg" alt="user" class="rounded-circle" width="48" height="48" />
+                      <img :src="userProfile3" alt="user" class="rounded-circle" width="48" height="48" />
                     </span>
                     <div class="w-75 d-inline-block v-middle">
                       <h6 class="mb-1 fw-semibold">Bianca sent payment</h6>
@@ -257,7 +285,7 @@ const { handleLogout } = useAuthService();
                   </a>
                   <a href="javascript:void(0)" class="py-6 px-7 d-flex align-items-center dropdown-item">
                     <span class="me-3">
-                      <img src="/dist/images/profile/user-4.jpg" alt="user" class="rounded-circle" width="48" height="48" />
+                      <img :src="userProfile4" alt="user" class="rounded-circle" width="48" height="48" />
                     </span>
                     <div class="w-75 d-inline-block v-middle">
                       <h6 class="mb-1 fw-semibold">Jolly completed tasks</h6>
@@ -266,7 +294,7 @@ const { handleLogout } = useAuthService();
                   </a>
                   <a href="javascript:void(0)" class="py-6 px-7 d-flex align-items-center dropdown-item">
                     <span class="me-3">
-                      <img src="/dist/images/profile/user-5.jpg" alt="user" class="rounded-circle" width="48" height="48" />
+                      <img :src="userProfile5" alt="user" class="rounded-circle" width="48" height="48" />
                     </span>
                     <div class="w-75 d-inline-block v-middle">
                       <h6 class="mb-1 fw-semibold">John received payment</h6>
@@ -292,7 +320,7 @@ const { handleLogout } = useAuthService();
               <a class="nav-link pe-0" href="javascript:void(0)" id="drop1" data-bs-toggle="dropdown" aria-expanded="false">
                 <div class="d-flex align-items-center">
                   <div class="user-profile-img">
-                    <img src="/dist/images/profile/user-1.jpg" class="rounded-circle" width="35" height="35" alt="" />
+                    <img :src="userProfile1" class="rounded-circle" width="35" height="35" alt="User profile" />
                   </div>
                 </div>
               </a>
@@ -302,7 +330,7 @@ const { handleLogout } = useAuthService();
                     <h5 class="mb-0 fs-5 fw-semibold">User Profile</h5>
                   </div>
                   <div class="d-flex align-items-center py-9 mx-7 border-bottom">
-                    <img src="/dist/images/profile/user-1.jpg" class="rounded-circle" width="80" height="80" alt="" />
+                    <img :src="userProfile1" class="rounded-circle" width="80" height="80" alt="User profile" />
                     <div class="ms-3">
                       <h5 class="mb-1 fs-3">Mathew Anderson</h5>
                       <span class="mb-1 d-block text-dark">Designer</span>
@@ -314,7 +342,7 @@ const { handleLogout } = useAuthService();
                   <div class="message-body">
                     <a href="./page-user-profile.html" class="py-8 px-7 mt-8 d-flex align-items-center">
                       <span class="d-flex align-items-center justify-content-center bg-light rounded-1 p-6">
-                        <img src="/dist/images/svgs/icon-account.svg" alt="" width="24" height="24">
+                        <img :src="iconAccount" alt="Account icon" width="24" height="24">
                       </span>
                       <div class="w-75 d-inline-block v-middle ps-3">
                         <h6 class="mb-1 bg-hover-primary fw-semibold"> My Profile </h6>
@@ -323,7 +351,7 @@ const { handleLogout } = useAuthService();
                     </a>
                     <a href="./app-email.html" class="py-8 px-7 d-flex align-items-center">
                       <span class="d-flex align-items-center justify-content-center bg-light rounded-1 p-6">
-                        <img src="/dist/images/svgs/icon-inbox.svg" alt="" width="24" height="24">
+                        <img :src="iconInbox" alt="Inbox icon" width="24" height="24">
                       </span>
                       <div class="w-75 d-inline-block v-middle ps-3">
                         <h6 class="mb-1 bg-hover-primary fw-semibold">My Inbox</h6>
@@ -332,7 +360,7 @@ const { handleLogout } = useAuthService();
                     </a>
                     <a href="./app-notes.html" class="py-8 px-7 d-flex align-items-center">
                       <span class="d-flex align-items-center justify-content-center bg-light rounded-1 p-6">
-                        <img src="/dist/images/svgs/icon-tasks.svg" alt="" width="24" height="24">
+                        <img :src="iconTasks" alt="Tasks icon" width="24" height="24">
                       </span>
                       <div class="w-75 d-inline-block v-middle ps-3">
                         <h6 class="mb-1 bg-hover-primary fw-semibold">My Task</h6>
@@ -349,7 +377,7 @@ const { handleLogout } = useAuthService();
                         </div>
                         <div class="col-6">
                           <div class="m-n4">
-                            <img src="/dist/images/backgrounds/unlimited-bg.png" alt="" class="w-100">
+                            <img :src="unlimitedBg" alt="Unlimited background" class="w-100">
                           </div>
                         </div>
                       </div>

@@ -2,6 +2,10 @@
 import { reactive, computed, watch } from 'vue';
 import { useGetUserNavigations } from '../../lib/api/NavigationApi';
 
+// Import images
+import darkLogo from '/dist/images/logos/dark-logo.svg';
+import userProfile1 from '/dist/images/profile/user-1.jpg';
+
 const token = localStorage.getItem('token') ?? '';
 if (!token) {
   console.error('No token found in localStorage');
@@ -97,7 +101,7 @@ watch(navigations, (newNavigations) => {
     <div>
       <div class="brand-logo d-flex align-items-center justify-content-between">
         <a href="#" class="text-nowrap logo-img">
-          <img src="/dist/images/logos/dark-logo.svg" class="dark-logo" width="180" alt="" />
+          <img :src="darkLogo" class="dark-logo" width="180" alt="Logo" />
         </a>
         <div class="close-btn d-lg-none d-block sidebartoggler cursor-pointer" id="sidebarCollapse">
           <i class="ti ti-x fs-8 text-muted"></i>
@@ -187,7 +191,7 @@ watch(navigations, (newNavigations) => {
       <div class="fixed-profile p-3 bg-light-secondary rounded sidebar-ad mt-3">
         <div class="hstack gap-3">
           <div class="john-img">
-            <img src="/dist/images/profile/user-1.jpg" class="rounded-circle" width="40" height="40" alt="">
+            <img :src="userProfile1" class="rounded-circle" width="40" height="40" alt="User profile">
           </div>
           <div class="john-title">
             <h6 class="mb-0 fs-4 fw-semibold">Mathew</h6>

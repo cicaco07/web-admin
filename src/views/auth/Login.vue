@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import googleIcon from '/dist/images/svgs/google-icon.svg';
 import AuthLayout from '../../components/Auth/AuthLayout.vue';
 import { useAuthService } from '../../lib/service/AuthService';
 
@@ -10,7 +11,7 @@ const { email, password, loading, error, handleLogin } = useAuthService();
     <div class="row">
       <div class="col-12 mb-2 mb-sm-0">
         <a class="btn btn-white text-dark border fw-normal d-flex align-items-center justify-content-center rounded-2 py-8" href="javascript:void(0)" role="button">
-          <img src="/dist/images/svgs/google-icon.svg" alt="" class="img-fluid me-2" width="18" height="18">
+          <img :src="googleIcon" alt="Google icon" class="img-fluid me-2" width="18" height="18">
           <span class="d-none d-sm-block me-1 flex-shrink-0">Sign in with</span>Google
         </a>
       </div>
