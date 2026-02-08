@@ -11,8 +11,8 @@ defineProps<{
   item: Item | null;
 }>();
 
-const getTypeBadgeColor = (type: string): string => {
-  const colors: Record<string, string> = {
+const getTypeBadgeColor = (type: string): "info" | "primary" | "danger" | "success" | "warning" | "secondary" | "light" | "dark" => {
+  const colors: Record<string, "info" | "primary" | "danger" | "success" | "warning" | "secondary" | "light" | "dark"> = {
     'Attack': 'danger',
     'Magic': 'info',
     'Defense': 'success',

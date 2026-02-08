@@ -5,7 +5,7 @@ import ModalHeader from '../../../../components/Modal/ModalHeader.vue';
 import ModalBody from '../../../../components/Modal/ModalBody.vue';
 import Button from '../../../../components/Button/Button.vue';
 import Badge from '../../../../components/Badge/Badge.vue';
-import type { Skill, SkillDetail } from '../../../../types/Skill';
+import type { Skill } from '../../../../types/Skill';
 
 interface SkillDetailWithLevel {
   level: number;

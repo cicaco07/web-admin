@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 
 // Layout & Components
@@ -127,22 +127,6 @@ const canProceedStep2 = computed(() => {
   if (f.levelCount <= 0 || f.attributeCount <= 0) return false;
   return f.attributeKeys.every(key => key.trim() !== '');
 });
-
-// ==================== Skill Detail Generation ====================
-const generateSkillDetailInput = () => {
-  return Array.from({ length: skillDetailForm.value.levelCount }, (_, levelIndex) => {
-    const attributes: Record<string, number> = {};
-    skillDetailForm.value.attributeKeys.forEach((key, attrIdx) => {
-      const rawValue = skillDetailForm.value.formValues[attrIdx]?.[levelIndex] || '0';
-      const parsed = parseFloat(rawValue);
-      attributes[key] = isNaN(parsed) ? 0 : parsed;
-    });
-    return {
-      level: levelIndex + 1,
-      attributes,
-    };
-  });
-};
 
 // ==================== Navigation ====================
 const nextStep = () => {

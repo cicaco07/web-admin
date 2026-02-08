@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { onMounted, reactive, computed, watch } from 'vue';
+import { reactive, computed, watch } from 'vue';
 import { useGetUserNavigations } from '../../lib/api/NavigationApi';
 
 const token = localStorage.getItem('token') ?? '';
 if (!token) {
   console.error('No token found in localStorage');
 }
-const { result: navigationResult, loading, refetch } = useGetUserNavigations(token);
+const { result: navigationResult, loading } = useGetUserNavigations(token);
 const navigations = computed(() => navigationResult.value?.getUserNavigations || []);
 
 interface NavigationItem {

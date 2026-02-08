@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue';
+import { computed } from 'vue';
 import type { SkillDetailFormData } from '../../../../types/Skill';
 
 const props = defineProps<{

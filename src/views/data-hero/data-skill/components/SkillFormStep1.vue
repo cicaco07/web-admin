@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { computed } from 'vue';
 import type { SkillFormData } from '../../../../types/Skill';
 import { SKILL_TAG_OPTIONS } from '../../../../types/Skill';
 import type { Hero } from '../../../../types/Hero';
@@ -23,11 +22,6 @@ const tagOptions = [...SKILL_TAG_OPTIONS];
 const updateField = <K extends keyof SkillFormData>(field: K, value: SkillFormData[K]) => {
   emit('update:formData', { ...props.formData, [field]: value });
 };
-
-const selectedHeroName = computed(() => {
-  const hero = props.heroes.find(h => h._id === props.formData.heroId);
-  return hero?.name || '';
-});
 </script>
 
 <template>

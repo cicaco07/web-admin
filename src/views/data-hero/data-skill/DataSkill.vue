@@ -26,7 +26,7 @@ import type { Skill, SkillDetail } from '../../../types/Skill';
 const router = useRouter();
 
 // ==================== Data Fetching ====================
-const { result: heroResult, refetch } = useHeroes();
+const { result: _heroResult, refetch } = useHeroes();
 const { result: skillResult, loading: skillLoading } = useSkills();
 const { result: skillDetailResult } = useSkillsDetail();
 const { deleteSkill } = useDeleteSkill();
