@@ -12,6 +12,10 @@ import NotFound from '../components/Error/NotFound.vue';
 import DataEmblem from '../views/data-persiapan/data-emblem/DataEmblem.vue';
 import DataBattleSpell from '../views/data-persiapan/data-battlespell/DataBattleSpell.vue';
 import NavigationList from '../views/navigasi/data-navigasi/NavigationList.vue';
+import TournamentTier1 from '../views/tournament/tier-1/TournamentTier1.vue';
+import TournamentTier2 from '../views/tournament/tier-2/TournamentTier2.vue';
+import TournamentList from '../views/tournament/tournament-list/TournamentList.vue';
+import TournamentDetail from '../views/tournament/tournament-detail/TournamentDetail.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -86,6 +90,33 @@ const router = createRouter({
           component: DataBattleSpell
         }
       ],
+    },
+    {
+      path: "/tournament",
+      name: "Tournament",
+      children: [
+        {
+          path: "tournament-list",
+          name: "TournamentList",
+          component: TournamentList,
+        },  
+        {
+          path: ":id",
+          name: "TournamentDetail",
+          component: TournamentDetail,
+          // props: true,
+        },
+        {
+          path: "tier-1",
+          name: "TournamentTier1",
+          component: TournamentTier1,
+        },
+        {
+          path: "tier-2",
+          name: "TournamentTier2",
+          component: TournamentTier2,
+        }
+      ]
     },
     {
       path: "/navigasi",
