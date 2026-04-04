@@ -16,6 +16,7 @@ import TournamentTier1 from '../views/tournament/tier-1/TournamentTier1.vue';
 import TournamentTier2 from '../views/tournament/tier-2/TournamentTier2.vue';
 import TournamentList from '../views/tournament/tournament-list/TournamentList.vue';
 import TournamentDetail from '../views/tournament/tournament-detail/TournamentDetail.vue';
+import DraftPickSimulation from '../views/draft-pick/simulation/DraftPickSimulation.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -116,6 +117,17 @@ const router = createRouter({
           name: "TournamentTier2",
           component: TournamentTier2,
         }
+      ]
+    },
+    {
+      path: "/draft-pick",
+      name: "DraftPick",
+      children: [
+        {
+          path: "simulation",
+          name: "DraftPickSimulation",
+          component: DraftPickSimulation,
+        },
       ]
     },
     {
