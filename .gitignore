@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+/.sisyphus
+clear-cache.js
+/.playwright-mcp

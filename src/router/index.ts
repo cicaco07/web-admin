@@ -6,7 +6,7 @@ import DataHero from '../views/data-hero/data-hero/DataHero.vue';
 import DataSkill from '../views/data-hero/data-skill/DataSkill.vue';
 import SkillCreate from '../views/data-hero/data-skill/SkillCreate.vue';
 import SkillEdit from '../views/data-hero/data-skill/SkillEdit.vue';
-// import DataBaseStat from '../views/data-hero/DataBaseStat.vue';
+import DataBaseStat from '../views/data-hero/data-base-stat/DataBaseStat.vue';
 import DataItem from '../views/data-persiapan/data-item/DataItem.vue';
 import NotFound from '../components/Error/NotFound.vue';
 import DataEmblem from '../views/data-persiapan/data-emblem/DataEmblem.vue';
@@ -17,6 +17,7 @@ import TournamentTier2 from '../views/tournament/tier-2/TournamentTier2.vue';
 import TournamentList from '../views/tournament/tournament-list/TournamentList.vue';
 import TournamentDetail from '../views/tournament/tournament-detail/TournamentDetail.vue';
 import DraftPickSimulation from '../views/draft-pick/simulation/DraftPickSimulation.vue';
+import BuildDasar from '../views/build/build-dasar/BuildDasar.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -64,11 +65,11 @@ const router = createRouter({
           name: "SkillEdit",
           component: SkillEdit,
         },
-        // {
-        //   path: "base-stat",
-        //   name: "BaseStat",
-        //   component: DataBaseStat,
-        // },
+        {
+          path: "base-stat",
+          name: "BaseStat",
+          component: DataBaseStat,
+        },
       ],
     },
     {
@@ -127,6 +128,17 @@ const router = createRouter({
           path: "simulation",
           name: "DraftPickSimulation",
           component: DraftPickSimulation,
+        },
+      ]
+    },
+    {
+      path: "/build",
+      name: "Build",
+      children: [
+        {
+          path: "build-dasar",
+          name: "BuildDasar",
+          component: BuildDasar,
         },
       ]
     },
