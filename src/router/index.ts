@@ -18,6 +18,12 @@ import TournamentList from '../views/tournament/tournament-list/TournamentList.v
 import TournamentDetail from '../views/tournament/tournament-detail/TournamentDetail.vue';
 import DraftPickSimulation from '../views/draft-pick/simulation/DraftPickSimulation.vue';
 import BuildDasar from '../views/build/build-dasar/BuildDasar.vue';
+import PatchList from '../views/patch-note/patch-list/PatchList.vue';
+import HeroPatchNote from '../views/patch-note/hero/HeroPatchNote.vue';
+import BattlefieldPatchNote from '../views/patch-note/battlefield/BattlefieldPatchNote.vue';
+import SystemPatchNote from '../views/patch-note/system/SystemPatchNote.vue';
+import GameModePatchNote from '../views/patch-note/game-mode/GameModePatchNote.vue';
+import UserManagement from '../views/user-management/UserManagement.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -143,8 +149,44 @@ const router = createRouter({
       ]
     },
     {
+      path: "/patch-note",
+      name: "PatchNote",
+      children: [
+        { 
+          path: "patch-list",
+          name: "PatchList",
+          component: PatchList
+        },
+        { 
+          path: "patch-hero", 
+          name: "PatchNoteHero", 
+          component: HeroPatchNote 
+        },
+        { 
+          path: "patch-battlefield", 
+          name: "PatchNoteBattlefield", 
+          component: BattlefieldPatchNote 
+        },
+        { 
+          path: "patch-system", 
+          name: "PatchNoteSistem", 
+          component: SystemPatchNote 
+        },
+        { 
+          path: "patch-game-mode", 
+          name: "PatchNoteModeGame", 
+          component: GameModePatchNote 
+        },
+      ],
+    },
+    {
       path: "/navigasi",
       component: NavigationList,
+    },
+    {
+      path: "/manajemen-user",
+      name: "UserManagement",
+      component: UserManagement,
     },
     {
       path: '/:pathMatch(.*)*',
