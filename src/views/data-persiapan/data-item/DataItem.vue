@@ -6,6 +6,7 @@ import DashboardLayout from '../../../components/DashboardLayout.vue';
 import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb.vue';
 import Button from '../../../components/Button/Button.vue';
 import ModalButton from '../../../components/Modal/ModalButton.vue';
+import ImportModal from '../../../components/Modal/ImportModal.vue';
 import TablePagination from '../../../components/Table/TablePagination.vue';
 
 // Item Components
@@ -13,8 +14,10 @@ import ItemFormModal from './components/ItemFormModal.vue';
 import ItemDetailModal from './components/ItemDetailModal.vue';
 
 // API & Services
-import { useItems } from '../../../lib/api/ItemApi';
+import { useCreateItem, useItems, useUpdateItem } from '../../../lib/api/ItemApi';
 import { useItemService } from '../../../lib/service/ItemService';
+import { alertError, alertSuccess } from '../../../lib/alert';
+import { downloadItemTemplate, exportItems, parseItemFile } from '../../../lib/excel/item.excel';
 
 // Types
 import type { Item, ItemFormData } from '../../../types/Item';
@@ -64,6 +67,14 @@ const paginatedItems = computed<Item[]>(() => {
 
 const getRowNumber = (index: number) => {
   return (currentPage.value - 1) * itemsPerPage.value + index + 1;
+};
+
+const activeFilterCount = computed(() => (selectedFilterType.value ? 1 : 0));
+
+const resetFilters = () => {
+  searchQuery.value = '';
+  selectedFilterType.value = '';
+  currentPage.value = 1;
 };
 
 // ==================== Form State ====================
@@ -130,6 +141,64 @@ const onEditItem = async (data: { attributes: string[]; description: string[] })
     isEditSubmitting.value = false;
   }
 };
+
+// ==================== Excel Import / Export ====================
+const isImporting = ref(false);
+const itemToken = (typeof localStorage !== 'undefined' && localStorage.getItem('token')) || '';
+const { createItem } = useCreateItem(itemToken);
+const { updateItem } = useUpdateItem(itemToken);
+
+const handleExport = () => {
+  if (items.value.length === 0) {
+    alertError('Tidak ada data item untuk diekspor.');
+    return;
+  }
+  exportItems(filteredItems.value.length ? filteredItems.value : items.value);
+};
+
+const handleDownloadTemplate = downloadItemTemplate;
+
+const handleImport = async (file: File) => {
+  isImporting.value = true;
+  try {
+    const inputs = await parseItemFile(file);
+    let createCount = 0;
+    let updateCount = 0;
+    const failures: string[] = [];
+
+    for (const input of inputs) {
+      try {
+        const existing = items.value.find((item) => item.name.toLowerCase() === input.name.toLowerCase());
+        const itemInput = { ...input, price: Number(input.price) };
+        if (existing) {
+          await updateItem({ id: existing._id, input: itemInput });
+          updateCount++;
+        } else {
+          await createItem({ input: itemInput });
+          createCount++;
+        }
+      } catch (err) {
+        failures.push(`${input.name || '(tanpa nama)'}: ${err instanceof Error ? err.message : 'gagal'}`);
+      }
+    }
+
+    await safeRefetch();
+
+    const successCount = createCount + updateCount;
+    if (failures.length === 0) {
+      alertSuccess(`Berhasil mengimpor ${successCount} item (${createCount} baru, ${updateCount} update).`);
+    } else if (successCount === 0) {
+      alertError(`Gagal mengimpor semua data. ${failures.slice(0, 3).join(' | ')}`);
+    } else {
+      alertSuccess(`Impor selesai: ${successCount} berhasil (${createCount} baru, ${updateCount} update), ${failures.length} gagal. ${failures.slice(0, 3).join(' | ')}`);
+    }
+  } catch (err) {
+    alertError(err instanceof Error ? err.message : 'Gagal memproses file.');
+    throw err;
+  } finally {
+    isImporting.value = false;
+  }
+};
 </script>
 
 <template>
@@ -151,9 +220,9 @@ const onEditItem = async (data: { attributes: string[]; description: string[] })
           </div>
 
           <div class="card-body">
-            <!-- Search & Filter Section -->
-            <div class="row mb-3">
-              <div class="col-md-8">
+            <!-- Search & Actions Section -->
+            <div class="row g-3 align-items-center mb-3">
+              <div class="col-12 col-lg-5">
                 <div class="input-group">
                   <span class="input-group-text bg-primary text-white">
                     <i class="ti ti-search"></i>
@@ -175,59 +244,115 @@ const onEditItem = async (data: { attributes: string[]; description: string[] })
                   </button>
                 </div>
               </div>
-              <div class="col-md-2">
-                <select 
-                  class="form-select" 
-                  v-model="selectedFilterType"
-                  @change="currentPage = 1"
-                >
-                  <option value="">Semua Tipe</option>
-                  <option 
-                    v-for="type in ITEM_TYPE_OPTIONS" 
-                    :key="type" 
-                    :value="type"
-                  >
-                    {{ type }}
-                  </option>
-                </select>
-              </div>
-              <div class="col-md-2">
-                <button 
-                  class="btn btn-outline-secondary w-100"
-                  @click="searchQuery = ''; selectedFilterType = ''; currentPage = 1"
-                >
-                  <i class="ti ti-refresh me-1"></i>
-                  Reset Filter
-                </button>
-              </div>
-            </div>
-
-            <!-- Add Item Button -->
-            <div class="row mb-3">
-              <div class="col-md-12 d-flex justify-content-end">
-                <ModalButton
-                  variant="info"
-                  font="medium"
-                  size="lg"
-                  dataBsTarget="add-item"
-                >
-                  <i class="ti ti-plus me-1"></i>
-                  Tambah Item
-                </ModalButton>
+              <div class="col-12 col-lg-7">
+                <div class="row g-2 hero-action-row">
+                  <div class="col-6 col-md-3">
+                    <button type="button" class="btn btn-success w-100 hero-action-btn" @click="handleExport">
+                      <i class="ti ti-file-export me-1"></i>
+                      Export Excel
+                    </button>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <button
+                      type="button"
+                      class="btn btn-primary w-100 hero-action-btn"
+                      data-bs-toggle="modal"
+                      data-bs-target="#import-item"
+                    >
+                      <i class="ti ti-file-import me-1"></i>
+                      Import Excel
+                    </button>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <button
+                      type="button"
+                      class="btn btn-outline-secondary w-100 hero-action-btn position-relative"
+                      data-bs-toggle="offcanvas"
+                      data-bs-target="#item-filter-offcanvas"
+                      aria-controls="item-filter-offcanvas"
+                    >
+                      <i class="ti ti-adjustments-horizontal me-1"></i>
+                      Filter
+                      <span
+                        v-if="activeFilterCount > 0"
+                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                      >
+                        {{ activeFilterCount }}
+                      </span>
+                    </button>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <button
+                      type="button"
+                      class="btn btn-info w-100 hero-action-btn"
+                      data-bs-toggle="modal"
+                      data-bs-target="#add-item"
+                    >
+                      <i class="ti ti-plus me-1"></i>
+                      Tambah Item
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
             <!-- Filter Info -->
-            <div v-if="searchQuery || selectedFilterType" class="alert alert-info py-2 mb-3">
-              <div class="d-flex align-items-center">
-                <i class="ti ti-filter me-2"></i>
-                <span>Menampilkan {{ filteredItems.length }} dari {{ items.length }} item</span>
-                <span v-if="searchQuery" class="ms-2">
-                  | Pencarian: <strong>{{ searchQuery }}</strong>
-                </span>
-                <span v-if="selectedFilterType" class="ms-2">
-                  | Tipe: <strong>{{ selectedFilterType }}</strong>
-                </span>
+            <div v-if="searchQuery || selectedFilterType" class="alert alert-info py-2 mb-3 d-flex align-items-center flex-wrap gap-2">
+              <i class="ti ti-filter"></i>
+              <span>Menampilkan <strong>{{ filteredItems.length }}</strong> dari <strong>{{ items.length }}</strong> item</span>
+              <span v-if="searchQuery" class="badge bg-primary-subtle text-primary">
+                Pencarian: {{ searchQuery }}
+              </span>
+              <span v-if="selectedFilterType" class="badge bg-info-subtle text-info">
+                Tipe: {{ selectedFilterType }}
+              </span>
+              <button type="button" class="btn btn-sm btn-outline-secondary ms-auto" @click="resetFilters">
+                <i class="ti ti-refresh me-1"></i> Reset
+              </button>
+            </div>
+
+            <!-- Filter Offcanvas -->
+            <div
+              class="offcanvas offcanvas-end"
+              tabindex="-1"
+              id="item-filter-offcanvas"
+              aria-labelledby="item-filter-offcanvas-label"
+            >
+              <div class="offcanvas-header border-bottom bg-light">
+                <h5 class="offcanvas-title d-flex align-items-center" id="item-filter-offcanvas-label">
+                  <i class="ti ti-adjustments-horizontal me-2 text-primary"></i>
+                  Filter Item
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+              </div>
+              <div class="offcanvas-body">
+                <div class="mb-4">
+                  <label class="form-label fw-semibold">
+                    <i class="ti ti-category me-1 text-info"></i>
+                    Tipe Item
+                  </label>
+                  <select class="form-select" v-model="selectedFilterType" @change="currentPage = 1">
+                    <option value="">Semua Tipe</option>
+                    <option v-for="type in ITEM_TYPE_OPTIONS" :key="type" :value="type">
+                      {{ type }}
+                    </option>
+                  </select>
+                  <small class="text-muted">Saring item berdasarkan kategori tipe.</small>
+                </div>
+
+                <div class="alert alert-light border d-flex align-items-center small mb-0">
+                  <i class="ti ti-info-circle me-2 text-primary"></i>
+                  Filter akan diterapkan otomatis saat dipilih.
+                </div>
+              </div>
+              <div class="offcanvas-footer border-top p-3 d-flex gap-2">
+                <button type="button" class="btn btn-outline-secondary flex-fill" @click="resetFilters">
+                  <i class="ti ti-refresh me-1"></i>
+                  Reset
+                </button>
+                <button type="button" class="btn btn-primary flex-fill" data-bs-dismiss="offcanvas">
+                  Selesai
+                </button>
               </div>
             </div>
 
@@ -259,6 +384,18 @@ const onEditItem = async (data: { attributes: string[]; description: string[] })
             <ItemDetailModal
               modalId="detail-item"
               :item="selectedItem"
+            />
+
+            <!-- Import Item Modal -->
+            <ImportModal
+              modalId="import-item"
+              title="Import Data Item"
+              templateFileName="template-data-item.xlsx"
+              templateHint="Template berisi 1 baris contoh dan sheet petunjuk pengisian. Pilihan tipe item valid ada pada sheet Petunjuk."
+              uploadHint="Pastikan kolom Atribut dipisahkan koma dan Deskripsi dipisahkan tanda | jika lebih dari satu baris."
+              :isImporting="isImporting"
+              :onDownloadTemplate="handleDownloadTemplate"
+              :onUpload="handleImport"
             />
 
             <!-- Table -->
@@ -384,3 +521,18 @@ const onEditItem = async (data: { attributes: string[]; description: string[] })
     </div>
   </DashboardLayout>
 </template>
+
+<style scoped>
+.hero-action-btn {
+  min-height: 42px;
+  font-weight: 600;
+}
+
+.hero-action-row .btn {
+  white-space: nowrap;
+}
+
+.offcanvas-footer {
+  background: #fff;
+}
+</style>

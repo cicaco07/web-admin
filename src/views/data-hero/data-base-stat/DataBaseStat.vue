@@ -14,7 +14,7 @@ import BaseStatFormModal from './components/BaseStatFormModal.vue';
 import BaseStatDetailModal from './components/BaseStatDetailModal.vue';
 
 // API & Services
-import { useBaseStats, useCreateBaseStat } from '../../../lib/api/BaseStatApi';
+import { useBaseStats, useCreateBaseStat, useUpdateBaseStat } from '../../../lib/api/BaseStatApi';
 import { useBaseStatService } from '../../../lib/service/BaseStatService';
 import { useHeroes } from '../../../lib/api/HeroApi';
 import { alertSuccess, alertError } from '../../../lib/alert';
@@ -206,13 +206,15 @@ const handleDownloadTemplate = downloadBaseStatTemplate;
 const isImporting = ref(false);
 const baseStatToken = (typeof localStorage !== 'undefined' && localStorage.getItem('token')) || '';
 const { createBaseStat } = useCreateBaseStat(baseStatToken);
+const { updateBaseStat } = useUpdateBaseStat(baseStatToken);
 
 const handleImport = async (file: File) => {
   isImporting.value = true;
   try {
     const inputs = await parseBaseStatFile(file);
 
-    let successCount = 0;
+    let createCount = 0;
+    let updateCount = 0;
     const failures: string[] = [];
 
     for (const input of inputs) {
@@ -222,15 +224,16 @@ const handleImport = async (file: File) => {
         failures.push(`${heroName}: hero tidak ditemukan`);
         continue;
       }
-      if (assignedHeroIds.value.has(hero._id)) {
-        failures.push(`${heroName}: sudah memiliki base stat`);
-        continue;
-      }
-
       try {
-        const { heroName: _heroName, ...createBaseStatInput } = input;
-        await createBaseStat({ createBaseStatInput: { ...createBaseStatInput, heroId: hero._id } });
-        successCount++;
+        const existing = baseStats.value.find((stat) => stat.hero._id === hero._id || stat.hero.name.toLowerCase() === heroName.toLowerCase());
+        const { heroName: _heroName, ...baseStatInput } = input;
+        if (existing) {
+          await updateBaseStat({ id: existing._id, updateBaseStatInput: { ...baseStatInput, heroId: hero._id } });
+          updateCount++;
+        } else {
+          await createBaseStat({ createBaseStatInput: { ...baseStatInput, heroId: hero._id } });
+          createCount++;
+        }
       } catch (err) {
         failures.push(`${heroName}: ${err instanceof Error ? err.message : 'gagal'}`);
       }
@@ -238,14 +241,14 @@ const handleImport = async (file: File) => {
 
     await safeRefetch();
 
+    const successCount = createCount + updateCount;
     if (failures.length === 0) {
-      alertSuccess(`Berhasil mengimpor ${successCount} data base stat.`);
+      alertSuccess(`Berhasil mengimpor ${successCount} data base stat (${createCount} baru, ${updateCount} update).`);
     } else if (successCount === 0) {
       alertError(`Gagal mengimpor semua data. ${failures.slice(0, 3).join(' | ')}`);
     } else {
-      alertSuccess(`Impor selesai: ${successCount} berhasil, ${failures.length} gagal. ${failures.slice(0, 3).join(' | ')}`);
+      alertSuccess(`Impor selesai: ${successCount} berhasil (${createCount} baru, ${updateCount} update), ${failures.length} gagal. ${failures.slice(0, 3).join(' | ')}`);
     }
-    (window as any).bootstrap?.Modal?.getOrCreateInstance(document.getElementById('import-base-stat'))?.hide();
   } catch (err) {
     alertError(err instanceof Error ? err.message : 'Gagal memproses file.');
     throw err;

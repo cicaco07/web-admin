@@ -14,7 +14,7 @@ import TablePagination from '../../../components/Table/TablePagination.vue';
 import SkillDetailModal from './components/SkillDetailModal.vue';
 
 // API
-import { useSkills, useDeleteSkill, useAddSkillToHero } from '../../../lib/api/SkillApi';
+import { useSkills, useDeleteSkill, useAddSkillToHero, useUpdateSkill } from '../../../lib/api/SkillApi';
 import { useSkillsDetail, useAddSkillDetailToSkill } from '../../../lib/api/SkillDetailApi';
 import { useHeroes } from '../../../lib/api/HeroApi';
 import { alertConfirm, alertSuccess, alertError } from '../../../lib/alert';
@@ -35,6 +35,7 @@ const { result: skillResult, loading: skillLoading, refetch: refetchSkills } = u
 const { result: skillDetailResult, refetch: refetchSkillDetails } = useSkillsDetail();
 const { deleteSkill } = useDeleteSkill();
 const { addSkillToHero } = useAddSkillToHero();
+const { updateSkill } = useUpdateSkill();
 const { addSkillDetailToSkill } = useAddSkillDetailToSkill();
 
 const heroes = computed<Hero[]>(() => heroResult.value?.heroes || []);
@@ -210,12 +211,40 @@ const handleDownloadTemplate = downloadSkillTemplate;
 // ==================== Import from Excel ====================
 const isImporting = ref(false);
 
+interface AddSkillResult {
+  data?: {
+    addSkillToHero?: {
+      _id?: string;
+    };
+  };
+}
+
+const getCreatedSkillId = (result: unknown): string => {
+  const addSkillResult = result as AddSkillResult;
+  return addSkillResult.data?.addSkillToHero?._id ?? '';
+};
+
+const findExistingSkill = (heroId: string, skillName: string): SkillRow | undefined => {
+  const bundle = groupSkillsByHero().find((item) => item.heroId === heroId);
+  return bundle?.skills.find((skill) => skill.name.toLowerCase() === skillName.toLowerCase());
+};
+
+const getMissingDetails = (skillId: string, importedDetails: SkillDetail[]): SkillDetail[] => {
+  const existingLevels = new Set((buildSkillDetailMap().get(skillId) ?? []).map((detail) => detail.level));
+  return importedDetails.filter((detail) => !existingLevels.has(detail.level));
+};
+
+const isHeroBaseStatValidationError = (err: unknown): boolean =>
+  err instanceof Error && err.message.includes('Hero validation failed: baseStat');
+
 const handleImport = async (file: File) => {
   isImporting.value = true;
   try {
     const parsed: ParsedHeroSheet[] = await parseSkillFile(file);
 
-    let totalSkills = 0;
+    let createdSkills = 0;
+    let updatedSkills = 0;
+    let skippedSkillUpdates = 0;
     let totalDetails = 0;
     const failures: string[] = [];
 
@@ -230,27 +259,39 @@ const handleImport = async (file: File) => {
 
       for (const skill of sheet.skills) {
         try {
-          const res = await addSkillToHero({
-            heroId: hero._id,
-            input: {
-              name: skill.name,
-              type: skill.type,
-              tag: skill.tag,
-              skill_icon: skill.skill_icon,
-              lite_description: skill.lite_description,
-              full_description: skill.full_description,
-            },
-          });
-          const newSkillId = (res as any)?.data?.addSkillToHero?._id;
-          totalSkills++;
+          const input = {
+            name: skill.name,
+            type: skill.type,
+            tag: skill.tag,
+            skill_icon: skill.skill_icon,
+            lite_description: skill.lite_description,
+            full_description: skill.full_description,
+          };
+          const existingSkill = findExistingSkill(hero._id, skill.name);
+          let skillId = existingSkill?._id ?? '';
 
-          if (newSkillId && skill.details.length > 0) {
+          if (existingSkill) {
+            try {
+              await updateSkill({ id: existingSkill._id, input });
+              updatedSkills++;
+            } catch (errUpdate) {
+              if (!isHeroBaseStatValidationError(errUpdate)) throw errUpdate;
+              skippedSkillUpdates++;
+            }
+          } else {
+            const res = await addSkillToHero({ heroId: hero._id, input });
+            skillId = getCreatedSkillId(res);
+            createdSkills++;
+          }
+
+          const detailsToCreate = existingSkill ? getMissingDetails(skillId, skill.details) : skill.details;
+          if (skillId && detailsToCreate.length > 0) {
             try {
               await addSkillDetailToSkill({
-                skillId: newSkillId,
-                input: skill.details,
+                skillId,
+                input: detailsToCreate,
               });
-              totalDetails += skill.details.length;
+              totalDetails += detailsToCreate.length;
             } catch (errDetail) {
               failures.push(
                 `Detail ${sheet.heroName}/${skill.name}: ${errDetail instanceof Error ? errDetail.message : 'gagal'}`,
@@ -267,14 +308,14 @@ const handleImport = async (file: File) => {
 
     await Promise.all([refetch(), refetchSkills(), refetchSkillDetails()]);
 
+    const totalSkills = createdSkills + updatedSkills;
     if (failures.length === 0) {
-      alertSuccess(`Impor berhasil: ${totalSkills} skill, ${totalDetails} baris detail.`);
+      alertSuccess(`Impor berhasil: ${totalSkills} skill (${createdSkills} baru, ${updatedSkills} update, ${skippedSkillUpdates} update skill dilewati karena baseStat hero invalid), ${totalDetails} detail baru.`);
     } else {
       alertSuccess(
-        `Impor selesai dengan catatan: ${totalSkills} skill berhasil, ${failures.length} masalah. ${failures.slice(0, 3).join(' | ')}`,
+        `Impor selesai dengan catatan: ${totalSkills} skill berhasil (${createdSkills} baru, ${updatedSkills} update, ${skippedSkillUpdates} update skill dilewati karena baseStat hero invalid), ${totalDetails} detail baru, ${failures.length} masalah. ${failures.slice(0, 3).join(' | ')}`,
       );
     }
-    (window as any).bootstrap?.Modal?.getOrCreateInstance(document.getElementById('import-skill'))?.hide();
   } catch (err) {
     alertError(err instanceof Error ? err.message : 'Gagal memproses file.');
     throw err;

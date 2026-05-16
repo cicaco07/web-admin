@@ -15,7 +15,7 @@ import HeroDetailModal from './components/HeroDetailModal.vue';
 import HeroFormModal from './components/HeroFormModal.vue';
 
 // API & Services
-import { useHeroes, useCreateHero } from '../../../lib/api/HeroApi';
+import { useHeroes, useCreateHero, useUpdateHero } from '../../../lib/api/HeroApi';
 import { useHeroService } from '../../../lib/service/HeroService';
 import { alertSuccess, alertError } from '../../../lib/alert';
 import { downloadHeroTemplate, exportHeroes, parseHeroFile } from '../../../lib/excel/hero.excel';
@@ -159,20 +159,28 @@ const handleDownloadTemplate = downloadHeroTemplate;
 const isImporting = ref(false);
 const token = (typeof localStorage !== 'undefined' && localStorage.getItem('token')) || '';
 const { createHero } = useCreateHero(token);
+const { updateHero } = useUpdateHero(token);
 
 const handleImport = async (file: File) => {
   isImporting.value = true;
   try {
     const inputs = await parseHeroFile(file);
 
-    let successCount = 0;
+    let createCount = 0;
+    let updateCount = 0;
     let failCount = 0;
     const failures: string[] = [];
 
     for (const input of inputs) {
       try {
-        await createHero({ createHeroInput: input });
-        successCount++;
+        const existing = heroes.value.find((hero) => hero.name.toLowerCase() === input.name.toLowerCase());
+        if (existing) {
+          await updateHero({ id: existing._id, updateHeroInput: input });
+          updateCount++;
+        } else {
+          await createHero({ createHeroInput: input });
+          createCount++;
+        }
       } catch (err) {
         failCount++;
         failures.push(`${input.name || '(tanpa nama)'}: ${err instanceof Error ? err.message : 'gagal'}`);
@@ -181,15 +189,14 @@ const handleImport = async (file: File) => {
 
     await safeRefetch();
 
+    const successCount = createCount + updateCount;
     if (failCount === 0) {
-      alertSuccess(`Berhasil mengimpor ${successCount} hero.`);
+      alertSuccess(`Berhasil mengimpor ${successCount} hero (${createCount} baru, ${updateCount} update).`);
     } else if (successCount === 0) {
       alertError(`Gagal mengimpor semua data. Detail: ${failures.slice(0, 3).join(' | ')}`);
     } else {
-      alertSuccess(`Impor selesai: ${successCount} berhasil, ${failCount} gagal.`);
+      alertSuccess(`Impor selesai: ${successCount} berhasil (${createCount} baru, ${updateCount} update), ${failCount} gagal.`);
     }
-
-    (window as any).bootstrap?.Modal?.getOrCreateInstance(document.getElementById('import-hero'))?.hide();
   } catch (err) {
     alertError(err instanceof Error ? err.message : 'Gagal memproses file.');
     throw err;
