@@ -6,6 +6,7 @@ import DashboardLayout from '../../../components/DashboardLayout.vue';
 import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb.vue';
 import Button from '../../../components/Button/Button.vue';
 import ModalButton from '../../../components/Modal/ModalButton.vue';
+import ImportModal from '../../../components/Modal/ImportModal.vue';
 import TablePagination from '../../../components/Table/TablePagination.vue';
 
 // Base Stat Components
@@ -13,14 +14,19 @@ import BaseStatFormModal from './components/BaseStatFormModal.vue';
 import BaseStatDetailModal from './components/BaseStatDetailModal.vue';
 
 // API & Services
-import { useBaseStats } from '../../../lib/api/BaseStatApi';
+import { useBaseStats, useCreateBaseStat } from '../../../lib/api/BaseStatApi';
 import { useBaseStatService } from '../../../lib/service/BaseStatService';
 import { useHeroes } from '../../../lib/api/HeroApi';
+import { alertSuccess, alertError } from '../../../lib/alert';
 
 // Types
 import type { BaseStat, BaseStatFormData } from '../../../types/BaseStat';
 import { createDefaultBaseStatForm } from '../../../types/BaseStat';
 import type { Hero } from '../../../types/Hero';
+import { HERO_ROLE_OPTIONS } from '../../../types/Hero';
+
+// Excel utils
+import { exportSheetsToExcel, readExcelAsRows, toStr, toNum } from '../../../utils/excel';
 
 // ==================== Data Fetching ====================
 const { result: baseStatResult, loading: baseStatLoading, refetch } = useBaseStats();
@@ -32,17 +38,69 @@ const { handleAddBaseStat, handleEditBaseStat, handleDeleteBaseStat } = useBaseS
 
 // ==================== Search ====================
 const searchQuery = ref('');
+const selectedFilterRole = ref('');
+const selectedSortBy = ref<'' | 'hp' | 'physical_attack' | 'magic_power' | 'physical_defense' | 'magic_defense' | 'movement_speed'>('');
+const selectedSortDir = ref<'desc' | 'asc'>('desc');
+
+const SORT_OPTIONS = [
+  { value: 'hp', label: 'HP' },
+  { value: 'physical_attack', label: 'Physical Attack' },
+  { value: 'magic_power', label: 'Magic Power' },
+  { value: 'physical_defense', label: 'Physical Defense' },
+  { value: 'magic_defense', label: 'Magic Defense' },
+  { value: 'movement_speed', label: 'Movement Speed' },
+] as const;
 
 const filteredBaseStats = computed<BaseStat[]>(() => {
-  if (!searchQuery.value.trim()) return baseStats.value;
-  const query = searchQuery.value.toLowerCase().trim();
-  return baseStats.value.filter((stat: BaseStat) =>
-    stat._id.toLowerCase().includes(query) ||
-    stat.hero.name.toLowerCase().includes(query) ||
-    String(stat.hp).includes(query) ||
-    String(stat.physical_attack).includes(query) ||
-    String(stat.magic_power).includes(query)
-  );
+  let filtered = baseStats.value;
+
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase().trim();
+    filtered = filtered.filter((stat: BaseStat) =>
+      stat._id.toLowerCase().includes(query) ||
+      stat.hero.name.toLowerCase().includes(query) ||
+      String(stat.hp).includes(query) ||
+      String(stat.physical_attack).includes(query) ||
+      String(stat.magic_power).includes(query)
+    );
+  }
+
+  if (selectedFilterRole.value) {
+    const role = selectedFilterRole.value;
+    filtered = filtered.filter((stat: BaseStat) =>
+      Array.isArray(stat.hero.role) ? stat.hero.role.includes(role) : stat.hero.role === role
+    );
+  }
+
+  if (selectedSortBy.value) {
+    const key = selectedSortBy.value;
+    const dir = selectedSortDir.value === 'asc' ? 1 : -1;
+    filtered = [...filtered].sort((a, b) => ((a[key] as number) - (b[key] as number)) * dir);
+  }
+
+  return filtered;
+});
+
+const activeFilterCount = computed(() => {
+  let count = 0;
+  if (selectedFilterRole.value) count++;
+  if (selectedSortBy.value) count++;
+  return count;
+});
+
+const resetFilters = () => {
+  searchQuery.value = '';
+  selectedFilterRole.value = '';
+  selectedSortBy.value = '';
+  selectedSortDir.value = 'desc';
+  currentPage.value = 1;
+};
+
+const sortLabel = computed(() => {
+  if (!selectedSortBy.value) return '';
+  const found = SORT_OPTIONS.find((o) => o.value === selectedSortBy.value);
+  if (!found) return '';
+  return `${found.label} (${selectedSortDir.value === 'asc' ? 'terkecil' : 'terbesar'})`;
 });
 
 // ==================== Pagination ====================
@@ -135,6 +193,187 @@ const onEditBaseStat = async () => {
   }
 };
 
+// ==================== Export to Excel ====================
+const BASE_STAT_HEADERS = [
+  'Nama Hero',
+  'HP',
+  'Mana',
+  'Energy',
+  'HP Regen',
+  'Mana Regen',
+  'Energy Regen',
+  'Physical Attack',
+  'Physical Defense',
+  'Magic Power',
+  'Magic Defense',
+  'Attack Speed',
+  'Movement Speed',
+  'Attack Speed Ratio',
+  'Spell Vamp Ratio',
+  'Attack Range',
+];
+
+const BASE_STAT_WIDTHS = [22, 10, 10, 10, 12, 12, 14, 16, 18, 14, 16, 14, 16, 18, 18, 14];
+
+const buildBaseStatRows = (data: BaseStat[]) =>
+  data.map((s) => [
+    s.hero.name,
+    s.hp,
+    s.mana,
+    s.energy,
+    s.hp_regen,
+    s.mana_regen,
+    s.energy_regen,
+    s.physical_attack,
+    s.physical_defense,
+    s.magic_power,
+    s.magic_defense,
+    s.attack_speed,
+    s.movement_speed,
+    s.attack_speed_ratio,
+    s.spell_vamp_ratio,
+    s.attack_range,
+  ]);
+
+const handleExport = () => {
+  if (baseStats.value.length === 0) {
+    alertError('Tidak ada data base stat untuk diekspor.');
+    return;
+  }
+  const source = filteredBaseStats.value.length ? filteredBaseStats.value : baseStats.value;
+  exportSheetsToExcel(
+    [
+      {
+        name: 'Base Stat',
+        aoa: [BASE_STAT_HEADERS, ...buildBaseStatRows(source)],
+        columnWidths: BASE_STAT_WIDTHS,
+      },
+    ],
+    `data-base-stat-${new Date().toISOString().slice(0, 10)}`,
+  );
+};
+
+const handleDownloadTemplate = () => {
+  const exampleRow: (string | number)[] = [
+    'Miya', 2480, 0, 0, 7.4, 0, 0, 110, 17, 0, 10, 0.85, 240, 1.0, 0, 5,
+  ];
+  exportSheetsToExcel(
+    [
+      {
+        name: 'Template Base Stat',
+        aoa: [BASE_STAT_HEADERS, exampleRow],
+        columnWidths: BASE_STAT_WIDTHS,
+      },
+      {
+        name: 'Petunjuk',
+        aoa: [
+          ['Petunjuk Pengisian Template Base Stat'],
+          [],
+          ['1. Sheet "Template Base Stat" berisi 1 baris contoh, hapus baris contoh sebelum mengimpor data baru.'],
+          ['2. Kolom "Nama Hero" wajib diisi sama persis dengan nama hero yang sudah ada di Data Hero.'],
+          ['3. Setiap hero hanya boleh memiliki 1 baris base stat. Jika sudah ada, baris pada file akan gagal disimpan.'],
+          ['4. Semua kolom angka wajib diisi (boleh 0 jika tidak relevan, mis. Energy untuk hero non-energy).'],
+          ['5. Gunakan titik sebagai pemisah desimal, contoh 7.4.'],
+        ],
+        columnWidths: [120],
+      },
+    ],
+    'template-data-base-stat',
+  );
+};
+
+// ==================== Import from Excel ====================
+const isImporting = ref(false);
+const baseStatToken = (typeof localStorage !== 'undefined' && localStorage.getItem('token')) || '';
+const { createBaseStat } = useCreateBaseStat(baseStatToken);
+
+interface BaseStatImportRow {
+  'Nama Hero'?: string;
+  HP?: string | number;
+  Mana?: string | number;
+  Energy?: string | number;
+  'HP Regen'?: string | number;
+  'Mana Regen'?: string | number;
+  'Energy Regen'?: string | number;
+  'Physical Attack'?: string | number;
+  'Physical Defense'?: string | number;
+  'Magic Power'?: string | number;
+  'Magic Defense'?: string | number;
+  'Attack Speed'?: string | number;
+  'Movement Speed'?: string | number;
+  'Attack Speed Ratio'?: string | number;
+  'Spell Vamp Ratio'?: string | number;
+  'Attack Range'?: string | number;
+}
+
+const handleImport = async (file: File) => {
+  isImporting.value = true;
+  try {
+    const rows = await readExcelAsRows<BaseStatImportRow>(file);
+    const cleanRows = rows.filter((r) => toStr(r['Nama Hero']).length > 0);
+    if (cleanRows.length === 0) {
+      throw new Error('File tidak berisi data base stat yang valid (kolom Nama Hero kosong).');
+    }
+
+    let successCount = 0;
+    const failures: string[] = [];
+
+    for (const row of cleanRows) {
+      const heroName = toStr(row['Nama Hero']);
+      const hero = heroes.value.find((h) => h.name.toLowerCase() === heroName.toLowerCase());
+      if (!hero) {
+        failures.push(`${heroName}: hero tidak ditemukan`);
+        continue;
+      }
+      if (assignedHeroIds.value.has(hero._id)) {
+        failures.push(`${heroName}: sudah memiliki base stat`);
+        continue;
+      }
+
+      const input = {
+        heroId: hero._id,
+        hp: toNum(row.HP),
+        mana: toNum(row.Mana),
+        energy: toNum(row.Energy),
+        hp_regen: toNum(row['HP Regen']),
+        mana_regen: toNum(row['Mana Regen']),
+        energy_regen: toNum(row['Energy Regen']),
+        physical_attack: toNum(row['Physical Attack']),
+        physical_defense: toNum(row['Physical Defense']),
+        magic_power: toNum(row['Magic Power']),
+        magic_defense: toNum(row['Magic Defense']),
+        attack_speed: toNum(row['Attack Speed']),
+        movement_speed: toNum(row['Movement Speed']),
+        attack_speed_ratio: toNum(row['Attack Speed Ratio']),
+        spell_vamp_ratio: toNum(row['Spell Vamp Ratio']),
+        attack_range: toNum(row['Attack Range']),
+      };
+      try {
+        await createBaseStat({ createBaseStatInput: input });
+        successCount++;
+      } catch (err) {
+        failures.push(`${heroName}: ${err instanceof Error ? err.message : 'gagal'}`);
+      }
+    }
+
+    await safeRefetch();
+
+    if (failures.length === 0) {
+      alertSuccess(`Berhasil mengimpor ${successCount} data base stat.`);
+    } else if (successCount === 0) {
+      alertError(`Gagal mengimpor semua data. ${failures.slice(0, 3).join(' | ')}`);
+    } else {
+      alertSuccess(`Impor selesai: ${successCount} berhasil, ${failures.length} gagal. ${failures.slice(0, 3).join(' | ')}`);
+    }
+    (window as any).bootstrap?.Modal?.getOrCreateInstance(document.getElementById('import-base-stat'))?.hide();
+  } catch (err) {
+    alertError(err instanceof Error ? err.message : 'Gagal memproses file.');
+    throw err;
+  } finally {
+    isImporting.value = false;
+  }
+};
+
 </script>
 
 <template>
@@ -156,17 +395,17 @@ const onEditBaseStat = async () => {
           </div>
 
           <div class="card-body">
-            <!-- Search Section -->
-            <div class="row mb-3">
-              <div class="col-md-10">
-                <div class="input-group">
+            <!-- Toolbar: Search + Action Buttons -->
+            <div class="row g-2 mb-3 align-items-stretch">
+              <div class="col-12 col-lg-5">
+                <div class="input-group h-100">
                   <span class="input-group-text bg-primary text-white">
                     <i class="ti ti-search"></i>
                   </span>
                   <input
                     type="text"
                     class="form-control"
-                    placeholder="Cari berdasarkan ID, nama hero, HP, Physical Attack, atau Magic Power..."
+                    placeholder="Cari berdasarkan ID, nama hero, HP, Phy. Attack, atau Mag. Power..."
                     v-model="searchQuery"
                     @keyup="currentPage = 1"
                   >
@@ -180,38 +419,194 @@ const onEditBaseStat = async () => {
                   </button>
                 </div>
               </div>
-              <div class="col-md-2">
-                <button
-                  class="btn btn-outline-secondary w-100"
-                  @click="searchQuery = ''; currentPage = 1"
-                >
-                  <i class="ti ti-refresh me-1"></i>
-                  Reset
-                </button>
-              </div>
-            </div>
-
-            <!-- Add Button -->
-            <div class="row mb-3">
-              <div class="col-md-12 d-flex justify-content-end">
-                <ModalButton
-                  variant="info"
-                  font="medium"
-                  size="lg"
-                  dataBsTarget="add-base-stat"
-                >
-                  <i class="ti ti-plus me-1"></i>
-                  Tambah Base Stat
-                </ModalButton>
+              <div class="col-12 col-lg-7">
+                <div class="row g-2 stat-action-row">
+                  <div class="col-6 col-md-3">
+                    <button
+                      type="button"
+                      class="btn btn-success w-100 stat-action-btn"
+                      @click="handleExport"
+                    >
+                      <i class="ti ti-file-export me-1"></i>
+                      Export Excel
+                    </button>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <button
+                      type="button"
+                      class="btn btn-primary w-100 stat-action-btn"
+                      data-bs-toggle="modal"
+                      data-bs-target="#import-base-stat"
+                    >
+                      <i class="ti ti-file-import me-1"></i>
+                      Import Excel
+                    </button>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <button
+                      type="button"
+                      class="btn btn-outline-secondary w-100 stat-action-btn position-relative"
+                      data-bs-toggle="offcanvas"
+                      data-bs-target="#base-stat-filter-offcanvas"
+                      aria-controls="base-stat-filter-offcanvas"
+                    >
+                      <i class="ti ti-adjustments-horizontal me-1"></i>
+                      Filter
+                      <span
+                        v-if="activeFilterCount > 0"
+                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                      >
+                        {{ activeFilterCount }}
+                      </span>
+                    </button>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <button
+                      type="button"
+                      class="btn btn-info w-100 stat-action-btn"
+                      data-bs-toggle="modal"
+                      data-bs-target="#add-base-stat"
+                    >
+                      <i class="ti ti-plus me-1"></i>
+                      Tambah Base Stat
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
             <!-- Filter Info -->
-            <div v-if="searchQuery" class="alert alert-info py-2 mb-3">
-              <div class="d-flex align-items-center">
-                <i class="ti ti-filter me-2"></i>
-                <span>Menampilkan {{ filteredBaseStats.length }} dari {{ baseStats.length }} base stat</span>
-                <span class="ms-2">| Pencarian: <strong>{{ searchQuery }}</strong></span>
+            <div v-if="searchQuery || activeFilterCount > 0" class="alert alert-info py-2 mb-3 d-flex align-items-center flex-wrap gap-2">
+              <i class="ti ti-filter"></i>
+              <span>Menampilkan <strong>{{ filteredBaseStats.length }}</strong> dari <strong>{{ baseStats.length }}</strong> base stat</span>
+              <span v-if="searchQuery" class="badge bg-primary-subtle text-primary">
+                Pencarian: {{ searchQuery }}
+              </span>
+              <span v-if="selectedFilterRole" class="badge bg-warning-subtle text-warning">
+                Role: {{ selectedFilterRole }}
+              </span>
+              <span v-if="selectedSortBy" class="badge bg-info-subtle text-info">
+                Urut: {{ sortLabel }}
+              </span>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary ms-auto"
+                @click="resetFilters"
+              >
+                <i class="ti ti-refresh me-1"></i> Reset
+              </button>
+            </div>
+
+            <!-- Filter Offcanvas -->
+            <div
+              class="offcanvas offcanvas-end"
+              tabindex="-1"
+              id="base-stat-filter-offcanvas"
+              aria-labelledby="base-stat-filter-offcanvas-label"
+            >
+              <div class="offcanvas-header border-bottom bg-light">
+                <h5 class="offcanvas-title d-flex align-items-center" id="base-stat-filter-offcanvas-label">
+                  <i class="ti ti-adjustments-horizontal me-2 text-primary"></i>
+                  Filter Base Stat
+                </h5>
+                <button
+                  type="button"
+                  class="btn-close"
+                  data-bs-dismiss="offcanvas"
+                  aria-label="Close"
+                ></button>
+              </div>
+              <div class="offcanvas-body">
+                <div class="mb-4">
+                  <label class="form-label fw-semibold">
+                    <i class="ti ti-shield me-1 text-warning"></i>
+                    Role Hero
+                  </label>
+                  <select
+                    class="form-select"
+                    v-model="selectedFilterRole"
+                    @change="currentPage = 1"
+                  >
+                    <option value="">Semua Role</option>
+                    <option
+                      v-for="role in HERO_ROLE_OPTIONS"
+                      :key="role"
+                      :value="role"
+                    >
+                      {{ role }}
+                    </option>
+                  </select>
+                  <small class="text-muted">Saring base stat berdasarkan role hero pemilik.</small>
+                </div>
+
+                <div class="mb-4">
+                  <label class="form-label fw-semibold">
+                    <i class="ti ti-arrows-sort me-1 text-info"></i>
+                    Urutkan Berdasarkan
+                  </label>
+                  <select
+                    class="form-select mb-2"
+                    v-model="selectedSortBy"
+                    @change="currentPage = 1"
+                  >
+                    <option value="">Tidak ada (urutan default)</option>
+                    <option
+                      v-for="opt in SORT_OPTIONS"
+                      :key="opt.value"
+                      :value="opt.value"
+                    >
+                      {{ opt.label }}
+                    </option>
+                  </select>
+                  <div class="btn-group w-100" role="group" aria-label="Arah pengurutan">
+                    <input
+                      type="radio"
+                      class="btn-check"
+                      id="sort-desc"
+                      value="desc"
+                      v-model="selectedSortDir"
+                      :disabled="!selectedSortBy"
+                    >
+                    <label class="btn btn-outline-primary" for="sort-desc">
+                      <i class="ti ti-sort-descending me-1"></i> Terbesar
+                    </label>
+                    <input
+                      type="radio"
+                      class="btn-check"
+                      id="sort-asc"
+                      value="asc"
+                      v-model="selectedSortDir"
+                      :disabled="!selectedSortBy"
+                    >
+                    <label class="btn btn-outline-primary" for="sort-asc">
+                      <i class="ti ti-sort-ascending me-1"></i> Terkecil
+                    </label>
+                  </div>
+                  <small class="text-muted d-block mt-1">Pilih atribut numerik untuk mengurutkan tabel.</small>
+                </div>
+
+                <div class="alert alert-light border d-flex align-items-center small mb-0">
+                  <i class="ti ti-info-circle me-2 text-primary"></i>
+                  Filter dan urutan akan diterapkan secara otomatis.
+                </div>
+              </div>
+              <div class="offcanvas-footer border-top p-3 bg-light d-flex gap-2">
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary flex-grow-1"
+                  @click="resetFilters"
+                >
+                  <i class="ti ti-refresh me-1"></i>
+                  Reset Filter
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-primary flex-grow-1"
+                  data-bs-dismiss="offcanvas"
+                >
+                  <i class="ti ti-check me-1"></i>
+                  Selesai
+                </button>
               </div>
             </div>
 
@@ -245,6 +640,18 @@ const onEditBaseStat = async () => {
             <BaseStatDetailModal
               modalId="detail-base-stat"
               :baseStat="selectedBaseStat"
+            />
+
+            <!-- Import Base Stat Modal -->
+            <ImportModal
+              modalId="import-base-stat"
+              title="Import Data Base Stat"
+              templateFileName="template-data-base-stat.xlsx"
+              templateHint="Template berisi 1 baris contoh dan sheet petunjuk pengisian. Setiap hero hanya boleh memiliki 1 base stat."
+              uploadHint="Pastikan kolom Nama Hero sama persis dengan nama hero pada Data Hero."
+              :isImporting="isImporting"
+              :onDownloadTemplate="handleDownloadTemplate"
+              :onUpload="handleImport"
             />
 
             <!-- Table -->
@@ -376,3 +783,25 @@ const onEditBaseStat = async () => {
     </div>
   </DashboardLayout>
 </template>
+
+<style scoped>
+.stat-action-row {
+  height: 100%;
+}
+
+.stat-action-btn {
+  height: 100%;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.offcanvas-footer {
+  flex-shrink: 0;
+}
+</style>

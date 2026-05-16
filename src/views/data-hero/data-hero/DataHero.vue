@@ -7,6 +7,7 @@ import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb.vue';
 import Button from '../../../components/Button/Button.vue';
 import Badge from '../../../components/Badge/Badge.vue';
 import ModalButton from '../../../components/Modal/ModalButton.vue';
+import ImportModal from '../../../components/Modal/ImportModal.vue';
 import TablePagination from '../../../components/Table/TablePagination.vue';
 
 // Hero Components
@@ -14,12 +15,16 @@ import HeroDetailModal from './components/HeroDetailModal.vue';
 import HeroFormModal from './components/HeroFormModal.vue';
 
 // API & Services
-import { useHeroes } from '../../../lib/api/HeroApi';
+import { useHeroes, useCreateHero } from '../../../lib/api/HeroApi';
 import { useHeroService } from '../../../lib/service/HeroService';
+import { alertSuccess, alertError } from '../../../lib/alert';
 
 // Types
 import type { Hero, HeroFormData } from '../../../types/Hero';
 import { createDefaultHeroForm, HERO_TYPE_OPTIONS, HERO_ROLE_OPTIONS } from '../../../types/Hero';
+
+// Excel utils
+import { exportSheetsToExcel, readExcelAsRows, toStr, toNum, toList } from '../../../utils/excel';
 
 // ==================== Data Fetching ====================
 const { result: heroResult, loading: heroLoading, refetch } = useHeroes();
@@ -130,6 +135,204 @@ const onEditHero = async () => {
 const toArray = (value: string | string[]): string[] => {
   return Array.isArray(value) ? value : value ? [value] : [];
 };
+
+const activeFilterCount = computed(() => {
+  let count = 0;
+  if (selectedFilterRole.value) count++;
+  if (selectedFilterType.value) count++;
+  return count;
+});
+
+const resetFilters = () => {
+  searchQuery.value = '';
+  selectedFilterRole.value = '';
+  selectedFilterType.value = '';
+  currentPage.value = 1;
+};
+
+// ==================== Export to Excel ====================
+const HERO_EXPORT_HEADERS = [
+  'Nama',
+  'Alias',
+  'Role',
+  'Tipe',
+  'Spesialitas',
+  'Region',
+  'Hero Order',
+  'Deskripsi Singkat',
+  'Avatar URL',
+  'Image URL',
+  'Tanggal Rilis',
+  'Durability',
+  'Offense',
+  'Control Effect',
+  'Difficulty',
+];
+
+const HERO_COLUMN_WIDTHS = [22, 22, 28, 28, 22, 18, 12, 50, 35, 35, 16, 12, 12, 14, 12];
+
+const buildHeroRows = (data: Hero[]) =>
+  data.map((hero) => [
+    hero.name,
+    hero.alias,
+    toArray(hero.role).join(', '),
+    toArray(hero.type).join(', '),
+    hero.speciality,
+    hero.region,
+    hero.hero_order,
+    hero.short_description,
+    hero.avatar,
+    hero.image,
+    hero.release_date,
+    hero.durability,
+    hero.offense,
+    hero.control_effect,
+    hero.difficulty,
+  ]);
+
+const handleExport = () => {
+  if (heroes.value.length === 0) {
+    alertError('Tidak ada data hero untuk diekspor.');
+    return;
+  }
+  exportSheetsToExcel(
+    [
+      {
+        name: 'Data Hero',
+        aoa: [HERO_EXPORT_HEADERS, ...buildHeroRows(filteredHeroes.value.length ? filteredHeroes.value : heroes.value)],
+        columnWidths: HERO_COLUMN_WIDTHS,
+      },
+    ],
+    `data-hero-${new Date().toISOString().slice(0, 10)}`,
+  );
+};
+
+const handleDownloadTemplate = () => {
+  const exampleRow = [
+    'Miya',
+    'Moonlight Archer',
+    HERO_ROLE_OPTIONS.slice(0, 1).join(', '),
+    HERO_TYPE_OPTIONS.filter((t) => t === 'Marksman').join(', '),
+    'Reap',
+    'Moniyan Empire',
+    1,
+    'Marksman dengan damage tinggi di late game.',
+    'https://example.com/avatar/miya.png',
+    'https://example.com/image/miya.png',
+    '2016-07-14',
+    4,
+    8,
+    3,
+    3,
+  ];
+  exportSheetsToExcel(
+    [
+      {
+        name: 'Template Hero',
+        aoa: [HERO_EXPORT_HEADERS, exampleRow],
+        columnWidths: HERO_COLUMN_WIDTHS,
+      },
+      {
+        name: 'Petunjuk',
+        aoa: [
+          ['Petunjuk Pengisian Template Hero'],
+          [],
+          ['1. Sheet "Template Hero" berisi 1 baris contoh, hapus baris contoh sebelum mengimpor data baru.'],
+          ['2. Kolom Role dan Tipe boleh diisi lebih dari satu, pisahkan dengan koma.'],
+          [`3. Pilihan Role yang valid: ${HERO_ROLE_OPTIONS.join(', ')}.`],
+          [`4. Pilihan Tipe yang valid: ${HERO_TYPE_OPTIONS.join(', ')}.`],
+          ['5. Hero Order, Durability, Offense, Control Effect, dan Difficulty wajib diisi angka.'],
+          ['6. Kolom Avatar URL dan Image URL diisi dengan link gambar yang dapat diakses publik.'],
+          ['7. Format tanggal rilis bebas, contoh: 2016-07-14.'],
+        ],
+        columnWidths: [120],
+      },
+    ],
+    'template-data-hero',
+  );
+};
+
+// ==================== Import from Excel ====================
+const isImporting = ref(false);
+const token = (typeof localStorage !== 'undefined' && localStorage.getItem('token')) || '';
+const { createHero } = useCreateHero(token);
+
+interface HeroImportRow {
+  Nama?: string;
+  Alias?: string;
+  Role?: string;
+  Tipe?: string;
+  Spesialitas?: string;
+  Region?: string;
+  'Hero Order'?: string | number;
+  'Deskripsi Singkat'?: string;
+  'Avatar URL'?: string;
+  'Image URL'?: string;
+  'Tanggal Rilis'?: string;
+  Durability?: string | number;
+  Offense?: string | number;
+  'Control Effect'?: string | number;
+  Difficulty?: string | number;
+}
+
+const handleImport = async (file: File) => {
+  isImporting.value = true;
+  try {
+    const rows = await readExcelAsRows<HeroImportRow>(file);
+    const cleanRows = rows.filter((r) => toStr(r.Nama).length > 0);
+    if (cleanRows.length === 0) {
+      throw new Error('File tidak berisi data hero yang valid (kolom Nama kosong).');
+    }
+
+    let successCount = 0;
+    let failCount = 0;
+    const failures: string[] = [];
+
+    for (const row of cleanRows) {
+      const input = {
+        name: toStr(row.Nama),
+        alias: toStr(row.Alias),
+        role: toList(row.Role),
+        type: toList(row.Tipe),
+        speciality: toStr(row.Spesialitas),
+        region: toStr(row.Region),
+        hero_order: toNum(row['Hero Order']),
+        short_description: toStr(row['Deskripsi Singkat']),
+        avatar: toStr(row['Avatar URL']),
+        image: toStr(row['Image URL']),
+        release_date: toStr(row['Tanggal Rilis']),
+        durability: toNum(row.Durability),
+        offense: toNum(row.Offense),
+        control_effect: toNum(row['Control Effect']),
+        difficulty: toNum(row.Difficulty),
+      };
+      try {
+        await createHero({ createHeroInput: input });
+        successCount++;
+      } catch (err) {
+        failCount++;
+        failures.push(`${input.name || '(tanpa nama)'}: ${err instanceof Error ? err.message : 'gagal'}`);
+      }
+    }
+
+    await safeRefetch();
+
+    if (failCount === 0) {
+      alertSuccess(`Berhasil mengimpor ${successCount} hero.`);
+    } else if (successCount === 0) {
+      alertError(`Gagal mengimpor semua data. Detail: ${failures.slice(0, 3).join(' | ')}`);
+    } else {
+      alertSuccess(`Impor selesai: ${successCount} berhasil, ${failCount} gagal.`);
+    }
+
+    (window as any).bootstrap?.Modal?.getOrCreateInstance(document.getElementById('import-hero'))?.hide();
+  } catch (err) {
+    alertError(err instanceof Error ? err.message : 'Gagal memproses file.');
+    throw err;
+  } finally {
+    isImporting.value = false;
+  }
+};
 </script>
 
 <template>
@@ -151,21 +354,21 @@ const toArray = (value: string | string[]): string[] => {
           </div>
 
           <div class="card-body">
-            <!-- Search & Filter Section -->
-            <div class="row mb-3">
-              <div class="col-md-5">
-                <div class="input-group">
+            <!-- Toolbar: Search + Action Buttons -->
+            <div class="row g-2 mb-3 align-items-stretch">
+              <div class="col-12 col-lg-5">
+                <div class="input-group h-100">
                   <span class="input-group-text bg-primary text-white">
                     <i class="ti ti-search"></i>
                   </span>
-                  <input 
-                    type="text" 
-                    class="form-control" 
+                  <input
+                    type="text"
+                    class="form-control"
                     placeholder="Cari nama, alias, spesialitas, atau region..."
                     v-model="searchQuery"
                     @keyup="currentPage = 1"
                   >
-                  <button 
+                  <button
                     v-if="searchQuery"
                     class="btn btn-outline-secondary"
                     type="button"
@@ -175,78 +378,170 @@ const toArray = (value: string | string[]): string[] => {
                   </button>
                 </div>
               </div>
-              <div class="col-md-3">
-                <select 
-                  class="form-select" 
-                  v-model="selectedFilterRole"
-                  @change="currentPage = 1"
-                >
-                  <option value="">Semua Role</option>
-                  <option 
-                    v-for="role in HERO_ROLE_OPTIONS" 
-                    :key="role" 
-                    :value="role"
-                  >
-                    {{ role }}
-                  </option>
-                </select>
-              </div>
-              <div class="col-md-2">
-                <select 
-                  class="form-select" 
-                  v-model="selectedFilterType"
-                  @change="currentPage = 1"
-                >
-                  <option value="">Semua Tipe</option>
-                  <option 
-                    v-for="type in HERO_TYPE_OPTIONS" 
-                    :key="type" 
-                    :value="type"
-                  >
-                    {{ type }}
-                  </option>
-                </select>
-              </div>
-              <div class="col-md-2">
-                <button 
-                  class="btn btn-outline-secondary w-100"
-                  @click="searchQuery = ''; selectedFilterRole = ''; selectedFilterType = ''; currentPage = 1"
-                >
-                  <i class="ti ti-refresh me-1"></i>
-                  Reset Filter
-                </button>
-              </div>
-            </div>
-
-            <!-- Add Hero Button -->
-            <div class="row mb-3">
-              <div class="col-md-12 d-flex justify-content-end">
-                <ModalButton 
-                  variant="info"
-                  font="medium"
-                  size="lg"
-                  dataBsTarget="add-hero"
-                >
-                  <i class="ti ti-plus me-1"></i>
-                  Tambah Hero
-                </ModalButton>
+              <div class="col-12 col-lg-7">
+                <div class="row g-2 hero-action-row">
+                  <div class="col-6 col-md-3">
+                    <button
+                      type="button"
+                      class="btn btn-success w-100 hero-action-btn"
+                      @click="handleExport"
+                    >
+                      <i class="ti ti-file-export me-1"></i>
+                      Export Excel
+                    </button>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <button
+                      type="button"
+                      class="btn btn-primary w-100 hero-action-btn"
+                      data-bs-toggle="modal"
+                      data-bs-target="#import-hero"
+                    >
+                      <i class="ti ti-file-import me-1"></i>
+                      Import Excel
+                    </button>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <button
+                      type="button"
+                      class="btn btn-outline-secondary w-100 hero-action-btn position-relative"
+                      data-bs-toggle="offcanvas"
+                      data-bs-target="#hero-filter-offcanvas"
+                      aria-controls="hero-filter-offcanvas"
+                    >
+                      <i class="ti ti-adjustments-horizontal me-1"></i>
+                      Filter
+                      <span
+                        v-if="activeFilterCount > 0"
+                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                      >
+                        {{ activeFilterCount }}
+                      </span>
+                    </button>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <button
+                      type="button"
+                      class="btn btn-info w-100 hero-action-btn"
+                      data-bs-toggle="modal"
+                      data-bs-target="#add-hero"
+                    >
+                      <i class="ti ti-plus me-1"></i>
+                      Tambah Hero
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
             <!-- Filter Info -->
-            <div v-if="searchQuery || selectedFilterRole || selectedFilterType" class="alert alert-info py-2 mb-3">
-              <div class="d-flex align-items-center">
-                <i class="ti ti-filter me-2"></i>
-                <span>Menampilkan {{ filteredHeroes.length }} dari {{ heroes.length }} hero</span>
-                <span v-if="searchQuery" class="ms-2">
-                  | Pencarian: <strong>{{ searchQuery }}</strong>
-                </span>
-                <span v-if="selectedFilterRole" class="ms-2">
-                  | Role: <strong>{{ selectedFilterRole }}</strong>
-                </span>
-                <span v-if="selectedFilterType" class="ms-2">
-                  | Tipe: <strong>{{ selectedFilterType }}</strong>
-                </span>
+            <div v-if="searchQuery || selectedFilterRole || selectedFilterType" class="alert alert-info py-2 mb-3 d-flex align-items-center flex-wrap gap-2">
+              <i class="ti ti-filter"></i>
+              <span>Menampilkan <strong>{{ filteredHeroes.length }}</strong> dari <strong>{{ heroes.length }}</strong> hero</span>
+              <span v-if="searchQuery" class="badge bg-primary-subtle text-primary">
+                Pencarian: {{ searchQuery }}
+              </span>
+              <span v-if="selectedFilterRole" class="badge bg-warning-subtle text-warning">
+                Role: {{ selectedFilterRole }}
+              </span>
+              <span v-if="selectedFilterType" class="badge bg-info-subtle text-info">
+                Tipe: {{ selectedFilterType }}
+              </span>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary ms-auto"
+                @click="resetFilters"
+              >
+                <i class="ti ti-refresh me-1"></i> Reset
+              </button>
+            </div>
+
+            <!-- Filter Offcanvas -->
+            <div
+              class="offcanvas offcanvas-end"
+              tabindex="-1"
+              id="hero-filter-offcanvas"
+              aria-labelledby="hero-filter-offcanvas-label"
+            >
+              <div class="offcanvas-header border-bottom bg-light">
+                <h5 class="offcanvas-title d-flex align-items-center" id="hero-filter-offcanvas-label">
+                  <i class="ti ti-adjustments-horizontal me-2 text-primary"></i>
+                  Filter Hero
+                </h5>
+                <button
+                  type="button"
+                  class="btn-close"
+                  data-bs-dismiss="offcanvas"
+                  aria-label="Close"
+                ></button>
+              </div>
+              <div class="offcanvas-body">
+                <div class="mb-4">
+                  <label class="form-label fw-semibold">
+                    <i class="ti ti-shield me-1 text-warning"></i>
+                    Role
+                  </label>
+                  <select
+                    class="form-select"
+                    v-model="selectedFilterRole"
+                    @change="currentPage = 1"
+                  >
+                    <option value="">Semua Role</option>
+                    <option
+                      v-for="role in HERO_ROLE_OPTIONS"
+                      :key="role"
+                      :value="role"
+                    >
+                      {{ role }}
+                    </option>
+                  </select>
+                  <small class="text-muted">Pilih role spesifik untuk menyaring hero.</small>
+                </div>
+
+                <div class="mb-4">
+                  <label class="form-label fw-semibold">
+                    <i class="ti ti-sword me-1 text-info"></i>
+                    Tipe
+                  </label>
+                  <select
+                    class="form-select"
+                    v-model="selectedFilterType"
+                    @change="currentPage = 1"
+                  >
+                    <option value="">Semua Tipe</option>
+                    <option
+                      v-for="type in HERO_TYPE_OPTIONS"
+                      :key="type"
+                      :value="type"
+                    >
+                      {{ type }}
+                    </option>
+                  </select>
+                  <small class="text-muted">Pilih tipe (class) hero yang ingin ditampilkan.</small>
+                </div>
+
+                <div class="alert alert-light border d-flex align-items-center small mb-0">
+                  <i class="ti ti-info-circle me-2 text-primary"></i>
+                  Filter akan diterapkan secara otomatis saat dipilih.
+                </div>
+              </div>
+              <div class="offcanvas-footer border-top p-3 bg-light d-flex gap-2">
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary flex-grow-1"
+                  @click="resetFilters"
+                >
+                  <i class="ti ti-refresh me-1"></i>
+                  Reset Filter
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-primary flex-grow-1"
+                  data-bs-dismiss="offcanvas"
+                >
+                  <i class="ti ti-check me-1"></i>
+                  Selesai
+                </button>
               </div>
             </div>
 
@@ -280,6 +575,18 @@ const toArray = (value: string | string[]): string[] => {
               @update:selectedTypes="selectedTypesEdit = $event"
               @submit="onEditHero"
               @cancel="resetForm"
+            />
+
+            <!-- Import Hero Modal -->
+            <ImportModal
+              modalId="import-hero"
+              title="Import Data Hero"
+              templateFileName="template-data-hero.xlsx"
+              templateHint="Template berisi 1 baris contoh dan sheet petunjuk pengisian. Pilihan Role/Tipe yang valid sudah dijelaskan pada sheet Petunjuk."
+              uploadHint="Pastikan file mengikuti template. Kolom Role dan Tipe boleh berisi banyak nilai yang dipisahkan koma."
+              :isImporting="isImporting"
+              :onDownloadTemplate="handleDownloadTemplate"
+              :onUpload="handleImport"
             />
 
             <!-- Heroes Table -->
@@ -430,3 +737,25 @@ const toArray = (value: string | string[]): string[] => {
     </div>
   </DashboardLayout>
 </template>
+
+<style scoped>
+.hero-action-row {
+  height: 100%;
+}
+
+.hero-action-btn {
+  height: 100%;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.offcanvas-footer {
+  flex-shrink: 0;
+}
+</style>
