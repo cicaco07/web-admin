@@ -18,15 +18,13 @@ import { useBaseStats, useCreateBaseStat } from '../../../lib/api/BaseStatApi';
 import { useBaseStatService } from '../../../lib/service/BaseStatService';
 import { useHeroes } from '../../../lib/api/HeroApi';
 import { alertSuccess, alertError } from '../../../lib/alert';
+import { downloadBaseStatTemplate, exportBaseStats, parseBaseStatFile } from '../../../lib/excel/baseStat.excel';
 
 // Types
 import type { BaseStat, BaseStatFormData } from '../../../types/BaseStat';
 import { createDefaultBaseStatForm } from '../../../types/BaseStat';
 import type { Hero } from '../../../types/Hero';
 import { HERO_ROLE_OPTIONS } from '../../../types/Hero';
-
-// Excel utils
-import { exportSheetsToExcel, readExcelAsRows, toStr, toNum } from '../../../utils/excel';
 
 // ==================== Data Fetching ====================
 const { result: baseStatResult, loading: baseStatLoading, refetch } = useBaseStats();
@@ -193,133 +191,32 @@ const onEditBaseStat = async () => {
   }
 };
 
-// ==================== Export to Excel ====================
-const BASE_STAT_HEADERS = [
-  'Nama Hero',
-  'HP',
-  'Mana',
-  'Energy',
-  'HP Regen',
-  'Mana Regen',
-  'Energy Regen',
-  'Physical Attack',
-  'Physical Defense',
-  'Magic Power',
-  'Magic Defense',
-  'Attack Speed',
-  'Movement Speed',
-  'Attack Speed Ratio',
-  'Spell Vamp Ratio',
-  'Attack Range',
-];
-
-const BASE_STAT_WIDTHS = [22, 10, 10, 10, 12, 12, 14, 16, 18, 14, 16, 14, 16, 18, 18, 14];
-
-const buildBaseStatRows = (data: BaseStat[]) =>
-  data.map((s) => [
-    s.hero.name,
-    s.hp,
-    s.mana,
-    s.energy,
-    s.hp_regen,
-    s.mana_regen,
-    s.energy_regen,
-    s.physical_attack,
-    s.physical_defense,
-    s.magic_power,
-    s.magic_defense,
-    s.attack_speed,
-    s.movement_speed,
-    s.attack_speed_ratio,
-    s.spell_vamp_ratio,
-    s.attack_range,
-  ]);
-
 const handleExport = () => {
   if (baseStats.value.length === 0) {
     alertError('Tidak ada data base stat untuk diekspor.');
     return;
   }
   const source = filteredBaseStats.value.length ? filteredBaseStats.value : baseStats.value;
-  exportSheetsToExcel(
-    [
-      {
-        name: 'Base Stat',
-        aoa: [BASE_STAT_HEADERS, ...buildBaseStatRows(source)],
-        columnWidths: BASE_STAT_WIDTHS,
-      },
-    ],
-    `data-base-stat-${new Date().toISOString().slice(0, 10)}`,
-  );
+  exportBaseStats(source);
 };
 
-const handleDownloadTemplate = () => {
-  const exampleRow: (string | number)[] = [
-    'Miya', 2480, 0, 0, 7.4, 0, 0, 110, 17, 0, 10, 0.85, 240, 1.0, 0, 5,
-  ];
-  exportSheetsToExcel(
-    [
-      {
-        name: 'Template Base Stat',
-        aoa: [BASE_STAT_HEADERS, exampleRow],
-        columnWidths: BASE_STAT_WIDTHS,
-      },
-      {
-        name: 'Petunjuk',
-        aoa: [
-          ['Petunjuk Pengisian Template Base Stat'],
-          [],
-          ['1. Sheet "Template Base Stat" berisi 1 baris contoh, hapus baris contoh sebelum mengimpor data baru.'],
-          ['2. Kolom "Nama Hero" wajib diisi sama persis dengan nama hero yang sudah ada di Data Hero.'],
-          ['3. Setiap hero hanya boleh memiliki 1 baris base stat. Jika sudah ada, baris pada file akan gagal disimpan.'],
-          ['4. Semua kolom angka wajib diisi (boleh 0 jika tidak relevan, mis. Energy untuk hero non-energy).'],
-          ['5. Gunakan titik sebagai pemisah desimal, contoh 7.4.'],
-        ],
-        columnWidths: [120],
-      },
-    ],
-    'template-data-base-stat',
-  );
-};
+const handleDownloadTemplate = downloadBaseStatTemplate;
 
 // ==================== Import from Excel ====================
 const isImporting = ref(false);
 const baseStatToken = (typeof localStorage !== 'undefined' && localStorage.getItem('token')) || '';
 const { createBaseStat } = useCreateBaseStat(baseStatToken);
 
-interface BaseStatImportRow {
-  'Nama Hero'?: string;
-  HP?: string | number;
-  Mana?: string | number;
-  Energy?: string | number;
-  'HP Regen'?: string | number;
-  'Mana Regen'?: string | number;
-  'Energy Regen'?: string | number;
-  'Physical Attack'?: string | number;
-  'Physical Defense'?: string | number;
-  'Magic Power'?: string | number;
-  'Magic Defense'?: string | number;
-  'Attack Speed'?: string | number;
-  'Movement Speed'?: string | number;
-  'Attack Speed Ratio'?: string | number;
-  'Spell Vamp Ratio'?: string | number;
-  'Attack Range'?: string | number;
-}
-
 const handleImport = async (file: File) => {
   isImporting.value = true;
   try {
-    const rows = await readExcelAsRows<BaseStatImportRow>(file);
-    const cleanRows = rows.filter((r) => toStr(r['Nama Hero']).length > 0);
-    if (cleanRows.length === 0) {
-      throw new Error('File tidak berisi data base stat yang valid (kolom Nama Hero kosong).');
-    }
+    const inputs = await parseBaseStatFile(file);
 
     let successCount = 0;
     const failures: string[] = [];
 
-    for (const row of cleanRows) {
-      const heroName = toStr(row['Nama Hero']);
+    for (const input of inputs) {
+      const heroName = input.heroName;
       const hero = heroes.value.find((h) => h.name.toLowerCase() === heroName.toLowerCase());
       if (!hero) {
         failures.push(`${heroName}: hero tidak ditemukan`);
@@ -330,26 +227,9 @@ const handleImport = async (file: File) => {
         continue;
       }
 
-      const input = {
-        heroId: hero._id,
-        hp: toNum(row.HP),
-        mana: toNum(row.Mana),
-        energy: toNum(row.Energy),
-        hp_regen: toNum(row['HP Regen']),
-        mana_regen: toNum(row['Mana Regen']),
-        energy_regen: toNum(row['Energy Regen']),
-        physical_attack: toNum(row['Physical Attack']),
-        physical_defense: toNum(row['Physical Defense']),
-        magic_power: toNum(row['Magic Power']),
-        magic_defense: toNum(row['Magic Defense']),
-        attack_speed: toNum(row['Attack Speed']),
-        movement_speed: toNum(row['Movement Speed']),
-        attack_speed_ratio: toNum(row['Attack Speed Ratio']),
-        spell_vamp_ratio: toNum(row['Spell Vamp Ratio']),
-        attack_range: toNum(row['Attack Range']),
-      };
       try {
-        await createBaseStat({ createBaseStatInput: input });
+        const { heroName: _heroName, ...createBaseStatInput } = input;
+        await createBaseStat({ createBaseStatInput: { ...createBaseStatInput, heroId: hero._id } });
         successCount++;
       } catch (err) {
         failures.push(`${heroName}: ${err instanceof Error ? err.message : 'gagal'}`);

@@ -18,21 +18,13 @@ import { useSkills, useDeleteSkill, useAddSkillToHero } from '../../../lib/api/S
 import { useSkillsDetail, useAddSkillDetailToSkill } from '../../../lib/api/SkillDetailApi';
 import { useHeroes } from '../../../lib/api/HeroApi';
 import { alertConfirm, alertSuccess, alertError } from '../../../lib/alert';
+import { downloadSkillTemplate, exportSkills, parseSkillFile } from '../../../lib/excel/skill.excel';
+import type { HeroSkillsBundle, ParsedHeroSheet, SkillRow } from '../../../lib/excel/skill.excel';
 
 // Types
 import type { Skill, SkillDetail } from '../../../types/Skill';
 import { SKILL_TAG_OPTIONS, SKILL_TYPE_OPTIONS } from '../../../types/Skill';
 import type { Hero } from '../../../types/Hero';
-
-// Excel utils
-import {
-  exportSheetsToExcel,
-  readExcelAsAoa,
-  toStr,
-  toNum,
-  toList,
-} from '../../../utils/excel';
-import type { SheetDefinition, SheetSection } from '../../../utils/excel';
 
 // ==================== Router ====================
 const router = useRouter();
@@ -183,41 +175,7 @@ const handleDelete = async (skillId: string, skillName: string) => {
   }
 };
 
-// ==================== Helper ====================
-const toArray = (value: string | string[]): string[] => {
-  return Array.isArray(value) ? value : value ? [value] : [];
-};
-
 // ==================== Export to Excel (per-hero sheet) ====================
-interface SkillRow {
-  _id: string;
-  name: string;
-  type: string;
-  tag: string[];
-  skill_icon: string;
-  lite_description: string;
-  full_description: string;
-}
-
-interface HeroSkillsBundle {
-  heroId: string;
-  heroName: string;
-  skills: SkillRow[];
-}
-
-const SKILL_INFO_HEADERS = [
-  'Nama Skill',
-  'Tipe',
-  'Tag',
-  'Skill Icon URL',
-  'Deskripsi Singkat',
-  'Deskripsi Lengkap',
-];
-const SKILL_INFO_WIDTHS = [22, 14, 28, 35, 50, 60];
-
-const SKILL_DETAIL_HEADERS = ['Nama Skill', 'Level', 'Atribut', 'Nilai'];
-const SKILL_DETAIL_WIDTHS = [22, 8, 26, 14];
-
 const groupSkillsByHero = (): HeroSkillsBundle[] => {
   if (!skillResult.value?.heroes) return [];
   return (skillResult.value.heroes as any[]).map((hero) => ({
@@ -227,61 +185,16 @@ const groupSkillsByHero = (): HeroSkillsBundle[] => {
   }));
 };
 
-const findSkillDetailsForSkillId = (skillId: string): SkillDetail[] => {
-  if (!skillDetailResult.value?.skills) return [];
-  const found = (skillDetailResult.value.skills as any[]).find((s) => s._id === skillId);
-  return (found?.skills_detail || []) as SkillDetail[];
-};
-
-const buildHeroSheet = (bundle: HeroSkillsBundle): SheetDefinition => {
-  const skillInfoRows = bundle.skills.map((s) => [
-    s.name,
-    s.type,
-    toArray(s.tag).join(', '),
-    s.skill_icon,
-    s.lite_description,
-    s.full_description,
-  ]);
-
-  const skillDetailRows: (string | number)[][] = [];
-  bundle.skills.forEach((skill) => {
-    const details = findSkillDetailsForSkillId(skill._id);
-    details
-      .slice()
-      .sort((a, b) => (a.level || 0) - (b.level || 0))
-      .forEach((detail) => {
-        const attrs = (detail.attributes || {}) as Record<string, number>;
-        const keys = Object.keys(attrs);
-        if (keys.length === 0) {
-          skillDetailRows.push([skill.name, detail.level, '', '']);
-        } else {
-          keys.forEach((key) => {
-            skillDetailRows.push([skill.name, detail.level, key, attrs[key]]);
-          });
-        }
-      });
+const buildSkillDetailMap = (): Map<string, SkillDetail[]> => {
+  const detailsBySkillId = new Map<string, SkillDetail[]>();
+  if (!skillDetailResult.value?.skills) return detailsBySkillId;
+  skillDetailResult.value.skills.forEach((skill: { _id: string; skills_detail?: SkillDetail[] }) => {
+    detailsBySkillId.set(skill._id, skill.skills_detail || []);
   });
-
-  const sections: SheetSection[] = [
-    {
-      title: `Hero: ${bundle.heroName}`,
-      aoa: [['Hero Name', bundle.heroName]],
-      columnWidths: [22, 30],
-    },
-    {
-      title: 'Skill Info',
-      aoa: [SKILL_INFO_HEADERS, ...skillInfoRows],
-      columnWidths: SKILL_INFO_WIDTHS,
-    },
-    {
-      title: 'Skill Detail (long format: 1 baris = 1 atribut per level)',
-      aoa: [SKILL_DETAIL_HEADERS, ...skillDetailRows],
-      columnWidths: SKILL_DETAIL_WIDTHS,
-    },
-  ];
-
-  return { name: bundle.heroName || 'Hero', aoa: [], sections };
+  return detailsBySkillId;
 };
+
+const toArray = (value: string | string[]): string[] => (Array.isArray(value) ? value : value ? [value] : []);
 
 const handleExport = () => {
   const bundles = groupSkillsByHero().filter((b) => b.skills.length > 0);
@@ -289,200 +202,18 @@ const handleExport = () => {
     alertError('Tidak ada data skill untuk diekspor.');
     return;
   }
-  const sheets = bundles.map(buildHeroSheet);
-  exportSheetsToExcel(sheets, `data-skill-${new Date().toISOString().slice(0, 10)}`);
+  exportSkills(bundles, buildSkillDetailMap());
 };
 
-const handleDownloadTemplate = () => {
-  const exampleSkillRows: (string | number)[][] = [
-    [
-      'Fission Wave',
-      'Skill 1',
-      'Buff, Slow',
-      'https://example.com/icon/fission-wave.png',
-      'Menembakkan gelombang energi yang memantul.',
-      'Memantul ke unit terdekat. Damage: {{Damage}}, Slow: {{Slow}}%.',
-    ],
-    [
-      'Hidden Moonlight',
-      'Skill 2',
-      'Conceal',
-      'https://example.com/icon/hidden-moonlight.png',
-      'Menjadi tidak terlihat sementara.',
-      'Bertahan {{Durasi}} detik dan menambah movement speed sebesar {{MS}}%.',
-    ],
-    [
-      'Goddess\'s Arrow',
-      'Ultimate',
-      'Burst Damage',
-      'https://example.com/icon/goddess-arrow.png',
-      'Memanah dari kejauhan dengan damage besar.',
-      'Damage: {{Damage}}, slow {{Slow}}% selama {{Durasi}} detik.',
-    ],
-  ];
-  const exampleDetailRows: (string | number)[][] = [];
-  exampleSkillRows.forEach((row) => {
-    const skillName = row[0];
-    [1, 2, 3, 4, 5].forEach((lvl) => {
-      exampleDetailRows.push([skillName, lvl, 'Damage', 100 + lvl * 25]);
-      exampleDetailRows.push([skillName, lvl, 'Cooldown', 12 - lvl]);
-    });
-  });
-
-  const heroSheet: SheetDefinition = {
-    name: 'Miya',
-    aoa: [],
-    sections: [
-      {
-        title: 'Hero: Miya',
-        aoa: [['Hero Name', 'Miya']],
-        columnWidths: [22, 30],
-      },
-      {
-        title: 'Skill Info',
-        aoa: [SKILL_INFO_HEADERS, ...exampleSkillRows],
-        columnWidths: SKILL_INFO_WIDTHS,
-      },
-      {
-        title: 'Skill Detail (long format: 1 baris = 1 atribut per level)',
-        aoa: [SKILL_DETAIL_HEADERS, ...exampleDetailRows],
-        columnWidths: SKILL_DETAIL_WIDTHS,
-      },
-    ],
-  };
-
-  const guideSheet: SheetDefinition = {
-    name: 'Petunjuk',
-    aoa: [
-      ['Petunjuk Pengisian Template Data Skill'],
-      [],
-      ['1. Setiap hero menempati 1 sheet. Nama sheet = nama hero (harus sama persis dengan nama hero pada Data Hero).'],
-      ['2. Sheet wajib memiliki 3 bagian dengan urutan: "Hero Name", "Skill Info", lalu "Skill Detail".'],
-      ['3. Bagian "Skill Info": 1 baris per skill. Kolom Tag boleh diisi banyak nilai dipisahkan koma.'],
-      [`4. Pilihan Tipe yang valid: ${SKILL_TYPE_OPTIONS.join(', ')}.`],
-      [`5. Pilihan Tag yang valid: ${SKILL_TAG_OPTIONS.join(', ')}.`],
-      ['6. Bagian "Skill Detail" memakai format panjang: setiap baris berisi 1 atribut untuk 1 level.'],
-      ['7. Skill bertipe "Passive" boleh dilewati di bagian Skill Detail.'],
-      ['8. Untuk menambah hero, salin sheet "Miya" lalu ganti nama sheet dan isi datanya.'],
-      ['9. Field deskripsi mendukung placeholder berbentuk {{NamaAtribut}} yang akan diganti nilai sesuai level.'],
-    ],
-    columnWidths: [120],
-  };
-
-  exportSheetsToExcel([heroSheet, guideSheet], 'template-data-skill');
-};
+const handleDownloadTemplate = downloadSkillTemplate;
 
 // ==================== Import from Excel ====================
 const isImporting = ref(false);
 
-interface ParsedSkill {
-  name: string;
-  type: string;
-  tag: string[];
-  skill_icon: string;
-  lite_description: string;
-  full_description: string;
-  details: { level: number; attributes: Record<string, number> }[];
-}
-
-interface ParsedHeroSheet {
-  heroName: string;
-  skills: ParsedSkill[];
-}
-
-const findSectionStart = (rows: (string | number | null)[][], keyword: string): number => {
-  return rows.findIndex((row) => {
-    const first = toStr(row?.[0]).toLowerCase();
-    return first.startsWith(keyword.toLowerCase());
-  });
-};
-
-const isHeaderRow = (row: (string | number | null)[], expected: string[]): boolean => {
-  for (let i = 0; i < expected.length; i++) {
-    if (toStr(row?.[i]).toLowerCase() !== expected[i].toLowerCase()) return false;
-  }
-  return true;
-};
-
-const parseHeroSheet = (sheetName: string, rows: (string | number | null)[][]): ParsedHeroSheet | null => {
-  const skillInfoStart = findSectionStart(rows, 'Skill Info');
-  const skillDetailStart = findSectionStart(rows, 'Skill Detail');
-  if (skillInfoStart < 0) return null;
-
-  const infoEnd = skillDetailStart > 0 ? skillDetailStart : rows.length;
-  const skillInfoRows = rows.slice(skillInfoStart + 1, infoEnd);
-  const headerIdx = skillInfoRows.findIndex((row) => isHeaderRow(row, SKILL_INFO_HEADERS));
-  if (headerIdx < 0) return null;
-  const dataRows = skillInfoRows.slice(headerIdx + 1).filter((row) => toStr(row?.[0]).length > 0);
-
-  const skillsMap = new Map<string, ParsedSkill>();
-  dataRows.forEach((row) => {
-    const name = toStr(row[0]);
-    if (!name) return;
-    skillsMap.set(name, {
-      name,
-      type: toStr(row[1]),
-      tag: toList(row[2]),
-      skill_icon: toStr(row[3]),
-      lite_description: toStr(row[4]),
-      full_description: toStr(row[5]),
-      details: [],
-    });
-  });
-
-  if (skillDetailStart >= 0) {
-    const detailRows = rows.slice(skillDetailStart + 1);
-    const detailHeaderIdx = detailRows.findIndex((row) => isHeaderRow(row, SKILL_DETAIL_HEADERS));
-    if (detailHeaderIdx >= 0) {
-      const detailDataRows = detailRows
-        .slice(detailHeaderIdx + 1)
-        .filter((row) => toStr(row?.[0]).length > 0 && toStr(row?.[1]).length > 0);
-      const grouped = new Map<string, Map<number, Record<string, number>>>();
-      detailDataRows.forEach((row) => {
-        const skillName = toStr(row[0]);
-        const level = toNum(row[1]);
-        const attr = toStr(row[2]);
-        const value = toNum(row[3]);
-        if (!skillName || !level) return;
-        if (!grouped.has(skillName)) grouped.set(skillName, new Map());
-        const levelMap = grouped.get(skillName)!;
-        if (!levelMap.has(level)) levelMap.set(level, {});
-        if (attr) levelMap.get(level)![attr] = value;
-      });
-
-      grouped.forEach((levelMap, skillName) => {
-        const skill = skillsMap.get(skillName);
-        if (!skill) return;
-        skill.details = Array.from(levelMap.entries())
-          .map(([level, attributes]) => ({ level, attributes }))
-          .sort((a, b) => a.level - b.level);
-      });
-    }
-  }
-
-  return {
-    heroName: sheetName,
-    skills: Array.from(skillsMap.values()),
-  };
-};
-
 const handleImport = async (file: File) => {
   isImporting.value = true;
   try {
-    const sheetMap = await readExcelAsAoa(file);
-    const sheetEntries = Object.entries(sheetMap).filter(
-      ([name]) => !['Petunjuk', 'Instructions', 'Guide'].includes(name),
-    );
-
-    const parsed: ParsedHeroSheet[] = [];
-    sheetEntries.forEach(([sheetName, rows]) => {
-      const result = parseHeroSheet(sheetName, rows);
-      if (result && result.skills.length > 0) parsed.push(result);
-    });
-
-    if (parsed.length === 0) {
-      throw new Error('Tidak ada data skill yang valid pada file. Pastikan struktur sheet sesuai template.');
-    }
+    const parsed: ParsedHeroSheet[] = await parseSkillFile(file);
 
     let totalSkills = 0;
     let totalDetails = 0;

@@ -18,13 +18,11 @@ import HeroFormModal from './components/HeroFormModal.vue';
 import { useHeroes, useCreateHero } from '../../../lib/api/HeroApi';
 import { useHeroService } from '../../../lib/service/HeroService';
 import { alertSuccess, alertError } from '../../../lib/alert';
+import { downloadHeroTemplate, exportHeroes, parseHeroFile } from '../../../lib/excel/hero.excel';
 
 // Types
 import type { Hero, HeroFormData } from '../../../types/Hero';
 import { createDefaultHeroForm, HERO_TYPE_OPTIONS, HERO_ROLE_OPTIONS } from '../../../types/Hero';
-
-// Excel utils
-import { exportSheetsToExcel, readExcelAsRows, toStr, toNum, toList } from '../../../utils/excel';
 
 // ==================== Data Fetching ====================
 const { result: heroResult, loading: heroLoading, refetch } = useHeroes();
@@ -131,17 +129,14 @@ const onEditHero = async () => {
   }
 };
 
-// ==================== Helper Functions ====================
-const toArray = (value: string | string[]): string[] => {
-  return Array.isArray(value) ? value : value ? [value] : [];
-};
-
 const activeFilterCount = computed(() => {
   let count = 0;
   if (selectedFilterRole.value) count++;
   if (selectedFilterType.value) count++;
   return count;
 });
+
+const toArray = (value: string | string[]): string[] => (Array.isArray(value) ? value : value ? [value] : []);
 
 const resetFilters = () => {
   searchQuery.value = '';
@@ -150,162 +145,31 @@ const resetFilters = () => {
   currentPage.value = 1;
 };
 
-// ==================== Export to Excel ====================
-const HERO_EXPORT_HEADERS = [
-  'Nama',
-  'Alias',
-  'Role',
-  'Tipe',
-  'Spesialitas',
-  'Region',
-  'Hero Order',
-  'Deskripsi Singkat',
-  'Avatar URL',
-  'Image URL',
-  'Tanggal Rilis',
-  'Durability',
-  'Offense',
-  'Control Effect',
-  'Difficulty',
-];
-
-const HERO_COLUMN_WIDTHS = [22, 22, 28, 28, 22, 18, 12, 50, 35, 35, 16, 12, 12, 14, 12];
-
-const buildHeroRows = (data: Hero[]) =>
-  data.map((hero) => [
-    hero.name,
-    hero.alias,
-    toArray(hero.role).join(', '),
-    toArray(hero.type).join(', '),
-    hero.speciality,
-    hero.region,
-    hero.hero_order,
-    hero.short_description,
-    hero.avatar,
-    hero.image,
-    hero.release_date,
-    hero.durability,
-    hero.offense,
-    hero.control_effect,
-    hero.difficulty,
-  ]);
-
 const handleExport = () => {
   if (heroes.value.length === 0) {
     alertError('Tidak ada data hero untuk diekspor.');
     return;
   }
-  exportSheetsToExcel(
-    [
-      {
-        name: 'Data Hero',
-        aoa: [HERO_EXPORT_HEADERS, ...buildHeroRows(filteredHeroes.value.length ? filteredHeroes.value : heroes.value)],
-        columnWidths: HERO_COLUMN_WIDTHS,
-      },
-    ],
-    `data-hero-${new Date().toISOString().slice(0, 10)}`,
-  );
+  exportHeroes(filteredHeroes.value.length ? filteredHeroes.value : heroes.value);
 };
 
-const handleDownloadTemplate = () => {
-  const exampleRow = [
-    'Miya',
-    'Moonlight Archer',
-    HERO_ROLE_OPTIONS.slice(0, 1).join(', '),
-    HERO_TYPE_OPTIONS.filter((t) => t === 'Marksman').join(', '),
-    'Reap',
-    'Moniyan Empire',
-    1,
-    'Marksman dengan damage tinggi di late game.',
-    'https://example.com/avatar/miya.png',
-    'https://example.com/image/miya.png',
-    '2016-07-14',
-    4,
-    8,
-    3,
-    3,
-  ];
-  exportSheetsToExcel(
-    [
-      {
-        name: 'Template Hero',
-        aoa: [HERO_EXPORT_HEADERS, exampleRow],
-        columnWidths: HERO_COLUMN_WIDTHS,
-      },
-      {
-        name: 'Petunjuk',
-        aoa: [
-          ['Petunjuk Pengisian Template Hero'],
-          [],
-          ['1. Sheet "Template Hero" berisi 1 baris contoh, hapus baris contoh sebelum mengimpor data baru.'],
-          ['2. Kolom Role dan Tipe boleh diisi lebih dari satu, pisahkan dengan koma.'],
-          [`3. Pilihan Role yang valid: ${HERO_ROLE_OPTIONS.join(', ')}.`],
-          [`4. Pilihan Tipe yang valid: ${HERO_TYPE_OPTIONS.join(', ')}.`],
-          ['5. Hero Order, Durability, Offense, Control Effect, dan Difficulty wajib diisi angka.'],
-          ['6. Kolom Avatar URL dan Image URL diisi dengan link gambar yang dapat diakses publik.'],
-          ['7. Format tanggal rilis bebas, contoh: 2016-07-14.'],
-        ],
-        columnWidths: [120],
-      },
-    ],
-    'template-data-hero',
-  );
-};
+const handleDownloadTemplate = downloadHeroTemplate;
 
 // ==================== Import from Excel ====================
 const isImporting = ref(false);
 const token = (typeof localStorage !== 'undefined' && localStorage.getItem('token')) || '';
 const { createHero } = useCreateHero(token);
 
-interface HeroImportRow {
-  Nama?: string;
-  Alias?: string;
-  Role?: string;
-  Tipe?: string;
-  Spesialitas?: string;
-  Region?: string;
-  'Hero Order'?: string | number;
-  'Deskripsi Singkat'?: string;
-  'Avatar URL'?: string;
-  'Image URL'?: string;
-  'Tanggal Rilis'?: string;
-  Durability?: string | number;
-  Offense?: string | number;
-  'Control Effect'?: string | number;
-  Difficulty?: string | number;
-}
-
 const handleImport = async (file: File) => {
   isImporting.value = true;
   try {
-    const rows = await readExcelAsRows<HeroImportRow>(file);
-    const cleanRows = rows.filter((r) => toStr(r.Nama).length > 0);
-    if (cleanRows.length === 0) {
-      throw new Error('File tidak berisi data hero yang valid (kolom Nama kosong).');
-    }
+    const inputs = await parseHeroFile(file);
 
     let successCount = 0;
     let failCount = 0;
     const failures: string[] = [];
 
-    for (const row of cleanRows) {
-      const input = {
-        name: toStr(row.Nama),
-        alias: toStr(row.Alias),
-        role: toList(row.Role),
-        type: toList(row.Tipe),
-        speciality: toStr(row.Spesialitas),
-        region: toStr(row.Region),
-        hero_order: toNum(row['Hero Order']),
-        short_description: toStr(row['Deskripsi Singkat']),
-        avatar: toStr(row['Avatar URL']),
-        image: toStr(row['Image URL']),
-        release_date: toStr(row['Tanggal Rilis']),
-        durability: toNum(row.Durability),
-        offense: toNum(row.Offense),
-        control_effect: toNum(row['Control Effect']),
-        difficulty: toNum(row.Difficulty),
-      };
+    for (const input of inputs) {
       try {
         await createHero({ createHeroInput: input });
         successCount++;
