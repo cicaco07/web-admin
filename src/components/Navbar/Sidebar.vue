@@ -2,9 +2,8 @@
 import { reactive, computed, watch } from 'vue';
 import { useGetUserNavigations } from '../../lib/api/NavigationApi';
 
-// Import images
-import darkLogo from '/dist/images/logos/dark-logo.svg';
-import userProfile1 from '/dist/images/profile/user-1.jpg';
+const darkLogo = '/dist/images/logos/dark-logo.svg';
+const userProfile1 = '/dist/images/profile/user-1.jpg';
 
 const token = localStorage.getItem('token') ?? '';
 if (!token) {

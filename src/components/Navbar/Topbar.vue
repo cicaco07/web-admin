@@ -1,33 +1,28 @@
 <script setup lang="ts">
 import { useAuthService } from '../../lib/service/AuthService';
 
-// Import SVG icons
-import iconChat from '/dist/images/svgs/icon-dd-chat.svg';
-import iconInvoice from '/dist/images/svgs/icon-dd-invoice.svg';
-import iconMobile from '/dist/images/svgs/icon-dd-mobile.svg';
-import iconMessageBox from '/dist/images/svgs/icon-dd-message-box.svg';
-import iconCart from '/dist/images/svgs/icon-dd-cart.svg';
-import iconDate from '/dist/images/svgs/icon-dd-date.svg';
-import iconLifebuoy from '/dist/images/svgs/icon-dd-lifebuoy.svg';
-import iconApplication from '/dist/images/svgs/icon-dd-application.svg';
-import iconAccount from '/dist/images/svgs/icon-account.svg';
-import iconInbox from '/dist/images/svgs/icon-inbox.svg';
-import iconTasks from '/dist/images/svgs/icon-tasks.svg';
-
-// Import flag icons
-import iconFlagEn from '/dist/images/svgs/icon-flag-en.svg';
-import iconFlagCn from '/dist/images/svgs/icon-flag-cn.svg';
-import iconFlagFr from '/dist/images/svgs/icon-flag-fr.svg';
-import iconFlagSa from '/dist/images/svgs/icon-flag-sa.svg';
-
-// Import logo and images
-import darkLogo from '/dist/images/logos/dark-logo.svg';
-import unlimitedBg from '/dist/images/backgrounds/unlimited-bg.png';
-import userProfile1 from '/dist/images/profile/user-1.jpg';
-import userProfile2 from '/dist/images/profile/user-2.jpg';
-import userProfile3 from '/dist/images/profile/user-3.jpg';
-import userProfile4 from '/dist/images/profile/user-4.jpg';
-import userProfile5 from '/dist/images/profile/user-5.jpg';
+const iconChat = '/dist/images/svgs/icon-dd-chat.svg';
+const iconInvoice = '/dist/images/svgs/icon-dd-invoice.svg';
+const iconMobile = '/dist/images/svgs/icon-dd-mobile.svg';
+const iconMessageBox = '/dist/images/svgs/icon-dd-message-box.svg';
+const iconCart = '/dist/images/svgs/icon-dd-cart.svg';
+const iconDate = '/dist/images/svgs/icon-dd-date.svg';
+const iconLifebuoy = '/dist/images/svgs/icon-dd-lifebuoy.svg';
+const iconApplication = '/dist/images/svgs/icon-dd-application.svg';
+const iconAccount = '/dist/images/svgs/icon-account.svg';
+const iconInbox = '/dist/images/svgs/icon-inbox.svg';
+const iconTasks = '/dist/images/svgs/icon-tasks.svg';
+const iconFlagEn = '/dist/images/svgs/icon-flag-en.svg';
+const iconFlagCn = '/dist/images/svgs/icon-flag-cn.svg';
+const iconFlagFr = '/dist/images/svgs/icon-flag-fr.svg';
+const iconFlagSa = '/dist/images/svgs/icon-flag-sa.svg';
+const darkLogo = '/dist/images/logos/dark-logo.svg';
+const unlimitedBg = '/dist/images/backgrounds/unlimited-bg.png';
+const userProfile1 = '/dist/images/profile/user-1.jpg';
+const userProfile2 = '/dist/images/profile/user-2.jpg';
+const userProfile3 = '/dist/images/profile/user-3.jpg';
+const userProfile4 = '/dist/images/profile/user-4.jpg';
+const userProfile5 = '/dist/images/profile/user-5.jpg';
 
 const { handleLogout } = useAuthService();
 </script>
@@ -303,7 +298,7 @@ const { handleLogout } = useAuthService();
                   </a>
                   <a href="javascript:void(0)" class="py-6 px-7 d-flex align-items-center dropdown-item">
                     <span class="me-3">
-                      <img src="/dist/images/profile/user-1.jpg" alt="user" class="rounded-circle" width="48" height="48" />
+                      <img :src="userProfile1" alt="user" class="rounded-circle" width="48" height="48" />
                     </span>
                     <div class="w-75 d-inline-block v-middle">
                       <h6 class="mb-1 fw-semibold">Roman Joined the Team!</h6>

@@ -1,3 +1,7 @@
+<script setup lang="ts">
+const authArt = '/dist/images/big/auth-bg.jpg';
+</script>
+
 <template>
   <div
     class="page-wrapper auth-shell"
@@ -35,7 +39,7 @@
 
         <img
           class="auth-art"
-          src="/dist/images/big/auth-bg.jpg"
+          :src="authArt"
           alt=""
           aria-hidden="true"
         >

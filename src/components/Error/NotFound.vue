@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import errorImg from '/dist/images/backgrounds/errorimg.svg';
+const errorImg = '/dist/images/backgrounds/errorimg.svg';
 </script>
 
 <template>
