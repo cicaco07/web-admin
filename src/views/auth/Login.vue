@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import googleIcon from '/dist/images/svgs/google-icon.svg';
 import AuthLayout from '../../components/Auth/AuthLayout.vue';
 import { useAuthService } from '../../lib/service/AuthService';
 
 const { email, password, loading, error, handleLogin } = useAuthService();
+const googleIcon = '/dist/images/svgs/google-icon.svg';
 </script>
 
 <template>
