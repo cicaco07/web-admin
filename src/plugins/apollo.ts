@@ -1,9 +1,9 @@
 import { ApolloClient, createHttpLink, InMemoryCache } from '@apollo/client/core'
 import { setContext } from '@apollo/client/link/context'
+import { GRAPHQL_URL } from '../lib/config/backend'
 
 const httpLink = createHttpLink({
-  uri: 'https://graphql-api-green.vercel.app/graphql',
-  // uri: 'http://localhost:3000/graphql',
+  uri: GRAPHQL_URL
 })
 
 const authLink = setContext((_, { headers }) => {

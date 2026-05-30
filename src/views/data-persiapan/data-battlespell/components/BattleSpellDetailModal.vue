@@ -4,6 +4,7 @@ import ModalHeader from '../../../../components/Modal/ModalHeader.vue';
 import ModalBody from '../../../../components/Modal/ModalBody.vue';
 import Badge from '../../../../components/Badge/Badge.vue';
 import type { BattleSpell } from '../../../../types/BattleSpell';
+import { backendUrl } from '../../../../lib/config/backend';
 
 defineProps<{
   modalId: string;
@@ -20,7 +21,7 @@ defineProps<{
       <div class="row pt-3">
         <div class="col-md-4 text-center">
           <img 
-            :src="`http://localhost:3000${battleSpell.icon}`" 
+            :src="backendUrl(battleSpell.icon)" 
             alt="Battle Spell Icon" 
             class="rounded mb-3" 
             style="width: 30%; height: auto;" 

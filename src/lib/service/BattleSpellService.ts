@@ -1,5 +1,6 @@
 import { alertConfirm, alertError, alertSuccess } from "../alert";
 import { useCreateBattleSpell, useDeleteBattleSpell, useUpdateBattleSpell } from "../api/BattleSpellApi"
+import { backendUrl } from "../config/backend";
 
 export const useBattleSpellService = (refetch: () => Promise<any>) => {
   const token = localStorage.getItem('token') || '';
@@ -12,7 +13,7 @@ export const useBattleSpellService = (refetch: () => Promise<any>) => {
       const formData = new FormData();
       formData.append('icon', file);
 
-      const response = await fetch('http://localhost:3000/battlespell/battlespell-icon', {
+      const response = await fetch(backendUrl('/battlespell/battlespell-icon'), {
         method: 'POST',
         headers: {
           ...(localStorage.getItem('token') ? { Authorization: `Bearer ${localStorage.getItem('token')}` } : {}),
