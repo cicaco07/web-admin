@@ -1,4 +1,4 @@
-export type PatchNoteType = 'major' | 'minor' | 'patch' | 'hotfix';
+export type PatchNoteType = 'MAJOR' | 'MINOR' | 'PATCH' | 'HOTFIX';
 export type PatchChangeType = 'new' | 'buff' | 'nerf' | 'adjusted' | 'rework' | 'removed';
 
 export interface HeroChangeDetail {
@@ -72,14 +72,14 @@ export interface SimplePatchNoteSectionFormData {
   change_details: string;
 }
 
-export const PATCH_NOTE_TYPE_OPTIONS: PatchNoteType[] = ['major', 'minor', 'patch', 'hotfix'];
+export const PATCH_NOTE_TYPE_OPTIONS: PatchNoteType[] = ['MAJOR', 'MINOR', 'PATCH', 'HOTFIX'];
 export const PATCH_CHANGE_TYPE_OPTIONS: PatchChangeType[] = ['new', 'buff', 'nerf', 'adjusted', 'rework', 'removed'];
 
 export const createDefaultPatchNoteForm = (): PatchNoteFormData => ({
   name: '',
   start_date: '',
   end_date: '',
-  type: 'patch',
+  type: 'PATCH',
   season: 0,
   is_active: true,
 });
