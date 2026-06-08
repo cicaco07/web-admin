@@ -24,6 +24,16 @@ const BASE_STAT_FIELDS = `
   attack_speed_ratio
   spell_vamp_ratio
   attack_range
+  hp_growth
+  mana_growth
+  energy_growth
+  hp_regen_growth
+  mana_regen_growth
+  energy_regen_growth
+  physical_attack_growth
+  physical_defense_growth
+  magic_defense_growth
+  attack_speed_growth
 `;
 
 const GET_BASE_STATS = gql`

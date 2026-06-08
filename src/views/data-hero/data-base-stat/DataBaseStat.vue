@@ -159,6 +159,16 @@ const openEditModal = (stat: BaseStat) => {
     attack_speed_ratio: stat.attack_speed_ratio,
     spell_vamp_ratio: stat.spell_vamp_ratio,
     attack_range: stat.attack_range,
+    hp_growth: stat.hp_growth ?? 0,
+    mana_growth: stat.mana_growth ?? 0,
+    energy_growth: stat.energy_growth ?? 0,
+    hp_regen_growth: stat.hp_regen_growth ?? 0,
+    mana_regen_growth: stat.mana_regen_growth ?? 0,
+    energy_regen_growth: stat.energy_regen_growth ?? 0,
+    physical_attack_growth: stat.physical_attack_growth ?? 0,
+    physical_defense_growth: stat.physical_defense_growth ?? 0,
+    magic_defense_growth: stat.magic_defense_growth ?? 0,
+    attack_speed_growth: stat.attack_speed_growth ?? 0,
   };
 };
 

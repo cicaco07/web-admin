@@ -24,6 +24,13 @@ const STAT_FIELDS = [
   'attack_range',
 ] as const;
 
+const GROWTH_FIELDS = [
+  'hp_growth', 'mana_growth', 'energy_growth',
+  'hp_regen_growth', 'mana_regen_growth', 'energy_regen_growth',
+  'physical_attack_growth', 'physical_defense_growth',
+  'magic_defense_growth', 'attack_speed_growth',
+] as const;
+
 const buildInput = (form: BaseStatFormData) => {
   const input: Record<string, number | string> = {
     heroId: form.heroId,
@@ -31,7 +38,12 @@ const buildInput = (form: BaseStatFormData) => {
   for (const field of STAT_FIELDS) {
     const raw = form[field];
     const num = typeof raw === 'number' ? raw : Number(raw);
-    input[field] = Number.isFinite(num) ? Math.trunc(num) : 0;
+    input[field] = Number.isFinite(num) ? num : 0;
+  }
+  for (const field of GROWTH_FIELDS) {
+    const raw = form[field];
+    const num = typeof raw === 'number' ? raw : Number(raw);
+    input[field] = Number.isFinite(num) ? num : 0;
   }
   return input;
 };

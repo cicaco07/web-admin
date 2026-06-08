@@ -2,8 +2,9 @@
 import Modal from '../../../../components/Modal/Modal.vue';
 import ModalHeader from '../../../../components/Modal/ModalHeader.vue';
 import ModalBody from '../../../../components/Modal/ModalBody.vue';
-import type { BaseStatFormData } from '../../../../types/BaseStat';
-import { BASE_STAT_FIELD_GROUPS } from '../../../../types/BaseStat';
+import { ref, watch } from 'vue';
+import type { BaseStatFormData, BaseStatGrowthKey } from '../../../../types/BaseStat';
+import { BASE_STAT_FIELD_GROUPS, BASE_STAT_GROWTH_FIELDS } from '../../../../types/BaseStat';
 import type { Hero } from '../../../../types/Hero';
 
 const props = defineProps<{
@@ -23,13 +24,86 @@ const emit = defineEmits<{
 
 const fieldGroups = BASE_STAT_FIELD_GROUPS;
 
+const statKeys = fieldGroups.flatMap((group) => group.fields.map((field) => field.key));
+const growthKeys = BASE_STAT_GROWTH_FIELDS.map((field) => field.growthKey as BaseStatGrowthKey);
+
+type BaseStatInputKey = (typeof statKeys)[number];
+
+const normalizeDecimal = (raw: string) => raw.replace(',', '.').trim();
+
+const parseDecimalInput = (raw: string) => {
+  const normalized = normalizeDecimal(raw);
+  const num = Number(normalized);
+  return normalized !== '' && Number.isFinite(num) ? num : 0;
+};
+
+const shouldSyncText = (current: string, value: number | null | undefined) => {
+  const normalized = normalizeDecimal(current);
+  const nextValue = value ?? 0;
+
+  if (normalized === '' && nextValue === 0) return false;
+  if ((normalized === '.' || normalized === '-.') && nextValue === 0) return false;
+
+  const parsed = Number(normalized);
+  return !Number.isFinite(parsed) || parsed !== nextValue;
+};
+
+const buildStatText = (): Record<BaseStatInputKey, string> =>
+  statKeys.reduce((acc, key) => {
+    const value = props.baseStatForm[key];
+    acc[key] = value == null ? '0' : String(value);
+    return acc;
+  }, {} as Record<BaseStatInputKey, string>);
+
+const buildGrowthText = (): Record<BaseStatGrowthKey, string> =>
+  growthKeys.reduce((acc, key) => {
+    const value = props.baseStatForm[key];
+    acc[key] = value === 0 || value == null ? '' : String(value);
+    return acc;
+  }, {} as Record<BaseStatGrowthKey, string>);
+
+const statText = ref<Record<BaseStatInputKey, string>>(buildStatText());
+const growthText = ref<Record<BaseStatGrowthKey, string>>(buildGrowthText());
+
+watch(
+  () => statKeys.map((key) => props.baseStatForm[key]),
+  (values) => {
+    statKeys.forEach((key, index) => {
+      const value = values[index];
+      const current = statText.value[key];
+      if (shouldSyncText(current, value)) {
+        statText.value[key] = value == null ? '0' : String(value);
+      }
+    });
+  },
+);
+
+watch(
+  () => growthKeys.map((key) => props.baseStatForm[key]),
+  (values) => {
+    growthKeys.forEach((key, index) => {
+      const value = values[index];
+      const current = growthText.value[key];
+      if (shouldSyncText(current, value)) {
+        growthText.value[key] = value === 0 || value == null ? '' : String(value);
+      }
+    });
+  },
+);
+
 const updateHero = (heroId: string) => {
   emit('update:baseStatForm', { ...props.baseStatForm, heroId });
 };
 
-const updateField = (field: keyof BaseStatFormData, raw: string) => {
-  const num = Number(raw);
-  const value = Number.isFinite(num) ? Math.trunc(num) : 0;
+const updateField = (field: BaseStatInputKey, raw: string) => {
+  statText.value[field] = raw;
+  const value = parseDecimalInput(raw);
+  emit('update:baseStatForm', { ...props.baseStatForm, [field]: value });
+};
+
+const updateGrowthField = (field: BaseStatGrowthKey, raw: string) => {
+  growthText.value[field] = raw;
+  const value = parseDecimalInput(raw);
   emit('update:baseStatForm', { ...props.baseStatForm, [field]: value });
 };
 
@@ -84,15 +158,32 @@ const handleCancel = () => {
                 <span class="text-danger">*</span>
               </label>
               <input
-                type="number"
+                type="text"
+                inputmode="decimal"
                 class="form-control"
                 :placeholder="`Masukkan ${field.label}`"
-                min="0"
-                step="1"
-                :value="baseStatForm[field.key]"
+                :value="statText[field.key]"
                 @input="updateField(field.key, ($event.target as HTMLInputElement).value)"
                 required
               />
+              <template v-if="field.growthKey">
+                <label class="form-label text-muted small mt-2">
+                  {{ field.label }} / Level
+                </label>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text">
+                    <i class="ti ti-trending-up"></i>
+                  </span>
+                  <input
+                    type="text"
+                    inputmode="decimal"
+                    class="form-control"
+                    :placeholder="`Growth ${field.label}`"
+                    :value="growthText[field.growthKey]"
+                    @input="updateGrowthField(field.growthKey, ($event.target as HTMLInputElement).value)"
+                  />
+                </div>
+              </template>
             </div>
           </div>
         </div>
