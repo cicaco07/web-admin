@@ -6,6 +6,7 @@ interface ItemImportRow {
   Nama?: string;
   Tipe?: string;
   Tag?: string;
+  Tier?: string;
   Atribut?: string;
   Harga?: string | number;
   'Image URL'?: string;
@@ -18,6 +19,7 @@ const ITEM_HEADERS = [
   'Nama',
   'Tipe',
   'Tag',
+  'Tier',
   'Atribut',
   'Harga',
   'Image URL',
@@ -26,13 +28,14 @@ const ITEM_HEADERS = [
   'Tips',
 ];
 
-const ITEM_WIDTHS = [24, 16, 22, 36, 12, 36, 50, 60, 50];
+const ITEM_WIDTHS = [24, 16, 22, 10, 36, 12, 36, 50, 60, 50];
 
 const buildItemRows = (items: Item[]) =>
   items.map((item) => [
     item.name,
     item.type,
     item.tag,
+    item.tier || '',
     (item.attributes || []).join(', '),
     item.price,
     item.image,
@@ -59,6 +62,7 @@ export const downloadItemTemplate = (): void => {
     'Demon Hunter Sword',
     'Attack',
     'Attack Speed',
+    '3',
     '+35 Physical Attack, +25% Attack Speed',
     '2180',
     'https://example.com/item/demon-hunter-sword.png',
@@ -81,9 +85,10 @@ export const downloadItemTemplate = (): void => {
           [],
           ['1. Sheet "Template Item" berisi 1 baris contoh, hapus atau ubah baris contoh sebelum impor.'],
           [`2. Pilihan Tipe yang valid: ${ITEM_TYPE_OPTIONS.join(', ')}.`],
-          ['3. Kolom Atribut boleh berisi banyak nilai, pisahkan dengan koma.'],
-          ['4. Kolom Deskripsi boleh berisi banyak paragraf, pisahkan dengan tanda |.'],
-          ['5. Harga boleh berupa angka atau teks angka, contoh: 2180.'],
+          ['3. Kolom Tier bersifat opsional, isi dengan angka (contoh: 1, 2, 3).'],
+          ['4. Kolom Atribut boleh berisi banyak nilai, pisahkan dengan koma.'],
+          ['5. Kolom Deskripsi boleh berisi banyak paragraf, pisahkan dengan tanda |.'],
+          ['6. Harga boleh berupa angka atau teks angka, contoh: 2180.'],
         ],
         columnWidths: [120],
       },
@@ -104,6 +109,7 @@ export const parseItemFile = async (file: File): Promise<ItemFormData[]> => {
     name: toStr(row.Nama),
     type: toStr(row.Tipe),
     tag: toStr(row.Tag),
+    tier: toStr(row.Tier),
     attributes: toList(row.Atribut),
     price: toStr(row.Harga),
     image: toStr(row['Image URL']),

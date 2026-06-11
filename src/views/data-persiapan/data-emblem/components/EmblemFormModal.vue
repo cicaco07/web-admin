@@ -68,7 +68,7 @@ const handleSubmit = () => {
   const attributes = textFields.value
     .filter(field => field.key.trim() && field.value.trim())
     .map(field => ({
-      [field.key]: parseFloat(field.value) || field.value,
+      [field.key]: field.value,
       icon: field.icon
     }));
   emit('submit', attributes);

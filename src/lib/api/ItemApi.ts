@@ -8,6 +8,7 @@ const GET_ITEMS = gql`
       name
       type
       tag
+      tier
       attributes
       price
       image

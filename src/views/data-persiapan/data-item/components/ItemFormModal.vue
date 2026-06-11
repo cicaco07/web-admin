@@ -7,7 +7,7 @@ import Button from '../../../../components/Button/Button.vue';
 import FormInput from '../../../../components/FormInput/FormInput.vue';
 import FormTextarea from '../../../../components/FormInput/FormTextarea.vue';
 import type { ItemFormData } from '../../../../types/Item';
-import { ITEM_TYPE_OPTIONS } from '../../../../types/Item';
+import { ITEM_TYPE_OPTIONS, ITEM_TIER_OPTIONS } from '../../../../types/Item';
 
 interface DynamicField {
   id: number;
@@ -29,6 +29,7 @@ const emit = defineEmits<{
 }>();
 
 const typeOptions = [...ITEM_TYPE_OPTIONS];
+const tierOptions = [...ITEM_TIER_OPTIONS];
 
 // Dynamic fields
 const attributeFields = ref<DynamicField[]>([{ id: Date.now(), value: '' }]);
@@ -94,7 +95,7 @@ const handleCancel = () => {
     <ModalBody :onSubmit="handleSubmit">
       <div class="form-group">
         <div class="row pt-3">
-          <div class="col-md-6 col-lg-4">
+          <div class="col-md-6 col-lg-3">
             <FormInput 
               type="text" 
               label="Nama Item" 
@@ -103,7 +104,7 @@ const handleCancel = () => {
               required
             />
           </div>
-          <div class="col-md-6 col-lg-4">
+          <div class="col-md-6 col-lg-3">
             <FormInput 
               type="text" 
               label="Tag Item" 
@@ -112,7 +113,7 @@ const handleCancel = () => {
               required
             />
           </div>
-          <div class="col-md-6 col-lg-4 mb-3">
+          <div class="col-md-6 col-lg-3 mb-3">
             <label class="form-label fw-semibold">Tipe</label>
             <select 
               class="form-select" 
@@ -123,6 +124,19 @@ const handleCancel = () => {
               <option value="" disabled>Pilih Tipe</option>
               <option v-for="type in typeOptions" :key="type" :value="type">
                 {{ type }}
+              </option>
+            </select>
+          </div>
+          <div class="col-md-6 col-lg-3 mb-3">
+            <label class="form-label fw-semibold">Tier</label>
+            <select
+              class="form-select"
+              :value="itemForm.tier"
+              @change="updateFormField('tier', ($event.target as HTMLSelectElement).value)"
+            >
+              <option value="" disabled>Pilih Tier</option>
+              <option v-for="tier in tierOptions" :key="tier.value" :value="tier.value">
+                {{ tier.label }}
               </option>
             </select>
           </div>

@@ -31,6 +31,7 @@ export const useItemService = (refetch: () => Promise<any>) => {
         name: editItem.name,
         type: editItem.type,
         tag: editItem.tag,
+        tier: editItem.tier,
         attributes: editItem.attributes,
         price: Number(editItem.price),
         image: editItem.image,

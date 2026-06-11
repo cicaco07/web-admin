@@ -69,6 +69,11 @@ const getRowNumber = (index: number) => {
   return (currentPage.value - 1) * itemsPerPage.value + index + 1;
 };
 
+const formatTier = (tier: string) => {
+  if (!tier) return '-';
+  return tier.replace('TIER_', 'Tier ');
+};
+
 const activeFilterCount = computed(() => (selectedFilterType.value ? 1 : 0));
 
 const resetFilters = () => {
@@ -101,6 +106,7 @@ const openEditModal = (item: Item) => {
     name: item.name,
     type: item.type,
     tag: item.tag,
+    tier: item.tier,
     attributes: item.attributes || [],
     price: item.price,
     image: item.image,
@@ -408,6 +414,7 @@ const handleImport = async (file: File) => {
                     <th style="width: 80px;">Gambar</th>
                     <th>Tag</th>
                     <th>Tipe</th>
+                    <th>Tier</th>
                     <th>Attribut</th>
                     <th style="width: 100px;">Harga</th>
                     <th style="width: 200px;">Aksi</th>
@@ -416,7 +423,7 @@ const handleImport = async (file: File) => {
                 <tbody>
                   <!-- Loading State -->
                   <tr v-if="itemLoading">
-                    <td colspan="8" class="text-center py-5">
+                    <td colspan="9" class="text-center py-5">
                       <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
                         <span class="visually-hidden">Loading...</span>
                       </div>
@@ -445,6 +452,7 @@ const handleImport = async (file: File) => {
                     </td>
                     <td>{{ item.tag }}</td>
                     <td>{{ item.type }}</td>
+                    <td>{{ formatTier(item.tier) }}</td>
                     <td class="text-start">
                       {{ item.attributes?.join(', ') || '-' }}
                     </td>
@@ -490,7 +498,7 @@ const handleImport = async (file: File) => {
 
                   <!-- Empty State - Filter Results -->
                   <tr v-if="!itemLoading && paginatedItems.length === 0 && items.length > 0">
-                    <td colspan="8" class="text-center py-4 text-muted">
+                    <td colspan="9" class="text-center py-4 text-muted">
                       <i class="ti ti-filter-off fs-1 d-block mb-2"></i>
                       Tidak ada item yang sesuai dengan filter
                     </td>
@@ -498,7 +506,7 @@ const handleImport = async (file: File) => {
 
                   <!-- Empty State - No Data -->
                   <tr v-if="!itemLoading && items.length === 0">
-                    <td colspan="8" class="text-center py-4 text-muted">
+                    <td colspan="9" class="text-center py-4 text-muted">
                       <i class="ti ti-database-off fs-1 d-block mb-2"></i>
                       Tidak ada data item
                     </td>

@@ -6,6 +6,11 @@ import Badge from '../../../../components/Badge/Badge.vue';
 import Button from '../../../../components/Button/Button.vue';
 import type { Item } from '../../../../types/Item';
 
+const formatTier = (tier: string) => {
+  if (!tier) return '';
+  return tier.replace('TIER_', 'Tier ');
+};
+
 defineProps<{
   modalId: string;
   item: Item | null;
@@ -40,6 +45,9 @@ const getTypeBadgeColor = (type: string): "info" | "primary" | "danger" | "succe
           />
           <div class="mb-2">
             <Badge v-if="item.price" color="warning">{{ item.price }}</Badge>
+          </div>
+          <div class="mb-2">
+            <Badge v-if="item.tier" color="info">{{ formatTier(item.tier) }}</Badge>
           </div>
           <Badge v-if="item.type" :color="getTypeBadgeColor(item.type)">
             {{ item.type }}
