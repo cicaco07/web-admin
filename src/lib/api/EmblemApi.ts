@@ -11,6 +11,7 @@ const GET_EMBLEMS = gql`
       benefit
       description
       cooldown
+      attributes
     }
   }
 `;

@@ -29,6 +29,7 @@ export const useEmblemService = (refetch: () => Promise<any>) => {
         name: editEmblem.name,
         type: editEmblem.type,
         icon: editEmblem.icon,
+        attributes: editEmblem.attributes,
         benefit: editEmblem.benefit,
         description: editEmblem.description,
         cooldown: String(editEmblem.cooldown),
