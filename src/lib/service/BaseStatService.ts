@@ -20,15 +20,19 @@ const STAT_FIELDS = [
   'physical_attack', 'physical_defense',
   'magic_power', 'magic_defense',
   'attack_speed', 'movement_speed',
-  'attack_speed_ratio', 'spell_vamp_ratio',
-  'attack_range',
+  'spell_vamp_ratio', 'attack_range',
+  'crit_rate', 'crit_damage',
+  'physical_pen', 'magical_pen',
+  'lifesteal', 'resilience',
+  'crit_damage_reduction', 'received_heal',
 ] as const;
 
 const GROWTH_FIELDS = [
   'hp_growth', 'mana_growth', 'energy_growth',
   'hp_regen_growth', 'mana_regen_growth', 'energy_regen_growth',
   'physical_attack_growth', 'physical_defense_growth',
-  'magic_defense_growth', 'attack_speed_growth',
+  'magic_power_growth', 'magic_defense_growth',
+  'attack_speed_growth',
 ] as const;
 
 const buildInput = (form: BaseStatFormData) => {

@@ -21,9 +21,16 @@ const BASE_STAT_FIELDS = `
   magic_defense
   attack_speed
   movement_speed
-  attack_speed_ratio
   spell_vamp_ratio
   attack_range
+  crit_rate
+  crit_damage
+  physical_pen
+  magical_pen
+  lifesteal
+  resilience
+  crit_damage_reduction
+  received_heal
   hp_growth
   mana_growth
   energy_growth
@@ -32,6 +39,7 @@ const BASE_STAT_FIELDS = `
   energy_regen_growth
   physical_attack_growth
   physical_defense_growth
+  magic_power_growth
   magic_defense_growth
   attack_speed_growth
 `;

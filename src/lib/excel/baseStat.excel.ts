@@ -15,9 +15,27 @@ export interface BaseStatImportInput {
   magic_defense: number;
   attack_speed: number;
   movement_speed: number;
-  attack_speed_ratio: number;
   spell_vamp_ratio: number;
   attack_range: number;
+  crit_rate: number;
+  crit_damage: number;
+  physical_pen: number;
+  magical_pen: number;
+  lifesteal: number;
+  resilience: number;
+  crit_damage_reduction: number;
+  received_heal: number;
+  hp_growth: number;
+  mana_growth: number;
+  energy_growth: number;
+  hp_regen_growth: number;
+  mana_regen_growth: number;
+  energy_regen_growth: number;
+  physical_attack_growth: number;
+  physical_defense_growth: number;
+  magic_power_growth: number;
+  magic_defense_growth: number;
+  attack_speed_growth: number;
 }
 
 interface BaseStatImportRow {
@@ -34,9 +52,27 @@ interface BaseStatImportRow {
   'Magic Defense'?: string | number;
   'Attack Speed'?: string | number;
   'Movement Speed'?: string | number;
-  'Attack Speed Ratio'?: string | number;
   'Spell Vamp Ratio'?: string | number;
   'Attack Range'?: string | number;
+  'Crit Rate'?: string | number;
+  'Crit Damage'?: string | number;
+  'Physical PEN'?: string | number;
+  'Magical PEN'?: string | number;
+  Lifesteal?: string | number;
+  Resilience?: string | number;
+  'Crit Damage Reduction'?: string | number;
+  'Pemulihan Diterima'?: string | number;
+  'HP Growth'?: string | number;
+  'Mana Growth'?: string | number;
+  'Energy Growth'?: string | number;
+  'HP Regen Growth'?: string | number;
+  'Mana Regen Growth'?: string | number;
+  'Energy Regen Growth'?: string | number;
+  'Physical Attack Growth'?: string | number;
+  'Physical Defense Growth'?: string | number;
+  'Magic Power Growth'?: string | number;
+  'Magic Defense Growth'?: string | number;
+  'Attack Speed Growth'?: string | number;
 }
 
 const BASE_STAT_HEADERS = [
@@ -53,12 +89,34 @@ const BASE_STAT_HEADERS = [
   'Magic Defense',
   'Attack Speed',
   'Movement Speed',
-  'Attack Speed Ratio',
   'Spell Vamp Ratio',
   'Attack Range',
+  'Crit Rate',
+  'Crit Damage',
+  'Physical PEN',
+  'Magical PEN',
+  'Lifesteal',
+  'Resilience',
+  'Crit Damage Reduction',
+  'Pemulihan Diterima',
+  'HP Growth',
+  'Mana Growth',
+  'Energy Growth',
+  'HP Regen Growth',
+  'Mana Regen Growth',
+  'Energy Regen Growth',
+  'Physical Attack Growth',
+  'Physical Defense Growth',
+  'Magic Power Growth',
+  'Magic Defense Growth',
+  'Attack Speed Growth',
 ];
 
-const BASE_STAT_WIDTHS = [22, 10, 10, 10, 12, 12, 14, 16, 18, 14, 16, 14, 16, 18, 18, 14];
+const BASE_STAT_WIDTHS = [
+  22, 10, 10, 10, 12, 12, 14, 16, 18, 14, 16, 14, 16, 18, 14,
+  12, 14, 14, 14, 12, 12, 20, 20,
+  14, 14, 14, 16, 16, 18, 20, 20, 18, 18, 18,
+];
 
 const buildBaseStatRows = (data: BaseStat[]) =>
   data.map((stat) => [
@@ -75,9 +133,27 @@ const buildBaseStatRows = (data: BaseStat[]) =>
     stat.magic_defense,
     stat.attack_speed,
     stat.movement_speed,
-    stat.attack_speed_ratio,
     stat.spell_vamp_ratio,
     stat.attack_range,
+    stat.crit_rate ?? 0,
+    stat.crit_damage ?? 0,
+    stat.physical_pen ?? 0,
+    stat.magical_pen ?? 0,
+    stat.lifesteal ?? 0,
+    stat.resilience ?? 0,
+    stat.crit_damage_reduction ?? 0,
+    stat.received_heal ?? 0,
+    stat.hp_growth ?? 0,
+    stat.mana_growth ?? 0,
+    stat.energy_growth ?? 0,
+    stat.hp_regen_growth ?? 0,
+    stat.mana_regen_growth ?? 0,
+    stat.energy_regen_growth ?? 0,
+    stat.physical_attack_growth ?? 0,
+    stat.physical_defense_growth ?? 0,
+    stat.magic_power_growth ?? 0,
+    stat.magic_defense_growth ?? 0,
+    stat.attack_speed_growth ?? 0,
   ]);
 
 export const exportBaseStats = (data: BaseStat[]): void => {
@@ -95,7 +171,9 @@ export const exportBaseStats = (data: BaseStat[]): void => {
 
 export const downloadBaseStatTemplate = (): void => {
   const exampleRow: (string | number)[] = [
-    'Miya', 2480, 0, 0, 7.4, 0, 0, 110, 17, 0, 10, 0.85, 240, 1.0, 0, 5,
+    'Miya', 2480, 0, 0, 7.4, 0, 0, 110, 17, 0, 10, 0.85, 240, 0, 5,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    120, 0, 0, 0.5, 0, 0, 8, 1.5, 0, 1.2, 0,
   ];
 
   exportSheetsToExcel(
@@ -115,6 +193,7 @@ export const downloadBaseStatTemplate = (): void => {
           ['3. Setiap hero hanya boleh memiliki 1 baris base stat. Jika sudah ada, baris pada file akan gagal disimpan.'],
           ['4. Semua kolom angka wajib diisi (boleh 0 jika tidak relevan, mis. Energy untuk hero non-energy).'],
           ['5. Gunakan titik sebagai pemisah desimal, contoh 7.4.'],
+          ['6. Kolom Growth bersifat opsional, isi dengan angka pertumbuhan per level (boleh 0).'],
         ],
         columnWidths: [120],
       },
@@ -145,8 +224,26 @@ export const parseBaseStatFile = async (file: File): Promise<BaseStatImportInput
     magic_defense: toNum(row['Magic Defense']),
     attack_speed: toNum(row['Attack Speed']),
     movement_speed: toNum(row['Movement Speed']),
-    attack_speed_ratio: toNum(row['Attack Speed Ratio']),
     spell_vamp_ratio: toNum(row['Spell Vamp Ratio']),
     attack_range: toNum(row['Attack Range']),
+    crit_rate: toNum(row['Crit Rate']),
+    crit_damage: toNum(row['Crit Damage']),
+    physical_pen: toNum(row['Physical PEN']),
+    magical_pen: toNum(row['Magical PEN']),
+    lifesteal: toNum(row.Lifesteal),
+    resilience: toNum(row.Resilience),
+    crit_damage_reduction: toNum(row['Crit Damage Reduction']),
+    received_heal: toNum(row['Pemulihan Diterima']),
+    hp_growth: toNum(row['HP Growth']),
+    mana_growth: toNum(row['Mana Growth']),
+    energy_growth: toNum(row['Energy Growth']),
+    hp_regen_growth: toNum(row['HP Regen Growth']),
+    mana_regen_growth: toNum(row['Mana Regen Growth']),
+    energy_regen_growth: toNum(row['Energy Regen Growth']),
+    physical_attack_growth: toNum(row['Physical Attack Growth']),
+    physical_defense_growth: toNum(row['Physical Defense Growth']),
+    magic_power_growth: toNum(row['Magic Power Growth']),
+    magic_defense_growth: toNum(row['Magic Defense Growth']),
+    attack_speed_growth: toNum(row['Attack Speed Growth']),
   }));
 };

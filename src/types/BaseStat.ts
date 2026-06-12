@@ -18,9 +18,16 @@ export interface BaseStat {
   magic_defense: number;
   attack_speed: number;
   movement_speed: number;
-  attack_speed_ratio: number;
   spell_vamp_ratio: number;
   attack_range: number;
+  crit_rate: number;
+  crit_damage: number;
+  physical_pen: number;
+  magical_pen: number;
+  lifesteal: number;
+  resilience: number;
+  crit_damage_reduction: number;
+  received_heal: number;
   hp_growth: number | null;
   mana_growth: number | null;
   energy_growth: number | null;
@@ -29,6 +36,7 @@ export interface BaseStat {
   energy_regen_growth: number | null;
   physical_attack_growth: number | null;
   physical_defense_growth: number | null;
+  magic_power_growth: number | null;
   magic_defense_growth: number | null;
   attack_speed_growth: number | null;
 }
@@ -48,9 +56,16 @@ export interface BaseStatFormData {
   magic_defense: number;
   attack_speed: number;
   movement_speed: number;
-  attack_speed_ratio: number;
   spell_vamp_ratio: number;
   attack_range: number;
+  crit_rate: number;
+  crit_damage: number;
+  physical_pen: number;
+  magical_pen: number;
+  lifesteal: number;
+  resilience: number;
+  crit_damage_reduction: number;
+  received_heal: number;
   hp_growth: number;
   mana_growth: number;
   energy_growth: number;
@@ -59,6 +74,7 @@ export interface BaseStatFormData {
   energy_regen_growth: number;
   physical_attack_growth: number;
   physical_defense_growth: number;
+  magic_power_growth: number;
   magic_defense_growth: number;
   attack_speed_growth: number;
 }
@@ -72,6 +88,7 @@ export type BaseStatGrowthKey =
   | 'energy_regen_growth'
   | 'physical_attack_growth'
   | 'physical_defense_growth'
+  | 'magic_power_growth'
   | 'magic_defense_growth'
   | 'attack_speed_growth';
 
@@ -108,11 +125,15 @@ export const BASE_STAT_FIELD_GROUPS: BaseStatFieldGroup[] = [
     color: 'warning',
     fields: [
       { key: 'physical_attack', label: 'Physical Attack', growthKey: 'physical_attack_growth' },
-      { key: 'magic_power', label: 'Magic Power' },
+      { key: 'magic_power', label: 'Magic Power', growthKey: 'magic_power_growth' },
       { key: 'attack_speed', label: 'Attack Speed', growthKey: 'attack_speed_growth' },
-      { key: 'attack_speed_ratio', label: 'Attack Speed Ratio' },
       { key: 'spell_vamp_ratio', label: 'Spell Vamp Ratio' },
       { key: 'attack_range', label: 'Attack Range' },
+      { key: 'crit_rate', label: 'Crit Rate' },
+      { key: 'crit_damage', label: 'Crit Damage' },
+      { key: 'physical_pen', label: 'Physical PEN' },
+      { key: 'magical_pen', label: 'Magical PEN' },
+      { key: 'lifesteal', label: 'Lifesteal' },
     ],
   },
   {
@@ -120,8 +141,11 @@ export const BASE_STAT_FIELD_GROUPS: BaseStatFieldGroup[] = [
     icon: 'ti ti-shield',
     color: 'info',
     fields: [
-      { key: 'physical_defense', label: 'Physical Defense' },
-      { key: 'magic_defense', label: 'Magic Defense' },
+      { key: 'physical_defense', label: 'Physical Defense', growthKey: 'physical_defense_growth' },
+      { key: 'magic_defense', label: 'Magic Defense', growthKey: 'magic_defense_growth' },
+      { key: 'resilience', label: 'Resilience' },
+      { key: 'crit_damage_reduction', label: 'Crit Damage Reduction' },
+      { key: 'received_heal', label: 'Pemulihan Diterima' },
     ],
   },
   {
@@ -148,9 +172,16 @@ export const createDefaultBaseStatForm = (): BaseStatFormData => ({
   magic_defense: 0,
   attack_speed: 0,
   movement_speed: 0,
-  attack_speed_ratio: 0,
   spell_vamp_ratio: 0,
   attack_range: 0,
+  crit_rate: 0,
+  crit_damage: 0,
+  physical_pen: 0,
+  magical_pen: 0,
+  lifesteal: 0,
+  resilience: 0,
+  crit_damage_reduction: 0,
+  received_heal: 0,
   hp_growth: 0,
   mana_growth: 0,
   energy_growth: 0,
@@ -159,6 +190,7 @@ export const createDefaultBaseStatForm = (): BaseStatFormData => ({
   energy_regen_growth: 0,
   physical_attack_growth: 0,
   physical_defense_growth: 0,
+  magic_power_growth: 0,
   magic_defense_growth: 0,
   attack_speed_growth: 0,
 });
