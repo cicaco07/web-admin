@@ -11,6 +11,7 @@ const emit = defineEmits<{
 }>();
 
 const updateLevelCount = (value: number) => {
+  if (value === props.formData.levelCount) return;
   const newFormValues = Array.from({ length: props.formData.attributeCount }, (_, attrIdx) =>
     Array.from({ length: value }, (_, lvlIdx) => 
       props.formData.formValues[attrIdx]?.[lvlIdx] || ''
@@ -24,6 +25,7 @@ const updateLevelCount = (value: number) => {
 };
 
 const updateAttributeCount = (value: number) => {
+  if (value === props.formData.attributeCount) return;
   const newFormValues = Array.from({ length: value }, (_, attrIdx) =>
     Array.from({ length: props.formData.levelCount }, (_, lvlIdx) => 
       props.formData.formValues[attrIdx]?.[lvlIdx] || ''

@@ -14,7 +14,7 @@ import SkillFormStep2 from './components/SkillFormStep2.vue';
 // API
 import { useHeroes } from '../../../lib/api/HeroApi';
 import { useSkills, useUpdateSkill } from '../../../lib/api/SkillApi';
-import { useSkillsDetail, useUpdateSkillDetailToSkill } from '../../../lib/api/SkillDetailApi';
+import { useSkillsDetail, useUpdateSkillDetailToSkill, useAddSkillDetailToSkill } from '../../../lib/api/SkillDetailApi';
 import { alertConfirm, alertSuccess, alertError } from '../../../lib/alert';
 
 // Types
@@ -37,11 +37,13 @@ const { result: skillDetailResult, refetch: refetchSkillDetails } = useSkillsDet
 // ==================== API Mutations ====================
 const { updateSkill } = useUpdateSkill();
 const { updateSkillDetailToSkill } = useUpdateSkillDetailToSkill();
+const { addSkillDetailToSkill } = useAddSkillDetailToSkill();
 
 // ==================== Form State ====================
 const currentStep = ref(1);
 const isSubmitting = ref(false);
 const isLoading = ref(true);
+const dataLoaded = ref(false);
 
 const skillForm = ref<SkillFormData>(createDefaultSkillForm());
 const skillDetailForm = ref<SkillDetailFormData>(createDefaultSkillDetailForm());
@@ -104,8 +106,9 @@ const loadSkillData = () => {
 };
 
 watch([currentSkill, currentSkillDetails], () => {
-  if (currentSkill.value) {
+  if (currentSkill.value && !dataLoaded.value) {
     loadSkillData();
+    dataLoaded.value
   }
 }, { immediate: true });
 
@@ -145,6 +148,22 @@ const goBack = () => {
   router.push('/data-hero/skill');
 };
 
+// ==================== Skill Detail Generation ====================
+const generateSkillDetailInput = (detailForm: SkillDetailFormData) => {
+  return Array.from({ length: detailForm.levelCount }, (_, levelIndex) => {
+    const attributes: Record<string, number> = {};
+    detailForm.attributeKeys.forEach((key, attrIdx) => {
+      const rawValue = detailForm.formValues[attrIdx]?.[levelIndex] || '0';
+      const parsed = parseFloat(rawValue);
+      attributes[key] = isNaN(parsed) ? 0 : parsed;
+    });
+    return {
+      level: levelIndex + 1,
+      attributes,
+    };
+  });
+};
+
 // ==================== Submit ====================
 const handleSubmit = async () => {
   const confirmMessage = isPassive.value 
@@ -170,9 +189,12 @@ Jumlah Atribut: ${skillDetailForm.value.attributeCount}
   const confirmed = await alertConfirm(confirmMessage);
   if (!confirmed) return;
 
+  const currentIsPassive = isPassive.value;
+  const allDetails = !currentIsPassive ? generateSkillDetailInput(skillDetailForm.value) : [];
+  const existingDetails = [...currentSkillDetails.value];
+
   isSubmitting.value = true;
   try {
-    // 1. Update skill
     await updateSkill({
       id: skillId.value,
       input: {
@@ -185,32 +207,38 @@ Jumlah Atribut: ${skillDetailForm.value.attributeCount}
       }
     });
 
-    // 2. Update skill details one by one (only for non-passive skills)
-    if (!isPassive.value) {
-      const details = currentSkillDetails.value;
-      for (let levelIndex = 0; levelIndex < skillDetailForm.value.levelCount; levelIndex++) {
-        const detail = details[levelIndex];
-        if (detail?._id) {
-          const attributes: Record<string, number> = {};
-          skillDetailForm.value.attributeKeys.forEach((key, attrIdx) => {
-            const rawValue = skillDetailForm.value.formValues[attrIdx]?.[levelIndex] || '0';
-            const parsed = parseFloat(rawValue);
-            attributes[key] = isNaN(parsed) ? 0 : parsed;
-          });
+    if (!currentIsPassive && allDetails.length > 0) {
+      const updateDetails: { detailId: string; input: { level: number; attributes: Record<string, number> } }[] = [];
+      const newDetails: { level: number; attributes: Record<string, number> }[] = [];
 
-          await updateSkillDetailToSkill({
-            skillId: skillId.value,
-            skillDetailId: detail._id,
-            input: {
-              level: levelIndex + 1,
-              attributes,
-            }
+      for (let i = 0; i < allDetails.length; i++) {
+        const existing = existingDetails[i];
+        if (existing?._id) {
+          updateDetails.push({
+            detailId: existing._id,
+            input: allDetails[i],
           });
+        } else {
+          newDetails.push(allDetails[i]);
         }
+      }
+
+      for (const detail of updateDetails) {
+        await updateSkillDetailToSkill({
+          skillId: skillId.value,
+          skillDetailId: detail.detailId,
+          input: detail.input,
+        });
+      }
+
+      if (newDetails.length > 0) {
+        await addSkillDetailToSkill({
+          skillId: skillId.value,
+          input: newDetails,
+        });
       }
     }
 
-    // Refetch data to update cache
     await refetchSkills();
     await refetchSkillDetails();
 

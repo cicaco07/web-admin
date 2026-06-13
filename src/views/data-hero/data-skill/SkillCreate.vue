@@ -61,11 +61,11 @@ const canProceedStep2 = computed(() => {
 });
 
 // ==================== Skill Detail Generation ====================
-const generateSkillDetailInput = () => {
-  return Array.from({ length: skillDetailForm.value.levelCount }, (_, levelIndex) => {
+const generateSkillDetailInput = (detailForm: SkillDetailFormData) => {
+  return Array.from({ length: detailForm.levelCount }, (_, levelIndex) => {
     const attributes: Record<string, number> = {};
-    skillDetailForm.value.attributeKeys.forEach((key, attrIdx) => {
-      const rawValue = skillDetailForm.value.formValues[attrIdx]?.[levelIndex] || '0';
+    detailForm.attributeKeys.forEach((key, attrIdx) => {
+      const rawValue = detailForm.formValues[attrIdx]?.[levelIndex] || '0';
       const parsed = parseFloat(rawValue);
       attributes[key] = isNaN(parsed) ? 0 : parsed;
     });
@@ -118,9 +118,11 @@ Jumlah Atribut: ${skillDetailForm.value.attributeCount}
   const confirmed = await alertConfirm(confirmMessage);
   if (!confirmed) return;
 
+  const currentIsPassive = isPassive.value;
+  const detailInput = !currentIsPassive ? generateSkillDetailInput(skillDetailForm.value) : [];
+
   isSubmitting.value = true;
   try {
-    // 1. Create skill
     const addSkillRes = await addSkillToHero({
       heroId: skillForm.value.heroId,
       input: {
@@ -138,9 +140,7 @@ Jumlah Atribut: ${skillDetailForm.value.attributeCount}
       throw new Error('Gagal mendapatkan ID skill baru');
     }
 
-    // 2. Create skill details (only for non-passive skills)
-    if (!isPassive.value) {
-      const detailInput = generateSkillDetailInput();
+    if (!currentIsPassive && detailInput.length > 0) {
       await addSkillDetailToSkill({
         skillId: newSkillId,
         input: detailInput,
