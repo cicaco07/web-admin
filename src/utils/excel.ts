@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import XLSX from 'xlsx-js-style';
 
 export interface SheetSection {
   title?: string;
@@ -11,6 +11,31 @@ export interface SheetDefinition {
   aoa: (string | number | null | undefined)[][];
   columnWidths?: number[];
   sections?: SheetSection[];
+}
+
+export interface CellStyle {
+  font?: { bold?: boolean; color?: { rgb?: string }; sz?: number };
+  fill?: { fgColor?: { rgb?: string } };
+  alignment?: { horizontal?: string; vertical?: string; wrapText?: boolean };
+  border?: {
+    top?: { style?: string; color?: { rgb?: string } };
+    bottom?: { style?: string; color?: { rgb?: string } };
+    left?: { style?: string; color?: { rgb?: string } };
+    right?: { style?: string; color?: { rgb?: string } };
+  };
+}
+
+export interface StyledCell {
+  v: string | number | null | undefined;
+  t?: string;
+  s?: CellStyle;
+}
+
+export interface StyledSheetDefinition {
+  name: string;
+  data: StyledCell[][];
+  columnWidths?: number[];
+  merges?: XLSX.Range[];
 }
 
 const SHEET_NAME_MAX_LEN = 31;
@@ -72,6 +97,46 @@ const buildSheetFromAoa = (
     ws['!cols'] = Array.from({ length: cols }, () => ({ wch: 20 }));
   }
   return ws;
+};
+
+export const exportStyledSheetsToExcel = (sheets: StyledSheetDefinition[], fileName: string): void => {
+  const wb = XLSX.utils.book_new();
+  const used = new Set<string>();
+
+  sheets.forEach((sheet) => {
+    const ws: XLSX.WorkSheet = {};
+    let maxCol = 0;
+
+    sheet.data.forEach((row, r) => {
+      row.forEach((cell, c) => {
+        const ref = XLSX.utils.encode_cell({ r, c });
+        if (cell.v === null || cell.v === undefined) {
+          ws[ref] = { v: '', t: 's', s: cell.s || {} };
+        } else if (typeof cell.v === 'number') {
+          ws[ref] = { v: cell.v, t: 'n', s: cell.s || {} };
+        } else {
+          ws[ref] = { v: String(cell.v), t: 's', s: cell.s || {} };
+        }
+        if (c > maxCol) maxCol = c;
+      });
+    });
+
+    ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: sheet.data.length - 1, c: maxCol } });
+
+    if (sheet.columnWidths) {
+      ws['!cols'] = sheet.columnWidths.map((w) => ({ wch: w }));
+    }
+
+    if (sheet.merges) {
+      ws['!merges'] = sheet.merges;
+    }
+
+    const name = uniqueSheetName(used, sheet.name);
+    XLSX.utils.book_append_sheet(wb, ws, name);
+  });
+
+  const finalName = fileName.toLowerCase().endsWith('.xlsx') ? fileName : `${fileName}.xlsx`;
+  XLSX.writeFile(wb, finalName);
 };
 
 export const exportSheetsToExcel = (sheets: SheetDefinition[], fileName: string): void => {

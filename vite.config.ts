@@ -11,7 +11,7 @@ export default defineConfig({
         manualChunks: {
           'vue-vendor': ['vue', 'vue-router'],
           'apollo-vendor': ['@apollo/client', '@vue/apollo-composable', 'graphql', 'graphql-tag'],
-          'xlsx-vendor': ['xlsx'],
+          'xlsx-vendor': ['xlsx-js-style'],
           'ui-vendor': ['sweetalert2', 'vuedraggable', '@vueuse/core'],
         },
       },
