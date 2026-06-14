@@ -29,6 +29,7 @@ export interface StyledCell {
   v: string | number | null | undefined;
   t?: string;
   s?: CellStyle;
+  f?: string;
 }
 
 export interface StyledSheetDefinition {
@@ -110,7 +111,9 @@ export const exportStyledSheetsToExcel = (sheets: StyledSheetDefinition[], fileN
     sheet.data.forEach((row, r) => {
       row.forEach((cell, c) => {
         const ref = XLSX.utils.encode_cell({ r, c });
-        if (cell.v === null || cell.v === undefined) {
+        if (cell.f) {
+          ws[ref] = { f: cell.f, t: 'n', s: cell.s || {} };
+        } else if (cell.v === null || cell.v === undefined) {
           ws[ref] = { v: '', t: 's', s: cell.s || {} };
         } else if (typeof cell.v === 'number') {
           ws[ref] = { v: cell.v, t: 'n', s: cell.s || {} };
