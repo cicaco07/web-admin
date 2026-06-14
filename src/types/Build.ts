@@ -53,12 +53,11 @@ export interface BuildFormData {
 }
 
 export const ROLE_OPTIONS = [
-  'Tank',
-  'Fighter',
-  'Assassin',
-  'Mage',
-  'Marksman',
-  'Support'
+  'Exp Lane',
+  'Gold Lane',
+  'Roam',
+  'Mid Lane',
+  'Jungle'
 ] as const;
 
 export const createDefaultBuildForm = (): BuildFormData => ({

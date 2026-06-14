@@ -38,16 +38,12 @@ const items = computed(() => itemResult.value?.items || []);
 const emblems = computed(() => emblemResult.value?.emblems || []);
 const battleSpells = computed(() => battleSpellResult.value?.battleSpells || []);
 
-// Filter heroes by selected role
+// Filter heroes by selected role (lane position)
 const filteredHeroes = computed(() => {
   if (!props.buildForm.role) return heroes.value;
   return heroes.value.filter((h: any) => {
-    // Handle if role is array
-    if (Array.isArray(h.role)) {
-      return h.role.includes(props.buildForm.role);
-    }
-    // Handle case-insensitive comparison
-    return h.role?.toLowerCase() === props.buildForm.role.toLowerCase();
+    const heroRoles = Array.isArray(h.role) ? h.role : [h.role];
+    return heroRoles.some((r: string) => r?.toLowerCase() === props.buildForm.role.toLowerCase());
   });
 });
 
@@ -68,21 +64,25 @@ const roleOptions = [...ROLE_OPTIONS];
 const buildItems = ref<Array<{ itemId: string; order: number }>>([]);
 const selectedEmblemIds = ref<string[]>([]);
 const selectedBattleSpellIds = ref<string[]>([]);
+const initialized = ref(false);
 
-// Initialize local state from form only when the underlying collections change
-// (i.e. external load via edit modal). Avoids overwriting drag/select state when
-// user types in name/description which re-emits the whole buildForm object.
+// Initialize local state from form only once when modal opens with data (edit mode).
+// After initialization, local state is managed independently to avoid being overwritten
+// when other form fields (name, role, etc.) trigger re-emission of buildForm.
 watch(
   () => [props.buildForm.items, props.buildForm.emblemIds, props.buildForm.battleSpellIds] as const,
   ([items, emblemIds, battleSpellIds]) => {
-    buildItems.value = items && items.length > 0 ? [...items] : [];
-    selectedEmblemIds.value = emblemIds && emblemIds.length > 0 ? [...emblemIds] : [];
-    // Trim legacy data with >2 battle spells to the new max of 2
-    if (battleSpellIds && battleSpellIds.length > 2) {
-      selectedBattleSpellIds.value = battleSpellIds.slice(0, 2);
-      console.warn(`[BuildFormModal] Legacy build had ${battleSpellIds.length} battle spells, trimmed to 2.`);
-    } else {
-      selectedBattleSpellIds.value = battleSpellIds && battleSpellIds.length > 0 ? [...battleSpellIds] : [];
+    if (initialized.value) return;
+
+    if ((items && items.length > 0) || (emblemIds && emblemIds.length > 0) || (battleSpellIds && battleSpellIds.length > 0)) {
+      buildItems.value = items ? [...items] : [];
+      selectedEmblemIds.value = emblemIds ? [...emblemIds] : [];
+      if (battleSpellIds && battleSpellIds.length > 2) {
+        selectedBattleSpellIds.value = battleSpellIds.slice(0, 2);
+      } else {
+        selectedBattleSpellIds.value = battleSpellIds ? [...battleSpellIds] : [];
+      }
+      initialized.value = true;
     }
   },
   { immediate: true, deep: true }
@@ -94,7 +94,6 @@ watch(
 watch(() => props.buildForm.role, (newRole, oldRole) => {
   if (newRole === oldRole || !props.buildForm.heroId) return;
 
-  // If heroes aren't loaded yet, skip (avoids clearing valid heroId during edit load)
   if (!heroes.value.length) return;
 
   const currentHero = heroes.value.find((h: any) => h._id === props.buildForm.heroId);
@@ -108,7 +107,13 @@ watch(() => props.buildForm.role, (newRole, oldRole) => {
 });
 
 const updateFormField = <K extends keyof BuildFormData>(field: K, value: BuildFormData[K]) => {
-  emit('update:buildForm', { ...props.buildForm, [field]: value });
+  emit('update:buildForm', {
+    ...props.buildForm,
+    items: buildItems.value,
+    emblemIds: selectedEmblemIds.value,
+    battleSpellIds: selectedBattleSpellIds.value,
+    [field]: value
+  });
 };
 
 // Emblem management
@@ -142,7 +147,6 @@ const toggleBattleSpell = (spellId: string) => {
  };
 
 const handleSubmit = () => {
-  // Filter out empty items
   const validItems = buildItems.value.filter(item => item.itemId);
   
   emit('update:buildForm', {
@@ -152,6 +156,7 @@ const handleSubmit = () => {
     battleSpellIds: selectedBattleSpellIds.value
   });
   
+  initialized.value = false;
   emit('submit');
 };
 
@@ -159,6 +164,7 @@ const handleCancel = () => {
   buildItems.value = [];
   selectedEmblemIds.value = [];
   selectedBattleSpellIds.value = [];
+  initialized.value = false;
   emit('cancel');
 };
 </script>

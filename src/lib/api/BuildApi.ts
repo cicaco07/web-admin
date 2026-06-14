@@ -2,7 +2,7 @@ import { useMutation, useQuery } from "@vue/apollo-composable";
 import gql from "graphql-tag";
 
 const GET_BUILDS = gql`
-  query builds {
+  query GetBuilds {
     builds {
       _id
       name
@@ -31,7 +31,6 @@ const GET_BUILDS = gql`
         _id
         name
         icon
-        tag
       }
       user {
         _id
