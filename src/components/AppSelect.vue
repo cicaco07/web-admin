@@ -41,10 +41,18 @@ const select2Settings = computed(() => {
   return settings;
 });
 
-function onSelect(event: { id: string | number; text: string }) {
-  const value = event.id;
-  emit('update:modelValue', value);
-  emit('change', value);
+function onValueChange(value: string | string[]) {
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (raw === '' || raw === undefined || raw === null) {
+    emit('update:modelValue', null);
+    emit('change', null);
+  } else {
+    const parsed = props.options.some(o => String(o.id) === raw && typeof o.id === 'number')
+      ? Number(raw)
+      : raw;
+    emit('update:modelValue', parsed);
+    emit('change', parsed);
+  }
 }
 </script>
 
@@ -56,7 +64,7 @@ function onSelect(event: { id: string | number; text: string }) {
     :placeholder="placeholder"
     :disabled="disabled"
     :settings="select2Settings"
-    @select="onSelect"
+    @update:modelValue="onValueChange"
   />
 </template>
 
