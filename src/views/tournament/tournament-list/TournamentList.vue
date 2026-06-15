@@ -9,6 +9,8 @@ import Button from '../../../components/Button/Button.vue';
 import Badge from '../../../components/Badge/Badge.vue';
 import ModalButton from '../../../components/Modal/ModalButton.vue';
 import TablePagination from '../../../components/Table/TablePagination.vue';
+import AppSelect from '../../../components/AppSelect.vue';
+import type { SelectOption } from '../../../components/AppSelect.vue';
 
 // Tournament Components
 import TournamentFormModal from './components/TournamentFormModal.vue';
@@ -33,6 +35,16 @@ const { handleCreateTournament, handleUpdateTournament, handleDeleteTournament }
 const searchQuery = ref('');
 const selectedFilterTier = ref('');
 const selectedFilterStatus = ref('');
+
+const tierFilterSelectOptions = computed<SelectOption[]>(() => [
+  { id: '', text: 'Semua Tier' },
+  ...TIER_OPTIONS.map(tier => ({ id: tier, text: tier })),
+]);
+
+const statusFilterSelectOptions = computed<SelectOption[]>(() => [
+  { id: '', text: 'Semua Status' },
+  ...STATUS_OPTIONS.map(status => ({ id: status, text: status })),
+]);
 
 const filteredTournaments = computed<Tournament[]>(() => {
   let filtered = tournaments.value;
@@ -206,36 +218,10 @@ const formatDate = (dateStr: string | null) => {
                 </div>
               </div>
               <div class="col-md-2">
-                <select
-                  class="form-select"
-                  v-model="selectedFilterTier"
-                  @change="currentPage = 1"
-                >
-                  <option value="">Semua Tier</option>
-                  <option
-                    v-for="tier in TIER_OPTIONS"
-                    :key="tier"
-                    :value="tier"
-                  >
-                    {{ tier }}
-                  </option>
-                </select>
+                <AppSelect v-model="selectedFilterTier" :options="tierFilterSelectOptions" placeholder="Semua Tier" @change="currentPage = 1" />
               </div>
               <div class="col-md-2">
-                <select
-                  class="form-select"
-                  v-model="selectedFilterStatus"
-                  @change="currentPage = 1"
-                >
-                  <option value="">Semua Status</option>
-                  <option
-                    v-for="status in STATUS_OPTIONS"
-                    :key="status"
-                    :value="status"
-                  >
-                    {{ status }}
-                  </option>
-                </select>
+                <AppSelect v-model="selectedFilterStatus" :options="statusFilterSelectOptions" placeholder="Semua Status" @change="currentPage = 1" />
               </div>
               <div class="col-md-3">
                 <button

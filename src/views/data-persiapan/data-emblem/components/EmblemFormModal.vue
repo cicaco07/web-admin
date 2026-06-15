@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import Modal from '../../../../components/Modal/Modal.vue';
 import ModalHeader from '../../../../components/Modal/ModalHeader.vue';
 import ModalBody from '../../../../components/Modal/ModalBody.vue';
 import Button from '../../../../components/Button/Button.vue';
 import FormInput from '../../../../components/FormInput/FormInput.vue';
+import AppSelect from '../../../../components/AppSelect.vue';
+import type { SelectOption } from '../../../../components/AppSelect.vue';
 import type { EmblemFormData, EmblemAttribute } from '../../../../types/Emblem';
 import { EMBLEM_TYPE_OPTIONS } from '../../../../types/Emblem';
 
@@ -30,6 +32,10 @@ const emit = defineEmits<{
 }>();
 
 const typeOptions = [...EMBLEM_TYPE_OPTIONS];
+
+const typeSelectOptions = computed<SelectOption[]>(() =>
+  typeOptions.map(type => ({ id: type, text: type }))
+);
 
 // Attribute fields management
 const textFields = ref<AttributeField[]>([{ id: Date.now(), key: '', value: '', icon: '' }]);
@@ -97,17 +103,12 @@ const handleCancel = () => {
           </div>
           <div class="col-md-6 col-lg-4 mb-3">
             <label class="form-label fw-semibold">Tipe</label>
-            <select 
-              class="form-select" 
-              :value="emblemForm.type"
-              @change="updateFormField('type', ($event.target as HTMLSelectElement).value)"
-              required
-            >
-              <option value="" disabled>Pilih Tipe</option>
-              <option v-for="type in typeOptions" :key="type" :value="type">
-                {{ type }}
-              </option>
-            </select>
+            <AppSelect
+              :modelValue="emblemForm.type"
+              :options="typeSelectOptions"
+              placeholder="Pilih Tipe"
+              @change="(val: string | number | null) => updateFormField('type', String(val ?? ''))"
+            />
           </div>
           <div class="col-md-6 col-lg-4">
             <FormInput 

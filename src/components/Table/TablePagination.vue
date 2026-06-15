@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import AppSelect from '../AppSelect.vue';
+import type { SelectOption } from '../AppSelect.vue';
 
 const props = defineProps<{
   currentPage: number;
@@ -14,6 +16,9 @@ const emit = defineEmits<{
 }>();
 
 const pageSizes = computed(() => props.pageSizeOptions || [10, 25, 50]);
+const pageSizeSelectOptions = computed<SelectOption[]>(() =>
+  pageSizes.value.map(size => ({ id: size, text: String(size) }))
+);
 const totalPages = computed(() => Math.ceil(props.totalItems / props.itemsPerPage));
 
 const startItem = computed(() => {
@@ -64,14 +69,11 @@ const changePageSize = (size: number) => {
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-3">
     <div class="d-flex align-items-center gap-2">
       <span class="text-muted">Tampilkan</span>
-      <select
-        class="form-select form-select-sm"
-        style="width: auto;"
-        :value="itemsPerPage"
-        @change="changePageSize(Number(($event.target as HTMLSelectElement).value))"
-      >
-        <option v-for="size in pageSizes" :key="size" :value="size">{{ size }}</option>
-      </select>
+      <AppSelect
+        :modelValue="itemsPerPage"
+        :options="pageSizeSelectOptions"
+        @change="(val: string | number | null) => changePageSize(Number(val))"
+      />
       <span class="text-muted">data</span>
     </div>
 

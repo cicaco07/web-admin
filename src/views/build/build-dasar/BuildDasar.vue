@@ -7,6 +7,8 @@ import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb.vue';
 import Button from '../../../components/Button/Button.vue';
 import ModalButton from '../../../components/Modal/ModalButton.vue';
 import TablePagination from '../../../components/Table/TablePagination.vue';
+import AppSelect from '../../../components/AppSelect.vue';
+import type { SelectOption } from '../../../components/AppSelect.vue';
 
 // Build Components
 import BuildFormModal from './components/BuildFormModal.vue';
@@ -30,6 +32,17 @@ const { handleAddBuild, handleEditBuild, handleDeleteBuild } = useBuildService(s
 const searchQuery = ref('');
 const selectedFilterRole = ref('');
 const selectedFilterOfficial = ref('');
+
+const roleFilterOptions = computed<SelectOption[]>(() => [
+  { id: '', text: 'Semua Role' },
+  ...ROLE_OPTIONS.map(role => ({ id: role, text: role })),
+]);
+
+const officialFilterOptions = computed<SelectOption[]>(() => [
+  { id: '', text: 'Semua Status' },
+  { id: 'official', text: 'Official' },
+  { id: 'community', text: 'Community' },
+]);
 
 const filteredBuilds = computed<Build[]>(() => {
   let filtered = builds.value;
@@ -181,31 +194,10 @@ const onEditBuild = async () => {
                 </div>
               </div>
               <div class="col-md-2">
-                <select 
-                  class="form-select" 
-                  v-model="selectedFilterRole"
-                  @change="currentPage = 1"
-                >
-                  <option value="">Semua Role</option>
-                  <option 
-                    v-for="role in ROLE_OPTIONS" 
-                    :key="role" 
-                    :value="role"
-                  >
-                    {{ role }}
-                  </option>
-                </select>
+                <AppSelect v-model="selectedFilterRole" :options="roleFilterOptions" placeholder="Semua Role" @change="currentPage = 1" />
               </div>
               <div class="col-md-2">
-                <select 
-                  class="form-select" 
-                  v-model="selectedFilterOfficial"
-                  @change="currentPage = 1"
-                >
-                  <option value="">Semua Status</option>
-                  <option value="official">Official</option>
-                  <option value="community">Community</option>
-                </select>
+                <AppSelect v-model="selectedFilterOfficial" :options="officialFilterOptions" placeholder="Semua Status" @change="currentPage = 1" />
               </div>
               <div class="col-md-2">
                 <button 

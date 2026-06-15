@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import Modal from '../../../../components/Modal/Modal.vue';
 import ModalHeader from '../../../../components/Modal/ModalHeader.vue';
 import ModalBody from '../../../../components/Modal/ModalBody.vue';
 import Button from '../../../../components/Button/Button.vue';
 import FormInput from '../../../../components/FormInput/FormInput.vue';
+import AppSelect from '../../../../components/AppSelect.vue';
+import type { SelectOption } from '../../../../components/AppSelect.vue';
 import { TIER_OPTIONS, STATUS_OPTIONS, REGION_OPTIONS, type TournamentFormData } from '../../../../types/Tournament';
 
 const props = defineProps<{
@@ -23,6 +26,18 @@ const emit = defineEmits<{
 const updateField = (field: keyof TournamentFormData, value: any) => {
   emit('update:tournamentForm', { ...props.tournamentForm, [field]: value });
 };
+
+const tierSelectOptions = computed<SelectOption[]>(() =>
+  TIER_OPTIONS.map(tier => ({ id: tier, text: tier }))
+);
+
+const regionSelectOptions = computed<SelectOption[]>(() =>
+  REGION_OPTIONS.map(region => ({ id: region, text: region }))
+);
+
+const statusSelectOptions = computed<SelectOption[]>(() =>
+  STATUS_OPTIONS.map(status => ({ id: status, text: status }))
+);
 
 const handleSubmit = () => {
   emit('submit');
@@ -62,17 +77,12 @@ const handleCancel = () => {
         <label class="form-label">
           Tier <span class="text-danger">*</span>
         </label>
-        <select
-          class="form-select"
-          :value="tournamentForm.tier"
-          @change="updateField('tier', ($event.target as HTMLSelectElement).value)"
-          required
-        >
-          <option value="" disabled>Pilih Tier</option>
-          <option v-for="tier in TIER_OPTIONS" :key="tier" :value="tier">
-            {{ tier }}
-          </option>
-        </select>
+        <AppSelect
+          :modelValue="tournamentForm.tier"
+          :options="tierSelectOptions"
+          placeholder="Pilih Tier"
+          @change="(val: string | number | null) => updateField('tier', String(val ?? ''))"
+        />
       </div>
 
       <!-- Tier Level -->
@@ -89,17 +99,12 @@ const handleCancel = () => {
         <label class="form-label">
           Region <span class="text-danger">*</span>
         </label>
-        <select
-          class="form-select"
-          :value="tournamentForm.region"
-          @change="updateField('region', ($event.target as HTMLSelectElement).value)"
-          required
-        >
-          <option value="" disabled>Pilih Region</option>
-          <option v-for="region in REGION_OPTIONS" :key="region" :value="region">
-            {{ region }}
-          </option>
-        </select>
+        <AppSelect
+          :modelValue="tournamentForm.region"
+          :options="regionSelectOptions"
+          placeholder="Pilih Region"
+          @change="(val: string | number | null) => updateField('region', String(val ?? ''))"
+        />
       </div>
 
       <!-- Liquipedia URL -->
@@ -124,17 +129,12 @@ const handleCancel = () => {
         <label class="form-label">
           Status <span class="text-danger">*</span>
         </label>
-        <select
-          class="form-select"
-          :value="tournamentForm.status"
-          @change="updateField('status', ($event.target as HTMLSelectElement).value)"
-          required
-        >
-          <option value="" disabled>Pilih Status</option>
-          <option v-for="status in STATUS_OPTIONS" :key="status" :value="status">
-            {{ status }}
-          </option>
-        </select>
+        <AppSelect
+          :modelValue="tournamentForm.status"
+          :options="statusSelectOptions"
+          placeholder="Pilih Status"
+          @change="(val: string | number | null) => updateField('status', String(val ?? ''))"
+        />
       </div>
 
       <!-- Prize Pool -->

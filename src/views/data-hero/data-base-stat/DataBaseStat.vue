@@ -8,6 +8,8 @@ import Button from '../../../components/Button/Button.vue';
 import ModalButton from '../../../components/Modal/ModalButton.vue';
 import ImportModal from '../../../components/Modal/ImportModal.vue';
 import TablePagination from '../../../components/Table/TablePagination.vue';
+import AppSelect from '../../../components/AppSelect.vue';
+import type { SelectOption } from '../../../components/AppSelect.vue';
 
 // Base Stat Components
 import BaseStatFormModal from './components/BaseStatFormModal.vue';
@@ -48,6 +50,16 @@ const SORT_OPTIONS = [
   { value: 'magic_defense', label: 'Magic Defense' },
   { value: 'movement_speed', label: 'Movement Speed' },
 ] as const;
+
+const roleFilterSelectOptions = computed<SelectOption[]>(() => [
+  { id: '', text: 'Semua Role' },
+  ...HERO_ROLE_OPTIONS.map(role => ({ id: role, text: role })),
+]);
+
+const sortBySelectOptions = computed<SelectOption[]>(() => [
+  { id: '', text: 'Tidak ada (urutan default)' },
+  ...SORT_OPTIONS.map(opt => ({ id: opt.value, text: opt.label })),
+]);
 
 const filteredBaseStats = computed<BaseStat[]>(() => {
   let filtered = baseStats.value;
@@ -423,20 +435,7 @@ const handleImport = async (file: File) => {
                     <i class="ti ti-shield me-1 text-warning"></i>
                     Role Hero
                   </label>
-                  <select
-                    class="form-select"
-                    v-model="selectedFilterRole"
-                    @change="currentPage = 1"
-                  >
-                    <option value="">Semua Role</option>
-                    <option
-                      v-for="role in HERO_ROLE_OPTIONS"
-                      :key="role"
-                      :value="role"
-                    >
-                      {{ role }}
-                    </option>
-                  </select>
+                  <AppSelect v-model="selectedFilterRole" :options="roleFilterSelectOptions" placeholder="Semua Role" @change="currentPage = 1" />
                   <small class="text-muted">Saring base stat berdasarkan role hero pemilik.</small>
                 </div>
 
@@ -445,20 +444,7 @@ const handleImport = async (file: File) => {
                     <i class="ti ti-arrows-sort me-1 text-info"></i>
                     Urutkan Berdasarkan
                   </label>
-                  <select
-                    class="form-select mb-2"
-                    v-model="selectedSortBy"
-                    @change="currentPage = 1"
-                  >
-                    <option value="">Tidak ada (urutan default)</option>
-                    <option
-                      v-for="opt in SORT_OPTIONS"
-                      :key="opt.value"
-                      :value="opt.value"
-                    >
-                      {{ opt.label }}
-                    </option>
-                  </select>
+                  <AppSelect v-model="selectedSortBy" :options="sortBySelectOptions" placeholder="Tidak ada (urutan default)" class="mb-2" @change="currentPage = 1" />
                   <div class="btn-group w-100" role="group" aria-label="Arah pengurutan">
                     <input
                       type="radio"

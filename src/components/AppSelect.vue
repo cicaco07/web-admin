@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import Select2 from 'vue3-select2-component';
+import vSelect from 'vue-select';
+import 'vue-select/dist/vue-select.css';
 
 export interface SelectOption {
   id: string | number;
@@ -27,83 +28,217 @@ const emit = defineEmits<{
   (e: 'change', value: string | number | null): void;
 }>();
 
-const select2Settings = computed(() => {
-  const settings: Record<string, unknown> = {};
+const filterable = computed(() => props.options.length > props.searchThreshold);
 
-  if (props.options.length <= props.searchThreshold) {
-    settings.minimumResultsForSearch = Infinity;
-  }
+const selected = computed(() =>
+  props.options.find(o => String(o.id) === String(props.modelValue)) ?? null
+);
 
-  if (props.allowClear) {
-    settings.allowClear = true;
-  }
-
-  return settings;
-});
-
-function onValueChange(value: string | string[]) {
-  const raw = Array.isArray(value) ? value[0] : value;
-  if (raw === '' || raw === undefined || raw === null) {
+function onInput(option: SelectOption | null) {
+  if (!option) {
     emit('update:modelValue', null);
     emit('change', null);
   } else {
-    const parsed = props.options.some(o => String(o.id) === raw && typeof o.id === 'number')
-      ? Number(raw)
-      : raw;
-    emit('update:modelValue', parsed);
-    emit('change', parsed);
+    emit('update:modelValue', option.id);
+    emit('change', option.id);
   }
 }
 </script>
 
 <template>
-  <Select2
+  <vSelect
     class="app-select"
-    :model-value="modelValue != null ? String(modelValue) : ''"
+    :model-value="selected"
     :options="options"
     :placeholder="placeholder"
     :disabled="disabled"
-    :settings="select2Settings"
-    @update:modelValue="onValueChange"
-  />
+    :filterable="filterable"
+    :clearable="allowClear"
+    :searchable="filterable"
+    label="text"
+    :reduce="(opt: SelectOption) => opt"
+    :get-option-key="(opt: SelectOption) => opt.id"
+    @update:modelValue="onInput"
+  >
+    <template #open-indicator="{ attributes }">
+      <span v-bind="attributes" class="app-select__arrow"></span>
+    </template>
+  </vSelect>
 </template>
 
+<style>
+:root {
+  --vs-controls-color: #5a6a85;
+  --vs-border-color: #dfe5ef;
+  --vs-border-width: 1px;
+  --vs-border-radius: 7px;
+
+  --vs-dropdown-bg: #fff;
+  --vs-dropdown-color: #5a6a85;
+  --vs-dropdown-option-padding: 8px 16px;
+
+  --vs-selected-color: #5a6a85;
+  --vs-selected-bg: transparent;
+
+  --vs-search-input-color: #5a6a85;
+  --vs-search-input-placeholder-color: #a1aab2;
+
+  --vs-font-size: 0.875rem;
+  --vs-line-height: 1.5;
+
+  --vs-state-disabled-bg: var(--bs-secondary-bg, #eaeff4);
+  --vs-state-disabled-color: #5a6a85;
+
+  --vs-dropdown-option--active-bg: #5d87ff;
+  --vs-dropdown-option--active-color: #fff;
+}
+</style>
+
 <style scoped>
-.app-select :deep(.select2-container) {
-  width: 100% !important;
+.app-select {
+  font-size: 0.875rem;
+  font-weight: 400;
 }
 
-.app-select :deep(.select2-container .select2-selection--single) {
-  height: calc(1.5em + 0.75rem + 2px);
-  padding: 0.375rem 0.75rem;
-  border: 1px solid #dee2e6;
-  border-radius: 0.375rem;
-  background-color: #fff;
+.app-select :deep(.vs__dropdown-toggle) {
+  min-height: 42px;
+  padding: 0 16px;
+  border: var(--bs-border-width, 1px) solid #dfe5ef;
+  border-radius: 7px;
+  background-color: transparent;
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  cursor: pointer;
 }
 
-.app-select :deep(.select2-container--default .select2-selection--single .select2-selection__rendered) {
+.app-select :deep(.vs__selected-options) {
+  padding: 0;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.app-select :deep(.vs__selected) {
+  margin: 0;
+  padding: 8px 0;
+  border: none;
   line-height: 1.5;
-  padding-left: 0;
-  color: #212529;
+  color: #5a6a85;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  position: relative;
 }
 
-.app-select :deep(.select2-container--default .select2-selection--single .select2-selection__arrow) {
-  height: calc(1.5em + 0.75rem);
-  top: 1px;
+.app-select :deep(.vs__search) {
+  margin: 0;
+  padding: 8px 0;
+  line-height: 1.5;
+  font-size: 0.875rem;
+  color: #5a6a85;
+  border: none;
 }
 
-.app-select :deep(.select2-container--default .select2-selection--single .select2-selection__placeholder) {
-  color: #6c757d;
+.app-select :deep(.vs__search::placeholder) {
+  color: #a1aab2;
 }
 
-.app-select :deep(.select2-container--default.select2-container--focus .select2-selection--single) {
-  border-color: #86b7fe;
-  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+.app-select :deep(.vs--single.vs--searching .vs__selected) {
+  position: absolute;
+  opacity: 0.4;
 }
 
-.app-select :deep(.select2-container--default.select2-container--disabled .select2-selection--single) {
-  background-color: #e9ecef;
+.app-select :deep(.vs__actions) {
+  padding: 0;
+  cursor: pointer;
+}
+
+.app-select__arrow {
+  display: block;
+  width: 16px;
+  height: 12px;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-size: 16px 12px;
+  background-position: center;
+  transition: transform 0.15s ease;
+}
+
+.app-select :deep(.vs--open .app-select__arrow) {
+  transform: rotate(180deg);
+}
+
+.app-select :deep(.vs--open .vs__dropdown-toggle) {
+  border-color: #aec3ff;
+  box-shadow: 0 0 0 0.25rem rgba(93, 135, 255, 0.25);
+  border-bottom-color: #aec3ff;
+}
+
+.app-select :deep(.vs__dropdown-menu) {
+  border: 1px solid #dfe5ef;
+  border-radius: 7px;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+  padding: 4px 0;
+  margin-top: 4px;
+  max-height: 250px;
+}
+
+.app-select :deep(.vs__dropdown-option) {
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  color: #5a6a85;
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-select :deep(.vs__dropdown-option--highlight) {
+  background: #5d87ff;
+  color: #fff;
+}
+
+.app-select :deep(.vs__dropdown-option--selected) {
+  font-weight: 600;
+}
+
+.app-select :deep(.vs__no-options) {
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  color: #a1aab2;
+  text-align: center;
+}
+
+.app-select :deep(.vs--disabled .vs__dropdown-toggle) {
+  background-color: var(--bs-secondary-bg, #eaeff4);
   opacity: 1;
+  cursor: not-allowed;
+}
+
+.app-select :deep(.vs--disabled .vs__search) {
+  background-color: transparent;
+}
+
+.app-select :deep(.vs--disabled .vs__selected) {
+  color: #5a6a85;
+}
+
+.app-select :deep(.vs--disabled .vs__actions) {
+  cursor: not-allowed;
+}
+
+.app-select :deep(.vs__clear) {
+  display: flex;
+  align-items: center;
+  margin-right: 4px;
+  color: #5a6a85;
+}
+
+.app-select :deep(.vs__clear:hover) {
+  color: #e74c3c;
+}
+
+.app-select :deep(.vs__spinner) {
+  border-left-color: #5d87ff;
 }
 </style>

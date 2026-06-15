@@ -9,6 +9,8 @@ import Badge from '../../../components/Badge/Badge.vue';
 import ModalButton from '../../../components/Modal/ModalButton.vue';
 import ImportModal from '../../../components/Modal/ImportModal.vue';
 import TablePagination from '../../../components/Table/TablePagination.vue';
+import AppSelect from '../../../components/AppSelect.vue';
+import type { SelectOption } from '../../../components/AppSelect.vue';
 
 // Modal Components
 import SkillDetailModal from './components/SkillDetailModal.vue';
@@ -79,6 +81,21 @@ const heroNameOptions = computed(() => {
   });
   return Array.from(names).sort((a, b) => a.localeCompare(b));
 });
+
+const heroFilterSelectOptions = computed<SelectOption[]>(() => [
+  { id: '', text: 'Semua Hero' },
+  ...heroNameOptions.value.map(name => ({ id: name, text: name })),
+]);
+
+const typeFilterSelectOptions = computed<SelectOption[]>(() => [
+  { id: '', text: 'Semua Tipe' },
+  ...SKILL_TYPE_OPTIONS.map(type => ({ id: type, text: type })),
+]);
+
+const tagFilterSelectOptions = computed<SelectOption[]>(() => [
+  { id: '', text: 'Semua Tag' },
+  ...SKILL_TAG_OPTIONS.map(tag => ({ id: tag, text: tag })),
+]);
 
 const filteredSkills = computed(() => {
   let filtered = skills.value;
@@ -473,20 +490,7 @@ const handleImport = async (file: File) => {
                     <i class="ti ti-user me-1 text-secondary"></i>
                     Hero
                   </label>
-                  <select
-                    class="form-select"
-                    v-model="selectedFilterHero"
-                    @change="currentPage = 1"
-                  >
-                    <option value="">Semua Hero</option>
-                    <option
-                      v-for="name in heroNameOptions"
-                      :key="name"
-                      :value="name"
-                    >
-                      {{ name }}
-                    </option>
-                  </select>
+                  <AppSelect v-model="selectedFilterHero" :options="heroFilterSelectOptions" placeholder="Semua Hero" @change="currentPage = 1" />
                   <small class="text-muted">Saring berdasarkan hero pemilik skill.</small>
                 </div>
 
@@ -495,20 +499,7 @@ const handleImport = async (file: File) => {
                     <i class="ti ti-bolt me-1 text-warning"></i>
                     Tipe Skill
                   </label>
-                  <select
-                    class="form-select"
-                    v-model="selectedFilterType"
-                    @change="currentPage = 1"
-                  >
-                    <option value="">Semua Tipe</option>
-                    <option
-                      v-for="type in SKILL_TYPE_OPTIONS"
-                      :key="type"
-                      :value="type"
-                    >
-                      {{ type }}
-                    </option>
-                  </select>
+                  <AppSelect v-model="selectedFilterType" :options="typeFilterSelectOptions" placeholder="Semua Tipe" @change="currentPage = 1" />
                   <small class="text-muted">Pilih jenis skill (Passive/Skill 1/Skill 2/Ultimate).</small>
                 </div>
 
@@ -517,20 +508,7 @@ const handleImport = async (file: File) => {
                     <i class="ti ti-tag me-1 text-info"></i>
                     Tag
                   </label>
-                  <select
-                    class="form-select"
-                    v-model="selectedFilterTag"
-                    @change="currentPage = 1"
-                  >
-                    <option value="">Semua Tag</option>
-                    <option
-                      v-for="tag in SKILL_TAG_OPTIONS"
-                      :key="tag"
-                      :value="tag"
-                    >
-                      {{ tag }}
-                    </option>
-                  </select>
+                  <AppSelect v-model="selectedFilterTag" :options="tagFilterSelectOptions" placeholder="Semua Tag" @change="currentPage = 1" />
                   <small class="text-muted">Tampilkan skill yang mengandung tag tertentu.</small>
                 </div>
 

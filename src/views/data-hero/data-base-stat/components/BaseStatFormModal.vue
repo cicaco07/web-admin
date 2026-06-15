@@ -2,7 +2,9 @@
 import Modal from '../../../../components/Modal/Modal.vue';
 import ModalHeader from '../../../../components/Modal/ModalHeader.vue';
 import ModalBody from '../../../../components/Modal/ModalBody.vue';
-import { ref, watch } from 'vue';
+import AppSelect from '../../../../components/AppSelect.vue';
+import type { SelectOption } from '../../../../components/AppSelect.vue';
+import { ref, watch, computed } from 'vue';
 import type { BaseStatFormData, BaseStatGrowthKey } from '../../../../types/BaseStat';
 import { BASE_STAT_FIELD_GROUPS, BASE_STAT_GROWTH_FIELDS } from '../../../../types/BaseStat';
 import type { Hero } from '../../../../types/Hero';
@@ -23,6 +25,10 @@ const emit = defineEmits<{
 }>();
 
 const fieldGroups = BASE_STAT_FIELD_GROUPS;
+
+const heroSelectOptions = computed<SelectOption[]>(() =>
+  props.heroes.map(hero => ({ id: hero._id, text: `${hero.name} - ${hero.role.join(', ')}` }))
+);
 
 const statKeys = fieldGroups.flatMap((group) => group.fields.map((field) => field.key));
 const growthKeys = BASE_STAT_GROWTH_FIELDS.map((field) => field.growthKey as BaseStatGrowthKey);
@@ -126,17 +132,12 @@ const handleCancel = () => {
             Hero
             <span class="text-danger">*</span>
           </label>
-          <select
-            class="form-select"
-            :value="baseStatForm.heroId"
-            @change="updateHero(($event.target as HTMLSelectElement).value)"
-            required
-          >
-            <option value="" disabled>Pilih Hero</option>
-            <option v-for="hero in heroes" :key="hero._id" :value="hero._id">
-              {{ hero.name }} - {{ hero.role.join(', ') }}
-            </option>
-          </select>
+          <AppSelect
+            :modelValue="baseStatForm.heroId"
+            :options="heroSelectOptions"
+            placeholder="Pilih Hero"
+            @change="(val: string | number | null) => updateHero(String(val ?? ''))"
+          />
         </div>
 
         <div v-for="group in fieldGroups" :key="group.title" class="mb-4">

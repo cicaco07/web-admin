@@ -8,6 +8,8 @@ import Button from '../../../components/Button/Button.vue';
 import ModalButton from '../../../components/Modal/ModalButton.vue';
 import ImportModal from '../../../components/Modal/ImportModal.vue';
 import TablePagination from '../../../components/Table/TablePagination.vue';
+import AppSelect from '../../../components/AppSelect.vue';
+import type { SelectOption } from '../../../components/AppSelect.vue';
 
 // Item Components
 import ItemFormModal from './components/ItemFormModal.vue';
@@ -32,6 +34,11 @@ const { handleAddItem, handleEditItem, handleDeleteItem } = useItemService(safeR
 // ==================== Search & Filter ====================
 const searchQuery = ref('');
 const selectedFilterType = ref('');
+
+const typeFilterOptions = computed<SelectOption[]>(() => [
+  { id: '', text: 'Semua Tipe' },
+  ...ITEM_TYPE_OPTIONS.map(type => ({ id: type, text: type })),
+]);
 
 const filteredItems = computed<Item[]>(() => {
   let filtered = items.value;
@@ -337,12 +344,7 @@ const handleImport = async (file: File) => {
                     <i class="ti ti-category me-1 text-info"></i>
                     Tipe Item
                   </label>
-                  <select class="form-select" v-model="selectedFilterType" @change="currentPage = 1">
-                    <option value="">Semua Tipe</option>
-                    <option v-for="type in ITEM_TYPE_OPTIONS" :key="type" :value="type">
-                      {{ type }}
-                    </option>
-                  </select>
+                  <AppSelect v-model="selectedFilterType" :options="typeFilterOptions" placeholder="Semua Tipe" @change="currentPage = 1" />
                   <small class="text-muted">Saring item berdasarkan kategori tipe.</small>
                 </div>
 

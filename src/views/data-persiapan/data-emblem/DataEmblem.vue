@@ -7,6 +7,8 @@ import Breadcrumb from '../../../components/Breadcrumb/Breadcrumb.vue';
 import Button from '../../../components/Button/Button.vue';
 import ModalButton from '../../../components/Modal/ModalButton.vue';
 import TablePagination from '../../../components/Table/TablePagination.vue';
+import AppSelect from '../../../components/AppSelect.vue';
+import type { SelectOption } from '../../../components/AppSelect.vue';
 
 // Emblem Components
 import EmblemFormModal from './components/EmblemFormModal.vue';
@@ -29,6 +31,11 @@ const { handleAddEmblem, handleEditEmblem, handleDeleteEmblem } = useEmblemServi
 // ==================== Search & Filter ====================
 const searchQuery = ref('');
 const selectedFilterType = ref('');
+
+const typeFilterSelectOptions = computed<SelectOption[]>(() => [
+  { id: '', text: 'Semua Tipe' },
+  ...EMBLEM_TYPE_OPTIONS.map(type => ({ id: type, text: type })),
+]);
 
 const filteredEmblems = computed(() => {
   let filtered = emblems.value;
@@ -173,20 +180,7 @@ const onEditEmblem = async (attributes: EmblemAttribute[]) => {
                 </div>
               </div>
               <div class="col-md-2">
-                <select 
-                  class="form-select" 
-                  v-model="selectedFilterType"
-                  @change="currentPage = 1"
-                >
-                  <option value="">Semua Tipe</option>
-                  <option 
-                    v-for="type in EMBLEM_TYPE_OPTIONS" 
-                    :key="type" 
-                    :value="type"
-                  >
-                    {{ type }}
-                  </option>
-                </select>
+                <AppSelect v-model="selectedFilterType" :options="typeFilterSelectOptions" placeholder="Semua Tipe" @change="currentPage = 1" />
               </div>
               <div class="col-md-2">
                 <button 

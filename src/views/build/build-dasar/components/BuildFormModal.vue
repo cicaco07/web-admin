@@ -5,6 +5,8 @@ import ModalHeader from '../../../../components/Modal/ModalHeader.vue';
 import ModalBody from '../../../../components/Modal/ModalBody.vue';
 import FormInput from '../../../../components/FormInput/FormInput.vue';
 import FormTextarea from '../../../../components/FormInput/FormTextarea.vue';
+import AppSelect from '../../../../components/AppSelect.vue';
+import type { SelectOption } from '../../../../components/AppSelect.vue';
 import ItemDragDrop from './ItemDragDrop.vue';
 import type { BuildFormData } from '../../../../types/Build';
 import { ROLE_OPTIONS } from '../../../../types/Build';
@@ -58,7 +60,13 @@ const emblemsByType = computed(() => {
   return grouped;
 });
 
-const roleOptions = [...ROLE_OPTIONS];
+const roleSelectOptions = computed<SelectOption[]>(() =>
+  ROLE_OPTIONS.map(role => ({ id: role, text: role }))
+);
+
+const heroSelectOptions = computed<SelectOption[]>(() =>
+  filteredHeroes.value.map((hero: any) => ({ id: hero._id, text: hero.name }))
+);
 
 // Build items management
 const buildItems = ref<Array<{ itemId: string; order: number }>>([]);
@@ -187,37 +195,25 @@ const handleCancel = () => {
           </div>
           <div class="col-md-6 mb-3">
             <label class="form-label fw-semibold">Role</label>
-            <select 
-              class="form-select" 
-              :value="buildForm.role"
-              @change="updateFormField('role', ($event.target as HTMLSelectElement).value)"
-              required
-            >
-              <option value="" disabled>Pilih Role</option>
-              <option v-for="role in roleOptions" :key="role" :value="role">
-                {{ role }}
-              </option>
-            </select>
+            <AppSelect
+              :modelValue="buildForm.role"
+              :options="roleSelectOptions"
+              placeholder="Pilih Role"
+              @change="(val: string | number | null) => updateFormField('role', String(val ?? ''))"
+            />
           </div>
         </div>
 
         <div class="row">
           <div class="col-md-12 mb-3">
             <label class="form-label fw-semibold">Hero</label>
-            <select 
-              class="form-select" 
-              :value="buildForm.heroId"
-              @change="updateFormField('heroId', ($event.target as HTMLSelectElement).value)"
+            <AppSelect
+              :modelValue="buildForm.heroId"
+              :options="heroSelectOptions"
+              :placeholder="heroLoading ? 'Loading heroes...' : (buildForm.role ? 'Pilih Hero' : 'Pilih role terlebih dahulu')"
               :disabled="!buildForm.role || heroLoading"
-              required
-            >
-              <option value="" disabled>
-                {{ heroLoading ? 'Loading heroes...' : (buildForm.role ? 'Pilih Hero' : 'Pilih role terlebih dahulu') }}
-              </option>
-              <option v-for="hero in filteredHeroes" :key="hero._id" :value="hero._id">
-                {{ hero.name }}
-              </option>
-            </select>
+              @change="(val: string | number | null) => updateFormField('heroId', String(val ?? ''))"
+            />
           </div>
         </div>
 

@@ -5,6 +5,8 @@ import ModalHeader from '../../../../components/Modal/ModalHeader.vue';
 import ModalBody from '../../../../components/Modal/ModalBody.vue';
 import Button from '../../../../components/Button/Button.vue';
 import Badge from '../../../../components/Badge/Badge.vue';
+import AppSelect from '../../../../components/AppSelect.vue';
+import type { SelectOption } from '../../../../components/AppSelect.vue';
 import type { Skill } from '../../../../types/Skill';
 
 interface SkillDetailWithLevel {
@@ -18,7 +20,11 @@ const props = defineProps<{
   skillDetails: SkillDetailWithLevel[];
 }>();
 
-const selectedLevel = ref(1);
+const selectedLevel = ref<string | number | null>(1);
+
+const levelSelectOptions = computed<SelectOption[]>(() =>
+  props.skillDetails.map(detail => ({ id: detail.level, text: String(detail.level) }))
+);
 
 const attributeKeys = computed(() => {
   if (props.skillDetails.length === 0) return [];
@@ -120,13 +126,9 @@ const toArray = (value: string | string[]): string[] => {
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-3">
               <h6 class="mb-0 fw-semibold">Deskripsi Lengkap</h6>
-              <div v-if="skillDetails.length > 0">
+              <div v-if="skillDetails.length > 0" style="min-width: 120px;">
                 <label class="form-label mb-0 me-2">Level:</label>
-                <select v-model="selectedLevel" class="form-select form-select-sm" style="width: auto; display: inline-block;">
-                  <option v-for="detail in skillDetails" :key="detail.level" :value="detail.level">
-                    {{ detail.level }}
-                  </option>
-                </select>
+                <AppSelect v-model="selectedLevel" :options="levelSelectOptions" placeholder="Level" />
               </div>
             </div>
             <div class="skill-description" v-html="parsedDescription"></div>

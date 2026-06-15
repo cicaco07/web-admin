@@ -9,6 +9,8 @@ import Badge from '../../../components/Badge/Badge.vue';
 import ModalButton from '../../../components/Modal/ModalButton.vue';
 import ImportModal from '../../../components/Modal/ImportModal.vue';
 import TablePagination from '../../../components/Table/TablePagination.vue';
+import AppSelect from '../../../components/AppSelect.vue';
+import type { SelectOption } from '../../../components/AppSelect.vue';
 
 // Hero Components
 import HeroDetailModal from './components/HeroDetailModal.vue';
@@ -34,6 +36,16 @@ const { handleAddHero, handleEditHero, handleDeleteHero } = useHeroService(safeR
 const searchQuery = ref('');
 const selectedFilterRole = ref('');
 const selectedFilterType = ref('');
+
+const roleFilterSelectOptions = computed<SelectOption[]>(() => [
+  { id: '', text: 'Semua Role' },
+  ...HERO_ROLE_OPTIONS.map(role => ({ id: role, text: role })),
+]);
+
+const typeFilterSelectOptions = computed<SelectOption[]>(() => [
+  { id: '', text: 'Semua Tipe' },
+  ...HERO_TYPE_OPTIONS.map(type => ({ id: type, text: type })),
+]);
 
 const filteredHeroes = computed(() => {
   let filtered = heroes.value;
@@ -352,20 +364,7 @@ const handleImport = async (file: File) => {
                     <i class="ti ti-shield me-1 text-warning"></i>
                     Role
                   </label>
-                  <select
-                    class="form-select"
-                    v-model="selectedFilterRole"
-                    @change="currentPage = 1"
-                  >
-                    <option value="">Semua Role</option>
-                    <option
-                      v-for="role in HERO_ROLE_OPTIONS"
-                      :key="role"
-                      :value="role"
-                    >
-                      {{ role }}
-                    </option>
-                  </select>
+                  <AppSelect v-model="selectedFilterRole" :options="roleFilterSelectOptions" placeholder="Semua Role" @change="currentPage = 1" />
                   <small class="text-muted">Pilih role spesifik untuk menyaring hero.</small>
                 </div>
 
@@ -374,20 +373,7 @@ const handleImport = async (file: File) => {
                     <i class="ti ti-sword me-1 text-info"></i>
                     Tipe
                   </label>
-                  <select
-                    class="form-select"
-                    v-model="selectedFilterType"
-                    @change="currentPage = 1"
-                  >
-                    <option value="">Semua Tipe</option>
-                    <option
-                      v-for="type in HERO_TYPE_OPTIONS"
-                      :key="type"
-                      :value="type"
-                    >
-                      {{ type }}
-                    </option>
-                  </select>
+                  <AppSelect v-model="selectedFilterType" :options="typeFilterSelectOptions" placeholder="Semua Tipe" @change="currentPage = 1" />
                   <small class="text-muted">Pilih tipe (class) hero yang ingin ditampilkan.</small>
                 </div>
 

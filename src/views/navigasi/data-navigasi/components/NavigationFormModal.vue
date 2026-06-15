@@ -6,6 +6,8 @@ import ModalBody from '../../../../components/Modal/ModalBody.vue';
 import Button from '../../../../components/Button/Button.vue';
 import FormInput from '../../../../components/FormInput/FormInput.vue';
 import CheckboxGroup from '../../../../components/FormInput/CheckboxGroup.vue';
+import AppSelect from '../../../../components/AppSelect.vue';
+import type { SelectOption } from '../../../../components/AppSelect.vue';
 import type { NavigationFormData } from '../../../../types/Navigation';
 import { ROLE_OPTIONS } from '../../../../types/Navigation';
 
@@ -33,6 +35,18 @@ const emit = defineEmits<{
 }>();
 
 const roleOptions = [...ROLE_OPTIONS];
+
+const parentSelectOptions = computed<SelectOption[]>(() => [
+  { id: '', text: 'Tidak ada (Parent Menu)' },
+  ...props.parentMenuOptions
+    .filter(nav => nav._id !== props.navigationForm._id)
+    .map(nav => ({ id: nav._id, text: nav.name })),
+]);
+
+const menuTypeSelectOptions = computed<SelectOption[]>(() => [
+  { id: 'true', text: 'Header' },
+  { id: 'false', text: 'Submenu' },
+]);
 
 const updateFormField = <K extends keyof NavigationFormData>(field: K, value: NavigationFormData[K]) => {
   emit('update:navigationForm', { ...props.navigationForm, [field]: value });
@@ -92,21 +106,12 @@ watch(() => props.navigationForm.parent_id, (newParentId) => {
           <!-- Parent Selection -->
           <div class="col-md-6 col-lg-4">
             <label class="form-label fw-semibold">Parent</label>
-            <select 
-              class="form-select" 
-              :value="navigationForm.parent_id ?? ''"
-              @change="updateFormField('parent_id', ($event.target as HTMLSelectElement).value || null)"
-            >
-              <option value="">Tidak ada (Parent Menu)</option>
-              <option 
-                v-for="nav in parentMenuOptions" 
-                :key="nav._id" 
-                :value="nav._id"
-                :disabled="nav._id === navigationForm._id"
-              >
-                {{ nav.name }}
-              </option>
-            </select>
+            <AppSelect
+              :modelValue="navigationForm.parent_id ?? ''"
+              :options="parentSelectOptions"
+              placeholder="Tidak ada (Parent Menu)"
+              @change="(val: string | number | null) => updateFormField('parent_id', val ? String(val) : null)"
+            />
             <small class="text-muted">Pilih parent untuk membuat submenu</small>
           </div>
 
@@ -142,16 +147,13 @@ watch(() => props.navigationForm.parent_id, (newParentId) => {
               Tipe Menu
               <span v-if="!canChangeIsHeader" class="text-muted">(Otomatis)</span>
             </label>
-            <select 
-              class="form-select" 
-              :value="navigationForm.is_header"
-              @change="updateFormField('is_header', ($event.target as HTMLSelectElement).value === 'true')"
+            <AppSelect
+              :modelValue="String(navigationForm.is_header)"
+              :options="menuTypeSelectOptions"
+              placeholder="Pilih Tipe Menu"
               :disabled="!canChangeIsHeader"
-              required
-            >
-              <option :value="true">Header</option>
-              <option :value="false">Submenu</option>
-            </select>
+              @change="(val: string | number | null) => updateFormField('is_header', val === 'true')"
+            />
             <small v-if="!canChangeIsHeader" class="text-muted">
               Karena memiliki parent, otomatis menjadi submenu
             </small>

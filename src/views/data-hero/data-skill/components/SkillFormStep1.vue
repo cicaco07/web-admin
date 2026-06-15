@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import type { SkillFormData } from '../../../../types/Skill';
 import { SKILL_TAG_OPTIONS } from '../../../../types/Skill';
 import type { Hero } from '../../../../types/Hero';
 import FormInput from '../../../../components/FormInput/FormInput.vue';
 import FormTextarea from '../../../../components/FormInput/FormTextarea.vue';
 import CheckboxGroup from '../../../../components/FormInput/CheckboxGroup.vue';
+import AppSelect from '../../../../components/AppSelect.vue';
+import type { SelectOption } from '../../../../components/AppSelect.vue';
 
 const props = defineProps<{
   formData: SkillFormData;
@@ -18,6 +21,17 @@ const emit = defineEmits<{
 }>();
 
 const tagOptions = [...SKILL_TAG_OPTIONS];
+
+const heroSelectOptions = computed<SelectOption[]>(() =>
+  props.heroes.map(hero => ({ id: hero._id, text: hero.name }))
+);
+
+const skillTypeSelectOptions = computed<SelectOption[]>(() => [
+  { id: 'Passive', text: 'Passive' },
+  { id: 'Skill 1', text: 'Skill 1' },
+  { id: 'Skill 2', text: 'Skill 2' },
+  { id: 'Ultimate', text: 'Ultimate' },
+]);
 
 const updateField = <K extends keyof SkillFormData>(field: K, value: SkillFormData[K]) => {
   emit('update:formData', { ...props.formData, [field]: value });
@@ -35,17 +49,12 @@ const updateField = <K extends keyof SkillFormData>(field: K, value: SkillFormDa
     <div class="row mb-3">
       <div class="col-12">
         <label class="form-label fw-semibold">Hero <span class="text-danger">*</span></label>
-        <select 
-          class="form-select" 
-          required 
-          :value="formData.heroId"
-          @change="updateField('heroId', ($event.target as HTMLSelectElement).value)"
-        >
-          <option value="">Pilih Hero</option>
-          <option v-for="hero in heroes" :key="hero._id" :value="hero._id">
-            {{ hero.name }}
-          </option>
-        </select>
+        <AppSelect
+          :modelValue="formData.heroId"
+          :options="heroSelectOptions"
+          placeholder="Pilih Hero"
+          @change="(val: string | number | null) => updateField('heroId', String(val ?? ''))"
+        />
       </div>
     </div>
 
@@ -63,18 +72,12 @@ const updateField = <K extends keyof SkillFormData>(field: K, value: SkillFormDa
       </div>
       <div class="col-md-6">
         <label class="form-label fw-semibold">Tipe Skill <span class="text-danger">*</span></label>
-        <select 
-          class="form-select" 
-          required 
-          :value="formData.type"
-          @change="updateField('type', ($event.target as HTMLSelectElement).value)"
-        >
-          <option value="">Pilih Tipe Skill</option>
-          <option value="Passive">Passive</option>
-          <option value="Skill 1">Skill 1</option>
-          <option value="Skill 2">Skill 2</option>
-          <option value="Ultimate">Ultimate</option>
-        </select>
+        <AppSelect
+          :modelValue="formData.type"
+          :options="skillTypeSelectOptions"
+          placeholder="Pilih Tipe Skill"
+          @change="(val: string | number | null) => updateField('type', String(val ?? ''))"
+        />
         <small v-if="formData.type === 'Passive'" class="text-info">
           <i class="ti ti-info-circle me-1"></i>
           Passive skill tidak memerlukan data detail per level

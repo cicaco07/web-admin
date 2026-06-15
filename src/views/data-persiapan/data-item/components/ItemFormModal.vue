@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import Modal from '../../../../components/Modal/Modal.vue';
 import ModalHeader from '../../../../components/Modal/ModalHeader.vue';
 import ModalBody from '../../../../components/Modal/ModalBody.vue';
 import Button from '../../../../components/Button/Button.vue';
 import FormInput from '../../../../components/FormInput/FormInput.vue';
 import FormTextarea from '../../../../components/FormInput/FormTextarea.vue';
+import AppSelect from '../../../../components/AppSelect.vue';
+import type { SelectOption } from '../../../../components/AppSelect.vue';
 import type { ItemFormData } from '../../../../types/Item';
 import { ITEM_TYPE_OPTIONS, ITEM_TIER_OPTIONS } from '../../../../types/Item';
 
@@ -30,6 +32,14 @@ const emit = defineEmits<{
 
 const typeOptions = [...ITEM_TYPE_OPTIONS];
 const tierOptions = [...ITEM_TIER_OPTIONS];
+
+const typeSelectOptions = computed<SelectOption[]>(() =>
+  typeOptions.map(type => ({ id: type, text: type }))
+);
+
+const tierSelectOptions = computed<SelectOption[]>(() =>
+  tierOptions.map(tier => ({ id: tier.value, text: tier.label }))
+);
 
 // Dynamic fields
 const attributeFields = ref<DynamicField[]>([{ id: Date.now(), value: '' }]);
@@ -115,30 +125,21 @@ const handleCancel = () => {
           </div>
           <div class="col-md-6 col-lg-3 mb-3">
             <label class="form-label fw-semibold">Tipe</label>
-            <select 
-              class="form-select" 
-              :value="itemForm.type"
-              @change="updateFormField('type', ($event.target as HTMLSelectElement).value)"
-              required
-            >
-              <option value="" disabled>Pilih Tipe</option>
-              <option v-for="type in typeOptions" :key="type" :value="type">
-                {{ type }}
-              </option>
-            </select>
+            <AppSelect
+              :modelValue="itemForm.type"
+              :options="typeSelectOptions"
+              placeholder="Pilih Tipe"
+              @change="(val: string | number | null) => updateFormField('type', String(val ?? ''))"
+            />
           </div>
           <div class="col-md-6 col-lg-3 mb-3">
             <label class="form-label fw-semibold">Tier</label>
-            <select
-              class="form-select"
-              :value="itemForm.tier"
-              @change="updateFormField('tier', ($event.target as HTMLSelectElement).value)"
-            >
-              <option value="" disabled>Pilih Tier</option>
-              <option v-for="tier in tierOptions" :key="tier.value" :value="tier.value">
-                {{ tier.label }}
-              </option>
-            </select>
+            <AppSelect
+              :modelValue="itemForm.tier"
+              :options="tierSelectOptions"
+              placeholder="Pilih Tier"
+              @change="(val: string | number | null) => updateFormField('tier', String(val ?? ''))"
+            />
           </div>
         </div>
 
