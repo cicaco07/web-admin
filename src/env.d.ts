@@ -5,6 +5,12 @@ declare module '*.vue' {
   export default component
 }
 
+declare module 'vue-select' {
+  import { DefineComponent } from 'vue'
+  const vSelect: DefineComponent<{}, {}, any>
+  export default vSelect
+}
+
 declare module 'vue3-select2-component' {
   import { DefineComponent } from 'vue'
   const Select2: DefineComponent<{
