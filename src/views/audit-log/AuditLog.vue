@@ -8,10 +8,29 @@ import AppSelect from '../../components/AppSelect.vue';
 import type { SelectOption } from '../../components/AppSelect.vue';
 import AuditLogDetailModal from './components/AuditLogDetailModal.vue';
 import { useAuditLogs } from '../../lib/api/AuditLogApi';
+import { useManagedUsers } from '../../lib/api/UserManagementApi';
 import type { AuditLog, AuditLogFilterInput } from '../../types/AuditLog';
 import { createDefaultAuditLogFilter, AUDIT_STATUS_OPTIONS } from '../../types/AuditLog';
+import type { ManagedUser } from '../../types/UserManagement';
 
 const token = localStorage.getItem('token') || '';
+
+// Fetch all users to map user IDs to names
+const { result: usersResult } = useManagedUsers(token);
+const users = computed<ManagedUser[]>(() => usersResult.value?.getAllUsers || []);
+
+const userMap = computed(() => {
+  const map: Record<string, string> = {};
+  users.value.forEach(u => {
+    map[u._id] = u.name;
+  });
+  return map;
+});
+
+const getUserName = (userId: string | null) => {
+  if (!userId) return '-';
+  return userMap.value[userId] || userId;
+};
 
 // --- Filter state ---
 const filter = ref<AuditLogFilterInput>(createDefaultAuditLogFilter());
@@ -146,6 +165,7 @@ const truncate = (value: string | null, maxLength = 50) => {
         <AuditLogDetailModal
           modalId="audit-log-detail"
           :log="selectedLog"
+          :userName="selectedLog ? getUserName(selectedLog.user) : '-'"
         />
 
         <!-- Table -->
@@ -154,7 +174,7 @@ const truncate = (value: string | null, maxLength = 50) => {
             <thead class="table-light">
               <tr class="text-center">
                 <th>No</th>
-                <th>User ID</th>
+                <th>User</th>
                 <th>Action</th>
                 <th>IP Address</th>
                 <th>Status</th>
@@ -174,8 +194,8 @@ const truncate = (value: string | null, maxLength = 50) => {
               >
                 <td>{{ (filter.page - 1) * filter.limit + index + 1 }}</td>
                 <td>
-                  <span class="text-truncate d-inline-block" style="max-width: 120px;" :title="log.user || '-'">
-                    {{ truncate(log.user, 12) }}
+                  <span class="text-truncate d-inline-block" style="max-width: 150px;" :title="log.user || '-'">
+                    {{ getUserName(log.user) }}
                   </span>
                 </td>
                 <td>

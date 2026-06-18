@@ -6,6 +6,7 @@ import type { AuditLog } from '../../../types/AuditLog';
 const props = defineProps<{
   modalId: string;
   log: AuditLog | null;
+  userName: string;
 }>();
 
 const formatJson = (raw: string | null): string => {
@@ -62,8 +63,8 @@ const formatDate = (value: string) =>
         <div class="col-md-4">
           <div class="card border shadow-none mb-0">
             <div class="card-body p-3">
-              <small class="text-muted d-block mb-1">User ID</small>
-              <span class="fw-semibold">{{ props.log.user || '-' }}</span>
+              <small class="text-muted d-block mb-1">User</small>
+              <span class="fw-semibold" :title="props.log.user || ''">{{ props.userName }}</span>
             </div>
           </div>
         </div>
