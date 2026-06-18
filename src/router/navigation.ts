@@ -170,5 +170,23 @@ export const navigations = [
     level: 1,
     component: "DataBattleSpell",
     is_visible: 1,
+  },
+  {
+    _id: "10",
+    name: "Audit Logs",
+    icon: "ti ti-history",
+    parent_id: "",
+    route: "/audit-logs",
+    is_header: 0,
+    is_active: 1,
+    order: 10,
+    roles: [
+      "super_admin"
+    ],
+    permissions: [],
+    description: "Audit logs page for super admin",
+    level: 0,
+    component: "AuditLog",
+    is_visible: 1,
   }
 ]

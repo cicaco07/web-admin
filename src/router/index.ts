@@ -24,6 +24,7 @@ import BattlefieldPatchNote from '../views/patch-note/battlefield/BattlefieldPat
 import SystemPatchNote from '../views/patch-note/system/SystemPatchNote.vue';
 import GameModePatchNote from '../views/patch-note/game-mode/GameModePatchNote.vue';
 import UserManagement from '../views/user-management/UserManagement.vue';
+import AuditLog from '../views/audit-log/AuditLog.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -187,6 +188,11 @@ const router = createRouter({
       path: "/manajemen-user",
       name: "UserManagement",
       component: UserManagement,
+    },
+    {
+      path: "/audit-logs",
+      name: "AuditLogs",
+      component: AuditLog,
     },
     {
       path: '/:pathMatch(.*)*',
