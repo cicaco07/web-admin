@@ -44,6 +44,8 @@ const tierSelectOptions = computed<SelectOption[]>(() =>
 // Dynamic fields
 const attributeFields = ref<DynamicField[]>([{ id: Date.now(), value: '' }]);
 const descriptionFields = ref<DynamicField[]>([{ id: Date.now() + 1, value: '' }]);
+const calculationAttributesJson = ref('[]');
+const calculationAttributesError = ref('');
 
 // Initialize fields when form changes (for edit mode)
 watch(() => props.itemForm, (newForm) => {
@@ -64,6 +66,9 @@ watch(() => props.itemForm, (newForm) => {
   } else {
     descriptionFields.value = [{ id: Date.now() + 1, value: '' }];
   }
+
+  calculationAttributesJson.value = JSON.stringify(newForm.calculation_attributes ?? [], null, 2);
+  calculationAttributesError.value = '';
 }, { immediate: true, deep: true });
 
 const updateFormField = <K extends keyof ItemFormData>(field: K, value: ItemFormData[K]) => {
@@ -89,12 +94,26 @@ const removeDescriptionField = (idx: number) => {
 const handleSubmit = () => {
   const attributes = attributeFields.value.map(f => f.value).filter(Boolean);
   const description = descriptionFields.value.map(f => f.value).filter(Boolean);
-  emit('submit', { attributes, description });
+  try {
+    const parsed = calculationAttributesJson.value.trim()
+      ? JSON.parse(calculationAttributesJson.value)
+      : [];
+    if (!Array.isArray(parsed)) {
+      throw new Error('Calculation attributes harus berupa array JSON.');
+    }
+    calculationAttributesError.value = '';
+    emit('update:itemForm', { ...props.itemForm, calculation_attributes: parsed });
+    emit('submit', { attributes, description });
+  } catch (err) {
+    calculationAttributesError.value = err instanceof Error ? err.message : 'Format JSON calculation attributes tidak valid.';
+  }
 };
 
 const handleCancel = () => {
   attributeFields.value = [{ id: Date.now(), value: '' }];
   descriptionFields.value = [{ id: Date.now() + 1, value: '' }];
+  calculationAttributesJson.value = '[]';
+  calculationAttributesError.value = '';
   emit('cancel');
 };
 </script>
@@ -247,6 +266,24 @@ const handleCancel = () => {
               @update:modelValue="updateFormField('story', $event)"
               :rows="5"
             />
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-12">
+            <label class="form-label fw-semibold">Calculation Attributes (JSON)</label>
+            <textarea
+              class="form-control font-monospace"
+              rows="10"
+              v-model="calculationAttributesJson"
+              placeholder='[{ "key": "physical_penetration", "value": 12, "value_type": "flat", "source": "unique_attribute", "trigger": "always", "target": "self" }]'
+            ></textarea>
+            <small class="text-muted">
+              Gunakan array JSON. Field ini digunakan frontend-core untuk kalkulasi efek unik item.
+            </small>
+            <div v-if="calculationAttributesError" class="alert alert-danger py-2 mt-2 mb-0">
+              {{ calculationAttributesError }}
+            </div>
           </div>
         </div>
       </div>
