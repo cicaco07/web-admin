@@ -24,7 +24,7 @@ import { createDefaultBuildForm, ROLE_OPTIONS } from '../../../types/Build';
 
 // ==================== Data Fetching ====================
 const { result: buildResult, loading: buildLoading, refetch } = useBuilds();
-const builds = computed<Build[]>(() => buildResult.value?.builds || []);
+const builds = computed<Build[]>(() => buildResult.value?.builds?.items || []);
 const safeRefetch = async () => (await refetch()) ?? Promise.resolve();
 const { handleAddBuild, handleEditBuild, handleDeleteBuild } = useBuildService(safeRefetch);
 

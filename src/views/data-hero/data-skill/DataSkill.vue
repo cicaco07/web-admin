@@ -40,7 +40,7 @@ const { addSkillToHero } = useAddSkillToHero();
 const { updateSkill } = useUpdateSkill();
 const { addSkillDetailToSkill } = useAddSkillDetailToSkill();
 
-const heroes = computed<Hero[]>(() => heroResult.value?.heroes || []);
+const heroes = computed<Hero[]>(() => heroResult.value?.heroes?.items || []);
 
 // ==================== Computed ====================
 interface SkillWithHero extends Skill {
@@ -48,8 +48,8 @@ interface SkillWithHero extends Skill {
 }
 
 const skills = computed<SkillWithHero[]>(() => {
-  if (!skillResult.value?.heroes) return [];
-  return skillResult.value.heroes.flatMap((hero: any) =>
+  if (!skillResult.value?.heroes?.items) return [];
+  return skillResult.value.heroes.items.flatMap((hero: any) =>
     (hero.skills || []).map((skill: any) => ({
       ...skill,
       heroName: hero.name
@@ -195,8 +195,8 @@ const handleDelete = async (skillId: string, skillName: string) => {
 
 // ==================== Export to Excel (per-hero sheet) ====================
 const groupSkillsByHero = (): HeroSkillsBundle[] => {
-  if (!skillResult.value?.heroes) return [];
-  return (skillResult.value.heroes as any[]).map((hero) => ({
+  if (!skillResult.value?.heroes?.items) return [];
+  return (skillResult.value.heroes.items as any[]).map((hero) => ({
     heroId: hero._id,
     heroName: hero.name,
     skills: (hero.skills || []) as SkillRow[],

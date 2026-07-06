@@ -32,7 +32,7 @@ import { HERO_ROLE_OPTIONS } from '../../../types/Hero';
 const { result: baseStatResult, loading: baseStatLoading, refetch } = useBaseStats();
 const { result: heroResult } = useHeroes();
 const baseStats = computed<BaseStat[]>(() => baseStatResult.value?.baseStats || []);
-const heroes = computed<Hero[]>(() => heroResult.value?.heroes || []);
+const heroes = computed<Hero[]>(() => heroResult.value?.heroes?.items || []);
 const safeRefetch = async () => (await refetch()) ?? Promise.resolve();
 const { handleAddBaseStat, handleEditBaseStat, handleDeleteBaseStat } = useBaseStatService(safeRefetch);
 

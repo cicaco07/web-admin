@@ -35,7 +35,7 @@ const { result: itemResult } = useItems();
 const { result: emblemResult } = useEmblems();
 const { result: battleSpellResult } = useBattleSpell();
 
-const heroes = computed(() => heroResult.value?.heroes || []);
+const heroes = computed(() => heroResult.value?.heroes?.items || []);
 const items = computed(() => itemResult.value?.items || []);
 const emblems = computed(() => emblemResult.value?.emblems || []);
 const battleSpells = computed(() => battleSpellResult.value?.battleSpells || []);

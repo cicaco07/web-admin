@@ -4,16 +4,18 @@ import gql from "graphql-tag";
 const GET_SKILLS = gql`
   query GetSkills {
     heroes {
-      _id
-      name
-      skills {
+      items {
         _id
         name
-        type
-        tag
-        skill_icon
-        lite_description
-        full_description
+        skills {
+          _id
+          name
+          type
+          tag
+          skill_icon
+          lite_description
+          full_description
+        }
       }
     }
   }

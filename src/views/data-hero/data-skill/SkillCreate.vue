@@ -27,7 +27,7 @@ const router = useRouter();
 
 // ==================== Data Fetching ====================
 const { result: heroResult } = useHeroes();
-const heroes = computed<Hero[]>(() => heroResult.value?.heroes || []);
+const heroes = computed<Hero[]>(() => heroResult.value?.heroes?.items || []);
 
 // ==================== API Mutations ====================
 const { addSkillToHero } = useAddSkillToHero();

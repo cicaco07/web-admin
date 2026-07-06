@@ -28,7 +28,7 @@ import { createDefaultHeroForm, HERO_TYPE_OPTIONS, HERO_ROLE_OPTIONS } from '../
 
 // ==================== Data Fetching ====================
 const { result: heroResult, loading: heroLoading, refetch } = useHeroes();
-const heroes = computed<Hero[]>(() => heroResult.value?.heroes || []);
+const heroes = computed<Hero[]>(() => heroResult.value?.heroes?.items || []);
 const safeRefetch = async () => (await refetch()) ?? Promise.resolve();
 const { handleAddHero, handleEditHero, handleDeleteHero } = useHeroService(safeRefetch);
 

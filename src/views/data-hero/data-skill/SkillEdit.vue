@@ -29,7 +29,7 @@ const skillId = computed(() => route.params.id as string);
 
 // ==================== Data Fetching ====================
 const { result: heroResult } = useHeroes();
-const heroes = computed<Hero[]>(() => heroResult.value?.heroes || []);
+const heroes = computed<Hero[]>(() => heroResult.value?.heroes?.items || []);
 
 const { result: skillResult, refetch: refetchSkills } = useSkills();
 const { result: skillDetailResult, refetch: refetchSkillDetails } = useSkillsDetail();
@@ -51,8 +51,8 @@ const selectedTags = ref<string[]>([]);
 
 // ==================== Find Current Skill ====================
 const currentSkill = computed(() => {
-  if (!skillResult.value?.heroes) return null;
-  for (const hero of skillResult.value.heroes) {
+  if (!skillResult.value?.heroes?.items) return null;
+  for (const hero of skillResult.value.heroes.items) {
     const skill = hero.skills?.find((s: any) => s._id === skillId.value);
     if (skill) {
       return { ...skill, heroId: hero._id || '', heroName: hero.name };

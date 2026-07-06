@@ -4,22 +4,24 @@ import { gql } from 'graphql-tag';
 const GET_ALL_HEROES = gql`
   query GetHeroes {
     heroes {
-      _id
-      name
-      alias
-      role
-      type
-      speciality
-      region
-      hero_order
-      avatar  
-      image
-      short_description
-      release_date
-      durability
-      offense
-      control_effect
-      difficulty
+      items {
+        _id
+        name
+        alias
+        role
+        type
+        speciality
+        region
+        hero_order
+        avatar
+        image
+        short_description
+        release_date
+        durability
+        offense
+        control_effect
+        difficulty
+      }
     }
   }
 `;

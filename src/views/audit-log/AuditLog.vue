@@ -91,10 +91,6 @@ const formatDate = (value: string) =>
     minute: '2-digit',
   });
 
-const truncate = (value: string | null, maxLength = 50) => {
-  if (!value) return '-';
-  return value.length > maxLength ? value.substring(0, maxLength) + '…' : value;
-};
 </script>
 
 <template>

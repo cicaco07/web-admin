@@ -11,7 +11,7 @@ import type { Hero } from '../../../types/Hero';
 
 const { result: heroResult, loading: heroLoading } = useHeroes();
 const heroes = computed<Hero[]>(() => {
-  const raw = heroResult.value?.heroes || [];
+  const raw = heroResult.value?.heroes?.items || [];
   return [...raw].sort((a, b) => a.name.localeCompare(b.name));
 });
 

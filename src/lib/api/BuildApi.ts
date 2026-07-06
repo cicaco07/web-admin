@@ -4,39 +4,41 @@ import gql from "graphql-tag";
 const GET_BUILDS = gql`
   query GetBuilds {
     builds {
-      _id
-      name
-      role
-      description
-      hero {
+      items {
         _id
         name
-        image
-      }
-      items {
-        item {
+        role
+        description
+        hero {
           _id
           name
           image
-          type
         }
-        order
+        items {
+          item {
+            _id
+            name
+            image
+            type
+          }
+          order
+        }
+        emblems {
+          _id
+          name
+          icon
+        }
+        battle_spells {
+          _id
+          name
+          icon
+        }
+        user {
+          _id
+          name
+        }
+        is_official
       }
-      emblems {
-        _id
-        name
-        icon
-      }
-      battle_spells {
-        _id
-        name
-        icon
-      }
-      user {
-        _id
-        name
-      }
-      is_official
     }
   }
 `;
