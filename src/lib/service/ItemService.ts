@@ -39,6 +39,7 @@ export const useItemService = (refetch: () => Promise<any>) => {
         description: editItem.description,
         tips: editItem.tips,
         parent_items: editItem.parent_items,
+        calculation_attributes: editItem.calculation_attributes ?? [],
       };
       await updateItem({ id: editItem._id, input });
       await refetch();

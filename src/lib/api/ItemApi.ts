@@ -16,6 +16,23 @@ const GET_ITEMS = gql`
       description
       tips
       parent_items
+      calculation_attributes {
+        key
+        value
+        min_value
+        max_value
+        value_type
+        scaling_stat
+        source
+        trigger
+        condition
+        target
+        duration
+        cooldown
+        max_stacks
+        cap
+        note
+      }
     }
   }
 `;

@@ -120,7 +120,8 @@ const openEditModal = (item: Item) => {
     story: item.story,
     description: item.description || [],
     tips: item.tips,
-    parent_items: item.parent_items || []
+    parent_items: item.parent_items || [],
+    calculation_attributes: item.calculation_attributes || []
   };
 };
 

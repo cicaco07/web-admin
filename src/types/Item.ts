@@ -1,3 +1,21 @@
+export interface CalculationAttribute {
+  key: string;
+  value?: number;
+  min_value?: number;
+  max_value?: number;
+  value_type: string;
+  scaling_stat?: string;
+  source: string;
+  trigger: string;
+  condition?: string;
+  target?: string;
+  duration?: number;
+  cooldown?: number;
+  max_stacks?: number;
+  cap?: number;
+  note?: string;
+}
+
 export interface Item {
   _id: string;
   name: string;
@@ -11,6 +29,7 @@ export interface Item {
   description: string[];
   tips: string;
   parent_items: any[];
+  calculation_attributes?: CalculationAttribute[];
 }
 
 export interface ItemFormData {
@@ -26,6 +45,7 @@ export interface ItemFormData {
   description: string[];
   tips: string;
   parent_items: any[];
+  calculation_attributes?: CalculationAttribute[];
 }
 
 export const ITEM_TYPE_OPTIONS = [
@@ -55,5 +75,6 @@ export const createDefaultItemForm = (): ItemFormData => ({
   story: '',
   description: [],
   tips: '',
-  parent_items: []
+  parent_items: [],
+  calculation_attributes: []
 });
