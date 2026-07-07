@@ -3,7 +3,7 @@ import gql from "graphql-tag";
 
 const GET_SKILLS = gql`
   query GetSkills {
-    heroes {
+    heroes(filter: { limit: 200 }) {
       items {
         _id
         name

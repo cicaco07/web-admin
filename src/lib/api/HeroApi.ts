@@ -3,7 +3,7 @@ import { gql } from 'graphql-tag';
 
 const GET_ALL_HEROES = gql`
   query GetHeroes {
-    heroes {
+    heroes(filter: { limit: 200 }) {
       items {
         _id
         name
