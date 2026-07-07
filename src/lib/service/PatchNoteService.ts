@@ -3,20 +3,32 @@ import {
   useCreateBattlefieldPatchNote,
   useCreateGameModePatchNote,
   useCreateHeroPatchNote,
+  useCreatePatchChange,
   useCreatePatchNote,
-  useCreateSystemPatchNote,
+  useImportPatchNoteFromUrl,
+  usePublishPatchNote,
   useRemoveBattlefieldPatchNote,
   useRemoveGameModePatchNote,
   useRemoveHeroPatchNote,
+  useRemovePatchChange,
   useRemovePatchNote,
   useRemoveSystemPatchNote,
+  useReparsePatchNote,
+  useUnpublishPatchNote,
   useUpdateBattlefieldPatchNote,
   useUpdateGameModePatchNote,
   useUpdateHeroPatchNote,
+  useUpdatePatchChange,
   useUpdatePatchNote,
   useUpdateSystemPatchNote,
+  useCreateSystemPatchNote,
 } from '../api/PatchNoteApi';
-import type { HeroPatchNoteFormData, PatchNoteFormData, SimplePatchNoteSectionFormData } from '../../types/PatchNote';
+import type {
+  HeroPatchNoteFormData,
+  PatchChangeFormData,
+  PatchNoteFormData,
+  SimplePatchNoteSectionFormData,
+} from '../../types/PatchNote';
 
 interface BootstrapModalApi { getOrCreateInstance(element: HTMLElement | null): { hide(): void } }
 interface WindowWithBootstrap extends Window { bootstrap?: { Modal?: BootstrapModalApi } }
@@ -31,11 +43,50 @@ const parseDetails = (value: string): Record<string, unknown> => {
   return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as Record<string, unknown> : { value: parsed };
 };
 
+const compactObject = <T extends Record<string, unknown>>(value: T) =>
+  Object.fromEntries(Object.entries(value).filter(([, entry]) => entry !== '' && entry !== undefined && entry !== null));
+
+const patchNotePayload = (form: PatchNoteFormData) => compactObject({
+  name: form.name,
+  version: form.version,
+  start_date: form.start_date,
+  end_date: form.end_date,
+  published_at: form.published_at,
+  type: form.type,
+  season: Number(form.season),
+  is_active: form.is_active,
+  status: form.status,
+  source_url: form.source_url,
+  source_newsid: form.source_newsid,
+  summary: form.summary,
+  raw_content: form.raw_content,
+});
+
+const patchChangePayload = (form: PatchChangeFormData) => compactObject({
+  target_type: form.target_type,
+  target_ref: form.target_ref,
+  target_name: form.target_name,
+  change_type: form.change_type,
+  section: form.section,
+  title: form.title,
+  description: form.description,
+  details: form.details,
+  raw_text: form.raw_text,
+  order: Number(form.order || 0),
+});
+
 export const usePatchNoteService = (refetch: () => Promise<unknown>) => {
   const token = localStorage.getItem('token') || '';
   const { createPatchNote } = useCreatePatchNote(token);
   const { updatePatchNote } = useUpdatePatchNote(token);
   const { removePatchNote } = useRemovePatchNote(token);
+  const { importPatchNoteFromUrl } = useImportPatchNoteFromUrl(token);
+  const { publishPatchNote } = usePublishPatchNote(token);
+  const { unpublishPatchNote } = useUnpublishPatchNote(token);
+  const { reparsePatchNote } = useReparsePatchNote(token);
+  const { createPatchChange } = useCreatePatchChange(token);
+  const { updatePatchChange } = useUpdatePatchChange(token);
+  const { removePatchChange } = useRemovePatchChange(token);
   const { createHeroPatchNote } = useCreateHeroPatchNote(token);
   const { updateHeroPatchNote } = useUpdateHeroPatchNote(token);
   const { removeHeroPatchNote } = useRemoveHeroPatchNote(token);
@@ -51,7 +102,7 @@ export const usePatchNoteService = (refetch: () => Promise<unknown>) => {
 
   const handleAddPatchNote = async (form: PatchNoteFormData) => {
     try {
-      await createPatchNote({ createPatchNoteInput: { ...form, season: Number(form.season) } });
+      await createPatchNote({ createPatchNoteInput: patchNotePayload(form) });
       await refetch();
       alertSuccess('Patch note berhasil ditambahkan!');
       hideModal('add-patch-note');
@@ -61,8 +112,7 @@ export const usePatchNoteService = (refetch: () => Promise<unknown>) => {
   const handleEditPatchNote = async (form: PatchNoteFormData) => {
     try {
       if (!form._id) throw new Error('Missing patch note id');
-      const { _id, ...updatePatchNoteInput } = form;
-      await updatePatchNote({ id: _id, updatePatchNoteInput: { ...updatePatchNoteInput, season: Number(updatePatchNoteInput.season) } });
+      await updatePatchNote({ id: form._id, updatePatchNoteInput: patchNotePayload(form) });
       await refetch();
       alertSuccess('Patch note berhasil diupdate!');
       hideModal('edit-patch-note');
@@ -75,6 +125,63 @@ export const usePatchNoteService = (refetch: () => Promise<unknown>) => {
       await refetch();
       alertSuccess('Patch note berhasil dihapus!');
     }
+  };
+
+  const handleImportPatchNote = async (url: string) => {
+    try {
+      await importPatchNoteFromUrl({ url });
+      await refetch();
+      alertSuccess('Patch note berhasil diimport sebagai draft!');
+      hideModal('import-patch-note');
+    } catch (error) { alertError('Gagal import patch note. Pastikan URL valid dan belum pernah diimport.'); throw error; }
+  };
+
+  const handlePublishPatchNote = async (id: string) => {
+    if (!(await alertConfirm('Publish patch note ini? Data akan tampil di query publik.'))) return;
+    await publishPatchNote({ id });
+    await refetch();
+    alertSuccess('Patch note berhasil dipublish!');
+  };
+
+  const handleUnpublishPatchNote = async (id: string) => {
+    if (!(await alertConfirm('Unpublish patch note ini? Data akan kembali menjadi draft.'))) return;
+    await unpublishPatchNote({ id });
+    await refetch();
+    alertSuccess('Patch note berhasil diunpublish!');
+  };
+
+  const handleReparsePatchNote = async (id: string) => {
+    if (!(await alertConfirm('Reparse akan menghapus hasil parsed changes saat ini dan membuat ulang dari raw content. Lanjutkan?'))) return;
+    await reparsePatchNote({ id });
+    await refetch();
+    alertSuccess('Patch note berhasil diparse ulang!');
+  };
+
+  const handleAddPatchChange = async (form: PatchChangeFormData) => {
+    try {
+      if (!form.patchNoteId) throw new Error('Missing patch note id');
+      await createPatchChange({ patchNoteId: form.patchNoteId, createPatchChangeInput: patchChangePayload(form) });
+      await refetch();
+      alertSuccess('Patch change berhasil ditambahkan!');
+      hideModal('patch-change-form');
+    } catch (error) { alertError('Gagal menyimpan patch change.'); throw error; }
+  };
+
+  const handleEditPatchChange = async (form: PatchChangeFormData) => {
+    try {
+      if (!form._id) throw new Error('Missing patch change id');
+      await updatePatchChange({ id: form._id, updatePatchChangeInput: patchChangePayload(form) });
+      await refetch();
+      alertSuccess('Patch change berhasil diupdate!');
+      hideModal('patch-change-form');
+    } catch (error) { alertError('Gagal mengupdate patch change.'); throw error; }
+  };
+
+  const handleDeletePatchChange = async (id: string) => {
+    if (!(await alertConfirm('Yakin ingin menghapus patch change ini?'))) return;
+    await removePatchChange({ id });
+    await refetch();
+    alertSuccess('Patch change berhasil dihapus!');
   };
 
   const handleAddHeroPatchNote = async (form: HeroPatchNoteFormData) => {
@@ -140,5 +247,22 @@ export const usePatchNoteService = (refetch: () => Promise<unknown>) => {
     alertSuccess('Data patch berhasil dihapus!');
   };
 
-  return { handleAddPatchNote, handleEditPatchNote, handleDeletePatchNote, handleAddHeroPatchNote, handleEditHeroPatchNote, handleDeleteHeroPatchNote, handleAddSimpleSection, handleEditSimpleSection, handleDeleteSimpleSection };
+  return {
+    handleAddPatchNote,
+    handleEditPatchNote,
+    handleDeletePatchNote,
+    handleImportPatchNote,
+    handlePublishPatchNote,
+    handleUnpublishPatchNote,
+    handleReparsePatchNote,
+    handleAddPatchChange,
+    handleEditPatchChange,
+    handleDeletePatchChange,
+    handleAddHeroPatchNote,
+    handleEditHeroPatchNote,
+    handleDeleteHeroPatchNote,
+    handleAddSimpleSection,
+    handleEditSimpleSection,
+    handleDeleteSimpleSection,
+  };
 };
