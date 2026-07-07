@@ -19,6 +19,7 @@ import TournamentDetail from '../views/tournament/tournament-detail/TournamentDe
 import DraftPickSimulation from '../views/draft-pick/simulation/DraftPickSimulation.vue';
 import BuildDasar from '../views/build/build-dasar/BuildDasar.vue';
 import PatchList from '../views/patch-note/patch-list/PatchList.vue';
+import PatchDetail from '../views/patch-note/patch-list/PatchDetail.vue';
 import HeroPatchNote from '../views/patch-note/hero/HeroPatchNote.vue';
 import BattlefieldPatchNote from '../views/patch-note/battlefield/BattlefieldPatchNote.vue';
 import SystemPatchNote from '../views/patch-note/system/SystemPatchNote.vue';
@@ -157,6 +158,11 @@ const router = createRouter({
           path: "patch-list",
           name: "PatchList",
           component: PatchList
+        },
+        {
+          path: "patch-list/:id",
+          name: "PatchDetail",
+          component: PatchDetail,
         },
         { 
           path: "patch-hero", 
