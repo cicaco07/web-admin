@@ -24,6 +24,7 @@ import HeroPatchNote from '../views/patch-note/hero/HeroPatchNote.vue';
 import BattlefieldPatchNote from '../views/patch-note/battlefield/BattlefieldPatchNote.vue';
 import SystemPatchNote from '../views/patch-note/system/SystemPatchNote.vue';
 import GameModePatchNote from '../views/patch-note/game-mode/GameModePatchNote.vue';
+import PatchHistory from '../views/patch-note/patch-history/PatchHistory.vue';
 import UserManagement from '../views/user-management/UserManagement.vue';
 import AuditLog from '../views/audit-log/AuditLog.vue';
 
@@ -163,6 +164,18 @@ const router = createRouter({
           path: "patch-list/:id",
           name: "PatchDetail",
           component: PatchDetail,
+        },
+        {
+          path: "history/hero",
+          name: "HeroPatchHistory",
+          component: PatchHistory,
+          props: { targetType: 'HERO' },
+        },
+        {
+          path: "history/item",
+          name: "ItemPatchHistory",
+          component: PatchHistory,
+          props: { targetType: 'ITEM' },
         },
         { 
           path: "patch-hero", 
