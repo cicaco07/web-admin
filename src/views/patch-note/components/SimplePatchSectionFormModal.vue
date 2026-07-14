@@ -73,7 +73,7 @@ const patchNoteSelectOptions = computed<SelectOption[]>(() =>
           ></textarea>
         </div>
       </div>
-      <div class="d-flex justify-content-end gap-2 mt-3">
+      <div class="d-flex justify-content-end gap-2 mt-3 patch-modal-actions">
         <button
           type="button"
           class="btn btn-secondary"

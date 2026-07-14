@@ -89,8 +89,8 @@ const changeTypeSelectOptions = computed<SelectOption[]>(() =>
 
         <div class="d-flex justify-content-between align-items-center mb-2">
           <h6 class="mb-0">Hero Changes</h6>
-          <button type="button" class="btn btn-outline-primary btn-sm" @click="addHeroChange">
-            <i class="ti ti-plus me-1"></i>Tambah Hero
+          <button type="button" class="btn btn-outline-primary patch-action-btn" @click="addHeroChange">
+            <i class="ti ti-plus"></i>Tambah Hero
           </button>
         </div>
 
@@ -128,7 +128,9 @@ const changeTypeSelectOptions = computed<SelectOption[]>(() =>
             <div class="col-md-3 mb-2 text-end">
               <button
                 type="button"
-                class="btn btn-danger btn-sm"
+                class="btn btn-danger patch-icon-btn"
+                title="Hapus hero"
+                aria-label="Hapus hero"
                 @click="removeHeroChange(index)"
               >
                 <i class="ti ti-trash"></i>
@@ -148,7 +150,7 @@ const changeTypeSelectOptions = computed<SelectOption[]>(() =>
         </div>
       </div>
 
-      <div class="d-flex justify-content-end gap-2 mt-3">
+      <div class="d-flex justify-content-end gap-2 mt-3 patch-modal-actions">
         <button
           type="button"
           class="btn btn-secondary"

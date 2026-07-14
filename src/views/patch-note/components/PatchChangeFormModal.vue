@@ -100,7 +100,7 @@ const removeDetail = (index: number) => {
         <div class="col-12">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h6 class="mb-0">Details</h6>
-            <button class="btn btn-sm btn-outline-primary" type="button" @click="addDetail"><i class="ti ti-plus me-1"></i>Tambah Detail</button>
+            <button class="btn btn-outline-primary patch-action-btn" type="button" @click="addDetail"><i class="ti ti-plus"></i>Tambah Detail</button>
           </div>
           <div v-if="form.details.length === 0" class="alert alert-light border">Belum ada detail angka/perubahan.</div>
           <div v-for="(detail, index) in form.details" :key="index" class="border rounded p-3 mb-2">
@@ -110,12 +110,12 @@ const removeDetail = (index: number) => {
               <div class="col-md-2"><label class="form-label">New</label><input class="form-control" :value="detail.new_value" @input="updateDetail(index, 'new_value', ($event.target as HTMLInputElement).value)" /></div>
               <div class="col-md-1"><label class="form-label">Unit</label><input class="form-control" :value="detail.unit" @input="updateDetail(index, 'unit', ($event.target as HTMLInputElement).value)" /></div>
               <div class="col-md-4"><label class="form-label">Raw</label><input class="form-control" :value="detail.raw_text" @input="updateDetail(index, 'raw_text', ($event.target as HTMLInputElement).value)" /></div>
-              <div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100" @click="removeDetail(index)"><i class="ti ti-trash"></i></button></div>
+              <div class="col-md-1"><button type="button" class="btn btn-outline-danger patch-icon-btn w-100" title="Hapus detail" aria-label="Hapus detail" @click="removeDetail(index)"><i class="ti ti-trash"></i></button></div>
             </div>
           </div>
         </div>
       </div>
-      <div class="d-flex justify-content-end gap-2 mt-4">
+      <div class="d-flex justify-content-end gap-2 mt-4 patch-modal-actions">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="emit('cancel')">Batal</button>
         <button type="submit" class="btn btn-primary" :disabled="isSubmitting"><span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>Simpan</button>
       </div>

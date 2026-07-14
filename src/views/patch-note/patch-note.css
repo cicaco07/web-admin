@@ -1,0 +1,150 @@
+.patch-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.patch-card-header .card-title,
+.patch-page-title {
+  line-height: 1.3;
+}
+
+.patch-page-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.patch-action-btn,
+.patch-back-btn,
+.patch-tab-btn {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.patch-action-btn {
+  min-width: 132px;
+  margin: 0 !important;
+  padding: 0.5rem 1rem !important;
+}
+
+.patch-icon-btn {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.patch-icon-btn i {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.patch-back-btn {
+  min-width: 156px;
+}
+
+.patch-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.patch-meta .badge {
+  padding: 0.45rem 0.65rem;
+  line-height: 1;
+}
+
+.patch-tabs {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.patch-modal-actions .btn {
+  min-width: 104px;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.patch-tab-btn {
+  min-width: 120px;
+  min-height: 38px;
+}
+
+.patch-table th {
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.patch-table td {
+  vertical-align: middle;
+}
+
+.patch-table .patch-description-cell {
+  min-width: 260px;
+  white-space: normal;
+  line-height: 1.45;
+}
+
+.patch-table .patch-action-cell {
+  width: 1%;
+  min-width: 156px;
+  white-space: nowrap;
+}
+
+.patch-state {
+  padding: 2.5rem 1rem;
+  text-align: center;
+  color: var(--bs-secondary-color, #6c757d);
+}
+
+.patch-state i {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 2rem;
+}
+
+.patch-history-card {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.patch-history-card:hover {
+  border-color: rgba(var(--bs-primary-rgb), 0.45) !important;
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.06);
+}
+
+@media (max-width: 767.98px) {
+  .patch-card-header,
+  .patch-page-actions {
+    align-items: stretch;
+  }
+
+  .patch-card-header > div,
+  .patch-page-actions,
+  .patch-page-actions .btn,
+  .patch-action-btn,
+  .patch-back-btn {
+    width: 100%;
+  }
+
+  .patch-tab-btn {
+    flex: 1 1 140px;
+  }
+}

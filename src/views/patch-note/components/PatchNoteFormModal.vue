@@ -94,7 +94,7 @@ const statusSelectOptions = computed<SelectOption[]>(() =>
           </div>
         </div>
       </div>
-      <div class="d-flex justify-content-end gap-2 mt-3">
+      <div class="d-flex justify-content-end gap-2 mt-3 patch-modal-actions">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="emit('cancel')">Batal</button>
         <button type="submit" class="btn" :class="headerColor === 'primary' ? 'btn-primary' : 'btn-warning'" :disabled="isSubmitting">
           <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>

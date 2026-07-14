@@ -14,6 +14,7 @@ import { usePatchNotes } from '../../../lib/api/PatchNoteApi';
 import { usePatchNoteService } from '../../../lib/service/PatchNoteService';
 import type { PatchNote, PatchNoteFormData } from '../../../types/PatchNote';
 import { createDefaultPatchNoteForm } from '../../../types/PatchNote';
+import '../patch-note.css';
 
 const router = useRouter();
 const { result, loading, refetch } = usePatchNotes();
@@ -83,14 +84,14 @@ const onImport = async () => { if (!importUrl.value.trim()) return; isImporting.
   <DashboardLayout>
     <Breadcrumb title="Patch List" :items="[{ name: 'Dashboard', href: '/dashboard' }, { name: 'Patch Note' }, { name: 'Patch List' }]" />
     <div class="card">
-      <div class="border-bottom title-part-padding d-flex justify-content-between align-items-center">
+      <div class="border-bottom title-part-padding patch-card-header">
         <div>
           <h4 class="card-title mb-1">Daftar Patch Note</h4>
           <small class="text-muted">Kelola draft, import URL resmi, dan publish patch note.</small>
         </div>
-        <div class="d-flex gap-2">
-          <ModalButton variant="success" font="medium" size="lg" dataBsTarget="import-patch-note"><i class="ti ti-download me-1"></i>Import URL</ModalButton>
-          <ModalButton variant="info" font="medium" size="lg" dataBsTarget="add-patch-note"><i class="ti ti-plus me-1"></i>Tambah Patch</ModalButton>
+        <div class="patch-page-actions">
+          <ModalButton class="patch-action-btn" variant="success" font="medium" dataBsTarget="import-patch-note"><i class="ti ti-download"></i>Import URL</ModalButton>
+          <ModalButton class="patch-action-btn" variant="info" font="medium" dataBsTarget="add-patch-note"><i class="ti ti-plus"></i>Tambah Patch</ModalButton>
         </div>
       </div>
       <div class="card-body">
@@ -108,7 +109,7 @@ const onImport = async () => { if (!importUrl.value.trim()) return; isImporting.
               <input v-model="importUrl" type="url" class="form-control" placeholder="https://www.mobilelegends.com/news/articleldetail?newsid=..." required />
               <small class="text-muted">Data akan masuk sebagai draft dan parsed changes perlu direview sebelum publish.</small>
             </div>
-            <div class="d-flex justify-content-end gap-2">
+            <div class="d-flex justify-content-end gap-2 patch-modal-actions">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
               <button type="submit" class="btn btn-success" :disabled="isImporting"><span v-if="isImporting" class="spinner-border spinner-border-sm me-2"></span>Import</button>
             </div>
@@ -119,7 +120,7 @@ const onImport = async () => { if (!importUrl.value.trim()) return; isImporting.
         <PatchNoteFormModal modalId="edit-patch-note" title="Edit Patch Note" headerColor="warning" :isSubmitting="isEditSubmitting" :patchNoteForm="editForm" @update:patchNoteForm="editForm = $event" @submit="onEdit" @cancel="resetEditForm" />
 
         <div class="table-responsive">
-          <table class="table table-bordered table-hover">
+          <table class="table table-bordered table-hover patch-table">
             <thead class="table-light"><tr class="text-center"><th>No</th><th>Nama</th><th>Version</th><th>Tipe</th><th>Published</th><th>Status</th><th>Source</th><th>Aksi</th></tr></thead>
             <tbody>
               <tr v-if="loading"><td colspan="8" class="text-center py-4">Memuat data...</td></tr>
@@ -131,12 +132,12 @@ const onImport = async () => { if (!importUrl.value.trim()) return; isImporting.
                 <td>{{ formatDate(item.published_at || item.start_date) }}</td>
                 <td><span class="badge" :class="statusClass(item)">{{ statusValue(item) }}</span></td>
                 <td><a v-if="item.source_url" :href="item.source_url" target="_blank" rel="noopener" class="small">{{ item.source_newsid || 'Open' }}</a><span v-else>-</span></td>
-                <td><div class="d-flex gap-1 justify-content-center flex-wrap">
-                  <Button variant="primary" font="medium" size="sm" type="button" @click="router.push(`/patch-note/patch-list/${item._id}`)"><i class="ti ti-eye"></i></Button>
-                  <ModalButton variant="warning" font="medium" size="sm" dataBsTarget="edit-patch-note" @click="openEdit(item)"><i class="ti ti-edit"></i></ModalButton>
-                  <Button v-if="statusValue(item) !== 'PUBLISHED'" variant="success" font="medium" size="sm" type="button" @click="handlePublishPatchNote(item._id)"><i class="ti ti-send"></i></Button>
-                  <Button v-else variant="secondary" font="medium" size="sm" type="button" @click="handleUnpublishPatchNote(item._id)"><i class="ti ti-archive"></i></Button>
-                  <Button variant="danger" font="medium" size="sm" type="button" @click="handleDeletePatchNote(item._id)"><i class="ti ti-trash"></i></Button>
+                <td class="patch-action-cell"><div class="d-flex gap-1 justify-content-center flex-wrap">
+                  <Button class="patch-icon-btn" variant="primary" size="sm" type="button" title="Review patch" aria-label="Review patch" @click="router.push(`/patch-note/patch-list/${item._id}`)"><i class="ti ti-eye"></i></Button>
+                  <ModalButton class="patch-icon-btn" variant="warning" font="medium" size="sm" dataBsTarget="edit-patch-note" title="Edit patch" aria-label="Edit patch" @click="openEdit(item)"><i class="ti ti-edit"></i></ModalButton>
+                  <Button v-if="statusValue(item) !== 'PUBLISHED'" class="patch-icon-btn" variant="success" size="sm" type="button" title="Publish patch" aria-label="Publish patch" @click="handlePublishPatchNote(item._id)"><i class="ti ti-send"></i></Button>
+                  <Button v-else class="patch-icon-btn" variant="secondary" size="sm" type="button" title="Unpublish patch" aria-label="Unpublish patch" @click="handleUnpublishPatchNote(item._id)"><i class="ti ti-archive"></i></Button>
+                  <Button class="patch-icon-btn" variant="danger" size="sm" type="button" title="Hapus patch" aria-label="Hapus patch" @click="handleDeletePatchNote(item._id)"><i class="ti ti-trash"></i></Button>
                 </div></td>
               </tr>
               <tr v-if="!loading && paginated.length === 0"><td colspan="8" class="text-center text-muted py-4">Tidak ada data patch note</td></tr>

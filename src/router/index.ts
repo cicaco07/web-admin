@@ -177,6 +177,24 @@ const router = createRouter({
           component: PatchHistory,
           props: { targetType: 'ITEM' },
         },
+        {
+          path: "history/battlefield",
+          name: "BattlefieldPatchHistory",
+          component: PatchHistory,
+          props: { targetType: 'BATTLEFIELD' },
+        },
+        {
+          path: "history/system",
+          name: "SystemPatchHistory",
+          component: PatchHistory,
+          props: { targetType: 'SYSTEM' },
+        },
+        {
+          path: "history/game-mode",
+          name: "GameModePatchHistory",
+          component: PatchHistory,
+          props: { targetType: 'GAME_MODE' },
+        },
         { 
           path: "patch-hero", 
           name: "PatchNoteHero", 

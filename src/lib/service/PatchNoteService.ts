@@ -46,6 +46,11 @@ const parseDetails = (value: string): Record<string, unknown> => {
 const compactObject = <T extends Record<string, unknown>>(value: T) =>
   Object.fromEntries(Object.entries(value).filter(([, entry]) => entry !== '' && entry !== undefined && entry !== null));
 
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error && error.message) return error.message;
+  return 'Terjadi kesalahan yang tidak diketahui.';
+};
+
 const patchNotePayload = (form: PatchNoteFormData) => compactObject({
   name: form.name,
   version: form.version,
@@ -152,9 +157,16 @@ export const usePatchNoteService = (refetch: () => Promise<unknown>) => {
 
   const handleReparsePatchNote = async (id: string) => {
     if (!(await alertConfirm('Reparse akan menghapus hasil parsed changes saat ini dan membuat ulang dari raw content. Lanjutkan?'))) return;
-    await reparsePatchNote({ id });
-    await refetch();
-    alertSuccess('Patch note berhasil diparse ulang!');
+    try {
+      const result = await reparsePatchNote({ id });
+      if (!result?.data) throw new Error('Backend tidak mengembalikan hasil parse ulang.');
+      await refetch();
+      const totalChanges = result.data.reparsePatchNote?.length ?? 0;
+      await alertSuccess(`Patch note berhasil diparse ulang. ${totalChanges} perubahan dibuat.`);
+    } catch (error) {
+      await alertError(`Gagal parse ulang patch note: ${getErrorMessage(error)}`);
+      throw error;
+    }
   };
 
   const handleAddPatchChange = async (form: PatchChangeFormData) => {
