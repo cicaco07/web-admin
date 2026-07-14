@@ -156,7 +156,7 @@ export const usePatchNoteService = (refetch: () => Promise<unknown>) => {
   };
 
   const handleReparsePatchNote = async (id: string) => {
-    if (!(await alertConfirm('Reparse akan menghapus hasil parsed changes saat ini dan membuat ulang dari raw content. Lanjutkan?'))) return;
+    if (!(await alertConfirm('Parse ulang akan memperbarui raw content dari sumber resmi bahasa Indonesia jika tersedia, lalu mengganti hasil parsing saat ini. Lanjutkan?'))) return;
     try {
       const result = await reparsePatchNote({ id });
       if (!result?.data) throw new Error('Backend tidak mengembalikan hasil parse ulang.');
